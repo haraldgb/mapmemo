@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
+    "@vis.gl/react-google-maps": "^1.7.1",
     "axios": "^1.13.2",
     "react": "19.3.0-canary-4a3d993e-20260114",
     "react-dom": "19.3.0-canary-4a3d993e-20260114",
@@ -21,6 +22,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@types/google.maps": "^3.58.1",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
