@@ -1,6 +1,7 @@
 /// <reference types="@types/google.maps" />
 import { useEffect, useRef, useState } from 'react'
 import { GOOGLE_MAPS_API_KEY } from '../../../.secrets/secrets'
+import { addGeoJsonPolygons } from './polygons'
 
 const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
 const MAP_CONTAINER_STYLE: React.CSSProperties = {
@@ -47,6 +48,7 @@ export const MapMemo = () => {
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const hasFetchedRef = useRef(false)
+  const polygonCleanupRef = useRef<null | (() => void)>(null)
   const [isMapReady, setIsMapReady] = useState(false)
 
   useEffect(function initializeMap() {
@@ -86,6 +88,36 @@ export const MapMemo = () => {
       isMounted = false
     }
   }, [])
+
+  useEffect(
+    function renderPolygons() {
+      if (!isMapReady || !mapInstanceRef.current) {
+        return
+      }
+      const mapInstance = mapInstanceRef.current
+      let isActive = true
+
+      const addPolygons = async () => {
+        const cleanup = await addGeoJsonPolygons(mapInstance)
+        if (!isActive) {
+          cleanup?.()
+          return
+        }
+        polygonCleanupRef.current = cleanup ?? null
+      }
+
+      void addPolygons()
+
+      return () => {
+        isActive = false
+        if (polygonCleanupRef.current) {
+          polygonCleanupRef.current()
+          polygonCleanupRef.current = null
+        }
+      }
+    },
+    [isMapReady],
+  )
 
   useEffect(
     function fetchPlacesOnce() {
