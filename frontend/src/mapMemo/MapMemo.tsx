@@ -1,49 +1,60 @@
 import { AdvancedMarker, APIProvider, Map } from '@vis.gl/react-google-maps'
+import { useCallback, useEffect, useState } from 'react'
 import { GOOGLE_MAPS_API_KEY } from '../../../.secrets/secrets'
+import { searchPlacesText, type PlacesTextSearchPlace } from '../api/places'
 
-const osloCenter = { lat: 59.91, lng: 10.73 }
-const osloCenter2 = { lat: 59.91 + 0.05, lng: 10.73 + 0.05 }
+const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
 
 export const MapMemo = () => {
-  const apiKey = GOOGLE_MAPS_API_KEY
+  const [places, setPlaces] = useState<PlacesTextSearchPlace[]>([])
 
-  if (!apiKey) {
-    return (
-      <section style={{ display: 'grid', gap: '12px' }}>
-        <header>
-          <h1>MapMemo</h1>
-          <p>Simple Google Maps render using @vis.gl/react-google-maps.</p>
-        </header>
-        <div>
-          <strong>API key required.</strong> Add `VITE_GOOGLE_MAPS_API_KEY` to your `frontend/.env`,
-          then restart the dev server.
-        </div>
-      </section>
-    )
-  }
+  const runTextSearch = useCallback(
+    async function fetchPlaces() {
+      await searchPlacesText({
+        apiKey: GOOGLE_MAPS_API_KEY,
+        textQuery: 'Neighborhoods in Oslo',
+        locationBias: OSLO_CENTER,
+        locationBiasRadiusMeters: 15000,
+        maxResultCount: 50,
+        language: 'nb',
+        region: 'NO',
+      }).then(({ data }) => {
+        const neighborhoods = data.places.filter((place) => place.types.includes('neighborhood'))
+        setPlaces(neighborhoods)
+      })
+    },
+    [setPlaces],
+  )
+
+  useEffect(
+    function fetchOnMount() {
+      if (places.length > 0) return
+      runTextSearch()
+    },
+    [runTextSearch, places],
+  )
 
   return (
-    <section style={{ display: 'grid', gap: '12px' }}>
-      <header>
-        <h1>MapMemo</h1>
-        <p>Simple Google Maps render using @vis.gl/react-google-maps.</p>
-      </header>
-      <APIProvider apiKey={apiKey}>
-        <Map
-          defaultCenter={osloCenter}
-          defaultZoom={11}
-          style={{
-            height: '480px',
-            width: '100%',
-            borderRadius: '12px',
-            border: '1px solid #e2e2e2',
-          }}
-          mapId="test"
-        >
-          <AdvancedMarker position={osloCenter} title="Oslo Center"></AdvancedMarker>
-          <AdvancedMarker position={osloCenter2} title="Oslo Center 2"></AdvancedMarker>
-        </Map>
-      </APIProvider>
-    </section>
+    <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
+      <Map
+        defaultCenter={OSLO_CENTER}
+        defaultZoom={12}
+        style={{
+          height: '320px',
+          width: '720px',
+          borderRadius: '12px',
+          border: '1px solid #e2e2e2',
+        }}
+        mapId="test"
+      >
+        {places.map((place) => (
+          <AdvancedMarker
+            key={place.formattedAddress}
+            position={{ lat: place.location.latitude, lng: place.location.longitude }}
+            title={place.formattedAddress}
+          />
+        ))}
+      </Map>
+    </APIProvider>
   )
 }
