@@ -27,6 +27,10 @@ export default defineConfig([
     },
     rules: {
       'import/no-default-export': 'error',
+      'brace-style': ['error', '1tbs', { allowSingleLine: false }],
+      curly: ['error', 'all'],
+      'no-warning-comments': ['warn', { terms: ['TODO'], location: 'start' }],
+      'no-unreachable': 'warn',
       'no-console': 'error',
       'no-restricted-syntax': [
         'warn',
@@ -48,6 +52,12 @@ export default defineConfig([
           paths: [],
         },
       ],
+    },
+  },
+  {
+    files: ['vite.config.ts'],
+    rules: {
+      'import/no-default-export': 'off',
     },
   },
 ])
