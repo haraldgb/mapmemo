@@ -27,6 +27,21 @@ export default defineConfig([
     },
     rules: {
       'import/no-default-export': 'error',
+      'no-console': 'error',
+      'no-restricted-syntax': [
+        'warn',
+        {
+          selector: 'CallExpression[callee.name=/^use[A-Z0-9]/] > ArrowFunctionExpression',
+          message:
+            'Avoid anonymous arrow functions as hook arguments; use a named function instead.',
+        },
+        {
+          selector:
+            'VariableDeclarator[id.name=/^[A-Z]/] > ArrowFunctionExpression[body.type!="BlockStatement"]',
+          message:
+            'Use an explicit function body with return for PascalCase component arrow functions.',
+        },
+      ],
       'no-restricted-imports': [
         'error',
         {

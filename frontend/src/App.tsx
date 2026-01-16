@@ -1,12 +1,14 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Landing } from './pages/Landing'
-import { MapMemo } from './mapMemo/MapMemo'
+import { MapMemoPage } from './mapMemo/MapMemoPage'
 
-export const App = () => (
-  <BrowserRouter>
-    <Routes>
-      <Route path="/" element={<Landing />} />
-      <Route path="/mapmemo" element={<MapMemo />} />
-    </Routes>
-  </BrowserRouter>
-)
+export const App = () => {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/mapmemo" element={<MapMemoPage />} />
+      </Routes>
+    </BrowserRouter>
+  )
+}
