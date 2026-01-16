@@ -45,7 +45,7 @@ const loadGoogleMapsScript = (apiKey: string) => {
 export const MapMemoV2 = () => {
   const mapElementRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
-  const markersRef = useRef<google.maps.Marker[]>([])
+  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const hasFetchedRef = useRef(false)
   const [isMapReady, setIsMapReady] = useState(false)
 
@@ -64,6 +64,7 @@ export const MapMemoV2 = () => {
 
       try {
         mapInstanceRef.current = new Map(mapElementRef.current, {
+          mapId: 'map-memo-v2',
           center: OSLO_CENTER,
           zoom: 12,
           mapTypeControl: true,
@@ -92,6 +93,9 @@ export const MapMemoV2 = () => {
 
       const runTextSearch = async () => {
         const { Place } = (await google.maps.importLibrary('places')) as google.maps.PlacesLibrary
+        const { AdvancedMarkerElement } = (await google.maps.importLibrary(
+          'marker',
+        )) as google.maps.MarkerLibrary
         const locationBias = new google.maps.Circle({ center: OSLO_CENTER, radius: 5000 })
         const { places } = await Place.searchByText({
           textQuery: 'Bydeler i Oslo',
@@ -107,7 +111,9 @@ export const MapMemoV2 = () => {
           return
         }
 
-        markersRef.current.forEach((marker) => marker.setMap(null))
+        markersRef.current.forEach((marker) => {
+          marker.map = null
+        })
         markersRef.current = []
 
         places
@@ -135,7 +141,7 @@ export const MapMemoV2 = () => {
               return
             }
             const title = place.displayName ?? place.formattedAddress ?? 'Neighborhood in Oslo'
-            const marker = new google.maps.Marker({
+            const marker = new AdvancedMarkerElement({
               map: mapInstance,
               position: place.location,
               title,
