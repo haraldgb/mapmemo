@@ -64,7 +64,9 @@ export const searchPlacesText = async <TMask extends readonly PlaceFieldMask[] =
   const resolvedFieldMask = (fieldMask ?? defaultFieldMask) as TMask
   const body: Record<string, unknown> = { textQuery }
 
-  if (language) body.languageCode = language
+  if (language) {
+    body.languageCode = language
+  }
   if (locationBias) {
     body.locationBias = {
       circle: {
@@ -81,8 +83,12 @@ export const searchPlacesText = async <TMask extends readonly PlaceFieldMask[] =
       },
     }
   }
-  if (typeof maxResultCount === 'number') body.maxResultCount = maxResultCount
-  if (region) body.regionCode = region
+  if (typeof maxResultCount === 'number') {
+    body.maxResultCount = maxResultCount
+  }
+  if (region) {
+    body.regionCode = region
+  }
 
   const response = await fetch('https://places.googleapis.com/v1/places:searchText', {
     method: 'POST',

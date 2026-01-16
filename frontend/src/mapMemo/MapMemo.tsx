@@ -28,7 +28,9 @@ export const MapMemo = () => {
 
   useEffect(
     function fetchOnMount() {
-      if (places.length > 0) return
+      if (places.length > 0) {
+        return
+      }
       runTextSearch()
     },
     [runTextSearch, places],
