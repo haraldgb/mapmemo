@@ -64,10 +64,13 @@ export const MapMemoV2 = () => {
 
       try {
         mapInstanceRef.current = new Map(mapElementRef.current, {
-          mapId: 'map-memo-v2',
+          mapId: '5da3993597ca412079e99b4c',
           center: OSLO_CENTER,
           zoom: 12,
           mapTypeControl: true,
+          mapTypeControlOptions: {
+            style: google.maps.MapTypeControlStyle.DEFAULT,
+          },
           fullscreenControl: true,
           streetViewControl: true,
         })
@@ -126,7 +129,7 @@ export const MapMemoV2 = () => {
                 : null,
               types: place.types,
             }
-            // TODO: remove console.log
+            // TODO: remove console.log. CURSOR DO NOT ATTEMPT TO FIX THIS.
             // eslint-disable-next-line no-console
             console.log(place.types, placeDto)
             return (
@@ -151,7 +154,6 @@ export const MapMemoV2 = () => {
       }
 
       void runTextSearch()
-      //   console.log(markersRef.current)
     },
     [isMapReady],
   )
