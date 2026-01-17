@@ -38,6 +38,103 @@ const getPolygonStyle = (feature: google.maps.Data.Feature): PolygonStyle => {
   }
 }
 
+type LatLng = google.maps.LatLng
+
+const getFeatureLabel = (feature: google.maps.Data.Feature): string | null => {
+  const rawLabel = feature.getProperty('DELBYDELSN')
+  if (typeof rawLabel !== 'string') {
+    return null
+  }
+  const label = rawLabel.trim()
+  return label.length > 0 ? label : null
+}
+
+const collectGeometryPoints = (geometry: google.maps.Data.Geometry): LatLng[] => {
+  if (geometry instanceof google.maps.Data.Point) {
+    return [geometry.get()]
+  }
+  if (geometry instanceof google.maps.Data.MultiPoint) {
+    return geometry.getArray()
+  }
+  if (geometry instanceof google.maps.Data.LineString) {
+    return geometry.getArray()
+  }
+  if (geometry instanceof google.maps.Data.MultiLineString) {
+    return geometry.getArray().flatMap((line) => line.getArray())
+  }
+  if (geometry instanceof google.maps.Data.Polygon) {
+    return geometry.getArray().flatMap((path) => path.getArray())
+  }
+  if (geometry instanceof google.maps.Data.MultiPolygon) {
+    return geometry
+      .getArray()
+      .flatMap((polygon) => polygon.getArray().flatMap((path) => path.getArray()))
+  }
+  if (geometry instanceof google.maps.Data.GeometryCollection) {
+    return geometry.getArray().flatMap((item) => collectGeometryPoints(item))
+  }
+  return []
+}
+
+const getPointsCenter = (points: LatLng[]): google.maps.LatLngLiteral | null => {
+  if (points.length === 0) {
+    return null
+  }
+  const total = points.reduce(
+    (acc, point) => {
+      acc.lat += point.lat()
+      acc.lng += point.lng()
+      return acc
+    },
+    { lat: 0, lng: 0 },
+  )
+  return {
+    lat: total.lat / points.length,
+    lng: total.lng / points.length,
+  }
+}
+
+const createPolygonLabelElement = (label: string) => {
+  const element = document.createElement('div')
+  element.textContent = label
+  element.style.color = '#3f3f3f'
+  element.style.fontSize = '14px'
+  element.style.fontWeight = '500'
+  element.style.whiteSpace = 'nowrap'
+  element.style.textShadow = '0 0 4px rgba(255, 255, 255, 0.9)'
+  return element
+}
+
+const addPolygonLabels = (
+  map: google.maps.Map,
+  features: google.maps.Data.Feature[],
+  AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement,
+): google.maps.marker.AdvancedMarkerElement[] => {
+  const markers: google.maps.marker.AdvancedMarkerElement[] = []
+  features.forEach((feature) => {
+    const label = getFeatureLabel(feature)
+    if (!label) {
+      return
+    }
+    const geometry = feature.getGeometry()
+    if (!geometry) {
+      return
+    }
+    const center = getPointsCenter(collectGeometryPoints(geometry))
+    if (!center) {
+      return
+    }
+    const marker = new AdvancedMarkerElement({
+      position: center,
+      map,
+      content: createPolygonLabelElement(label),
+      title: label,
+    })
+    markers.push(marker)
+  })
+  return markers
+}
+
 type PolygonLayerOptions = {
   url?: string
 }
@@ -108,6 +205,7 @@ export const addGeoJsonPolygons = async (
 ) => {
   const controller = new AbortController()
   let addedFeatures: google.maps.Data.Feature[] = []
+  let labelMarkers: google.maps.marker.AdvancedMarkerElement[] = []
 
   const cleanup = () => {
     controller.abort()
@@ -115,6 +213,10 @@ export const addGeoJsonPolygons = async (
       map.data.remove(feature)
     })
     addedFeatures = []
+    labelMarkers.forEach((marker) => {
+      marker.map = null
+    })
+    labelMarkers = []
   }
 
   const url = options.url ?? '/Delbydeler_1854838652447253595.geojson'
@@ -131,6 +233,10 @@ export const addGeoJsonPolygons = async (
     }
     addedFeatures = map.data.addGeoJson(geojson)
     map.data.setStyle(getPolygonStyle)
+    const { AdvancedMarkerElement } = (await google.maps.importLibrary(
+      'marker',
+    )) as google.maps.MarkerLibrary
+    labelMarkers = addPolygonLabels(map, addedFeatures, AdvancedMarkerElement)
   } catch (error) {
     if ((error as Error).name === 'AbortError') {
       return cleanup
