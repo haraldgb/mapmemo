@@ -49,7 +49,9 @@ export const MapMemo = () => {
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
   const hasFetchedRef = useRef(false)
   const polygonCleanupRef = useRef<null | (() => void)>(null)
+  const showMarkersRef = useRef(false)
   const [isMapReady, setIsMapReady] = useState(false)
+  const [showPolygons, setShowPolygons] = useState(false)
 
   useEffect(function initializeMap() {
     let isMounted = true
@@ -94,6 +96,13 @@ export const MapMemo = () => {
       if (!isMapReady || !mapInstanceRef.current) {
         return
       }
+      if (!showPolygons) {
+        if (polygonCleanupRef.current) {
+          polygonCleanupRef.current()
+          polygonCleanupRef.current = null
+        }
+        return
+      }
       const mapInstance = mapInstanceRef.current
       let isActive = true
 
@@ -116,7 +125,7 @@ export const MapMemo = () => {
         }
       }
     },
-    [isMapReady],
+    [isMapReady, showPolygons],
   )
 
   useEffect(
@@ -177,7 +186,7 @@ export const MapMemo = () => {
             }
             const title = place.displayName ?? place.formattedAddress ?? 'Neighborhood in Oslo'
             const marker = new AdvancedMarkerElement({
-              map: mapInstance,
+              map: showMarkersRef.current ? mapInstance : null,
               position: place.location,
               title,
             })
@@ -190,5 +199,47 @@ export const MapMemo = () => {
     [isMapReady],
   )
 
-  return <div ref={mapElementRef} style={MAP_CONTAINER_STYLE} />
+  useEffect(
+    function toggleMarkersOnMapReady() {
+      if (!isMapReady || !mapInstanceRef.current) {
+        return
+      }
+      const mapInstance = mapInstanceRef.current
+      markersRef.current.forEach((marker) => {
+        marker.map = showMarkersRef.current ? mapInstance : null
+      })
+    },
+    [isMapReady],
+  )
+
+  return (
+    <div>
+      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+        <input
+          type="checkbox"
+          checked={showPolygons}
+          onChange={(event) => setShowPolygons(event.target.checked)}
+        />
+        Show polygons
+      </label>
+      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+        <input
+          type="checkbox"
+          defaultChecked={false}
+          onChange={(event) => {
+            showMarkersRef.current = event.target.checked
+            if (!mapInstanceRef.current) {
+              return
+            }
+            const mapInstance = mapInstanceRef.current
+            markersRef.current.forEach((marker) => {
+              marker.map = showMarkersRef.current ? mapInstance : null
+            })
+          }}
+        />
+        Show markers
+      </label>
+      <div ref={mapElementRef} style={MAP_CONTAINER_STYLE} />
+    </div>
+  )
 }
