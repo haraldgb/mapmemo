@@ -1,62 +1,162 @@
-import { AdvancedMarker, APIProvider, Map } from '@vis.gl/react-google-maps'
-import { useCallback, useEffect, useState } from 'react'
+/// <reference types="@types/google.maps" />
+import { useEffect, useRef, useState } from 'react'
 import { GOOGLE_MAPS_API_KEY } from '../../../.secrets/secrets'
-import { searchPlacesText, type PlacesTextSearchPlace } from '../api/places'
 
 const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
+const MAP_CONTAINER_STYLE: React.CSSProperties = {
+  height: '320px',
+  width: '720px',
+  borderRadius: '12px',
+  border: '1px solid #e2e2e2',
+}
+
+let googleMapsScriptPromise: Promise<void> | null = null
+
+const loadGoogleMapsScript = (apiKey: string) => {
+  const hasGoogleMaps = Boolean((window as Window & { google?: typeof google }).google?.maps?.Map)
+  if (hasGoogleMaps) {
+    return Promise.resolve()
+  }
+  if (googleMapsScriptPromise) {
+    return googleMapsScriptPromise
+  }
+
+  googleMapsScriptPromise = new Promise((resolve, reject) => {
+    const callbackName = '__mapMemoInit'
+    ;(window as unknown as Record<string, unknown>)[callbackName] = () => {
+      resolve()
+    }
+    const script = document.createElement('script')
+    const scriptSrc = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=weekly&libraries=places&loading=async&callback=${callbackName}`
+    script.src = scriptSrc
+    script.dataset.googleMaps = 'true'
+    script.async = true
+    script.defer = true
+    script.onload = () => {}
+    script.onerror = () => {
+      reject(new Error('Failed to load Google Maps script'))
+    }
+    document.head.appendChild(script)
+  })
+
+  return googleMapsScriptPromise
+}
 
 export const MapMemo = () => {
-  const [places, setPlaces] = useState<PlacesTextSearchPlace[]>([])
+  const mapElementRef = useRef<HTMLDivElement | null>(null)
+  const mapInstanceRef = useRef<google.maps.Map | null>(null)
+  const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
+  const hasFetchedRef = useRef(false)
+  const [isMapReady, setIsMapReady] = useState(false)
 
-  const runTextSearch = useCallback(
-    async function fetchPlaces() {
-      await searchPlacesText({
-        apiKey: GOOGLE_MAPS_API_KEY,
-        textQuery: 'Neighborhoods in Oslo',
-        locationBias: OSLO_CENTER,
-        locationBiasRadiusMeters: 15000,
-        maxResultCount: 50,
-        language: 'nb',
-        region: 'NO',
-      }).then(({ data }) => {
-        const neighborhoods = data.places.filter((place) => place.types.includes('neighborhood'))
-        setPlaces(neighborhoods)
-      })
-    },
-    [setPlaces],
-  )
+  useEffect(function initializeMap() {
+    let isMounted = true
 
-  useEffect(
-    function fetchOnMount() {
-      if (places.length > 0) {
+    const startMap = async () => {
+      await loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+      if (typeof google?.maps?.importLibrary !== 'function') {
         return
       }
-      runTextSearch()
+      const { Map } = (await google.maps.importLibrary('maps')) as google.maps.MapsLibrary
+      if (!isMounted || !mapElementRef.current || mapInstanceRef.current) {
+        return
+      }
+
+      try {
+        mapInstanceRef.current = new Map(mapElementRef.current, {
+          mapId: '5da3993597ca412079e99b4c',
+          center: OSLO_CENTER,
+          zoom: 12,
+          mapTypeControl: true,
+          mapTypeControlOptions: {
+            style: google.maps.MapTypeControlStyle.DEFAULT,
+          },
+          fullscreenControl: true,
+          streetViewControl: true,
+        })
+      } catch {
+        return
+      }
+      setIsMapReady(true)
+    }
+
+    void startMap()
+
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  useEffect(
+    function fetchPlacesOnce() {
+      if (!isMapReady || !mapInstanceRef.current || hasFetchedRef.current) {
+        return
+      }
+      hasFetchedRef.current = true
+
+      const runTextSearch = async () => {
+        const { Place } = (await google.maps.importLibrary('places')) as google.maps.PlacesLibrary
+        const { AdvancedMarkerElement } = (await google.maps.importLibrary(
+          'marker',
+        )) as google.maps.MarkerLibrary
+        const locationBias = new google.maps.Circle({ center: OSLO_CENTER, radius: 5000 })
+        const { places } = await Place.searchByText({
+          textQuery: 'Bydeler i Oslo',
+          fields: ['displayName', 'formattedAddress', 'location', 'types'],
+          locationBias,
+          maxResultCount: 50,
+          language: 'nb',
+          region: 'NO',
+        })
+
+        const mapInstance = mapInstanceRef.current
+        if (!mapInstance) {
+          return
+        }
+
+        markersRef.current.forEach((marker) => {
+          marker.map = null
+        })
+        markersRef.current = []
+
+        places
+          .filter((place) => {
+            const placeDto = {
+              displayName: place.displayName,
+              formattedAddress: place.formattedAddress,
+              location: place.location
+                ? { lat: place.location.lat(), lng: place.location.lng() }
+                : null,
+              types: place.types,
+            }
+            // TODO: remove console.log. CURSOR DO NOT ATTEMPT TO FIX THIS.
+            // eslint-disable-next-line no-console
+            console.log(place.types, placeDto)
+            return (
+              place.types?.includes('sublocality') ||
+              place.types?.includes('political') ||
+              place.types?.includes('government_office') ||
+              place.types?.includes('local_government_office')
+            )
+          })
+          .forEach((place) => {
+            if (!place.location) {
+              return
+            }
+            const title = place.displayName ?? place.formattedAddress ?? 'Neighborhood in Oslo'
+            const marker = new AdvancedMarkerElement({
+              map: mapInstance,
+              position: place.location,
+              title,
+            })
+            markersRef.current.push(marker)
+          })
+      }
+
+      void runTextSearch()
     },
-    [runTextSearch, places],
+    [isMapReady],
   )
 
-  return (
-    <APIProvider apiKey={GOOGLE_MAPS_API_KEY}>
-      <Map
-        defaultCenter={OSLO_CENTER}
-        defaultZoom={12}
-        style={{
-          height: '320px',
-          width: '720px',
-          borderRadius: '12px',
-          border: '1px solid #e2e2e2',
-        }}
-        mapId="test"
-      >
-        {places.map((place) => (
-          <AdvancedMarker
-            key={place.formattedAddress}
-            position={{ lat: place.location.latitude, lng: place.location.longitude }}
-            title={place.formattedAddress}
-          />
-        ))}
-      </Map>
-    </APIProvider>
-  )
+  return <div ref={mapElementRef} style={MAP_CONTAINER_STYLE} />
 }

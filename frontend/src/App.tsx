@@ -1,8 +1,7 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import { Landing } from './pages/Landing'
+import { Landing } from './landingPage/Landing'
 import { MapMemoPage } from './mapMemo/MapMemoPage'
 import { MapMemo } from './mapMemo/MapMemo'
-import { MapMemoV2 } from './mapMemo/MapMemoV2'
 
 export const App = () => {
   return (
@@ -10,18 +9,10 @@ export const App = () => {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route
-          path="/mapmemov1"
+          path="/mapmemo"
           element={
             <MapMemoPage>
               <MapMemo />
-            </MapMemoPage>
-          }
-        />
-        <Route
-          path="/mapmemov2"
-          element={
-            <MapMemoPage>
-              <MapMemoV2 />
             </MapMemoPage>
           }
         />
