@@ -49,6 +49,10 @@ const getFeatureLabel = (feature: google.maps.Data.Feature): string | null => {
   return label.length > 0 ? label : null
 }
 
+export const getDelbydelName = (feature: google.maps.Data.Feature): string | null => {
+  return getFeatureLabel(feature)
+}
+
 const collectGeometryPoints = (geometry: google.maps.Data.Geometry): LatLng[] => {
   if (geometry instanceof google.maps.Data.Point) {
     return [geometry.get()]
@@ -135,8 +139,42 @@ const addPolygonLabels = (
   return markers
 }
 
+export const createPolygonLabelMarker = (
+  map: google.maps.Map,
+  feature: google.maps.Data.Feature,
+  AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement,
+): google.maps.marker.AdvancedMarkerElement | null => {
+  const label = getFeatureLabel(feature)
+  if (!label) {
+    return null
+  }
+  const geometry = feature.getGeometry()
+  if (!geometry) {
+    return null
+  }
+  const center = getPointsCenter(collectGeometryPoints(geometry))
+  if (!center) {
+    return null
+  }
+  return new AdvancedMarkerElement({
+    position: center,
+    map,
+    content: createPolygonLabelElement(label),
+    title: label,
+  })
+}
+
 type PolygonLayerOptions = {
   url?: string
+  includeLabels?: boolean
+  style?: (feature: google.maps.Data.Feature) => google.maps.Data.StyleOptions
+  onLoaded?: (payload: { features: google.maps.Data.Feature[]; map: google.maps.Map }) => void | Promise<void>
+  onFeatureClick?: (feature: google.maps.Data.Feature, event: google.maps.Data.MouseEvent) => void
+  onFeatureHover?: (
+    feature: google.maps.Data.Feature,
+    isHovering: boolean,
+    event: google.maps.Data.MouseEvent,
+  ) => void
 }
 
 type GeoJsonObject = {
@@ -206,9 +244,11 @@ export const addGeoJsonPolygons = async (
   const controller = new AbortController()
   let addedFeatures: google.maps.Data.Feature[] = []
   let labelMarkers: google.maps.marker.AdvancedMarkerElement[] = []
+  const listeners: google.maps.MapsEventListener[] = []
 
   const cleanup = () => {
     controller.abort()
+    listeners.forEach((listener) => listener.remove())
     addedFeatures.forEach((feature) => {
       map.data.remove(feature)
     })
@@ -232,11 +272,45 @@ export const addGeoJsonPolygons = async (
       geojson = conversion.geojson
     }
     addedFeatures = map.data.addGeoJson(geojson)
-    map.data.setStyle(getPolygonStyle)
-    const { AdvancedMarkerElement } = (await google.maps.importLibrary(
-      'marker',
-    )) as google.maps.MarkerLibrary
-    labelMarkers = addPolygonLabels(map, addedFeatures, AdvancedMarkerElement)
+    const style = options.style ?? getPolygonStyle
+    map.data.setStyle(style)
+    if (options.onFeatureClick) {
+      listeners.push(
+        map.data.addListener('click', (event: google.maps.Data.MouseEvent) => {
+          if (!event.feature) {
+            return
+          }
+          options.onFeatureClick?.(event.feature, event)
+        }),
+      )
+    }
+    if (options.onFeatureHover) {
+      listeners.push(
+        map.data.addListener('mouseover', (event: google.maps.Data.MouseEvent) => {
+          if (!event.feature) {
+            return
+          }
+          options.onFeatureHover?.(event.feature, true, event)
+        }),
+      )
+      listeners.push(
+        map.data.addListener('mouseout', (event: google.maps.Data.MouseEvent) => {
+          if (!event.feature) {
+            return
+          }
+          options.onFeatureHover?.(event.feature, false, event)
+        }),
+      )
+    }
+    if (options.onLoaded) {
+      await options.onLoaded({ features: addedFeatures, map })
+    }
+    if (options.includeLabels ?? true) {
+      const { AdvancedMarkerElement } = (await google.maps.importLibrary(
+        'marker',
+      )) as google.maps.MarkerLibrary
+      labelMarkers = addPolygonLabels(map, addedFeatures, AdvancedMarkerElement)
+    }
   } catch (error) {
     if ((error as Error).name === 'AbortError') {
       return cleanup

@@ -1,6 +1,7 @@
 /// <reference types="@types/google.maps" />
 import { useEffect, useRef, useState } from 'react'
 import { GOOGLE_MAPS_API_KEY } from '../../../.secrets/secrets'
+import { loadGoogleMapsScript } from './utils/googleMaps'
 import { addGeoJsonPolygons } from './utils/polygons'
 
 const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
@@ -9,38 +10,6 @@ const MAP_CONTAINER_STYLE: React.CSSProperties = {
   width: '720px',
   borderRadius: '12px',
   border: '1px solid #e2e2e2',
-}
-
-let googleMapsScriptPromise: Promise<void> | null = null
-
-const loadGoogleMapsScript = (apiKey: string) => {
-  const hasGoogleMaps = Boolean((window as Window & { google?: typeof google }).google?.maps?.Map)
-  if (hasGoogleMaps) {
-    return Promise.resolve()
-  }
-  if (googleMapsScriptPromise) {
-    return googleMapsScriptPromise
-  }
-
-  googleMapsScriptPromise = new Promise((resolve, reject) => {
-    const callbackName = '__mapMemoInit'
-    ;(window as unknown as Record<string, unknown>)[callbackName] = () => {
-      resolve()
-    }
-    const script = document.createElement('script')
-    const scriptSrc = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&v=weekly&libraries=places&loading=async&callback=${callbackName}`
-    script.src = scriptSrc
-    script.dataset.googleMaps = 'true'
-    script.async = true
-    script.defer = true
-    script.onload = () => {}
-    script.onerror = () => {
-      reject(new Error('Failed to load Google Maps script'))
-    }
-    document.head.appendChild(script)
-  })
-
-  return googleMapsScriptPromise
 }
 
 export const MapMemo = () => {

@@ -1,4 +1,5 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { DelbydelGame } from './game/DelbydelGame'
 import { Landing } from './landingPage/Landing'
 import { MapMemoPage } from './mapMemo/MapMemoPage'
 import { MapMemo } from './mapMemo/MapMemo'
@@ -16,6 +17,7 @@ export const App = () => {
             </MapMemoPage>
           }
         />
+        <Route path="/game" element={<DelbydelGame />} />
       </Routes>
     </BrowserRouter>
   )
