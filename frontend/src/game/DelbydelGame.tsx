@@ -1,5 +1,6 @@
 /// <reference types="@types/google.maps" />
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { GOOGLE_MAPS_API_KEY } from '../../../.secrets/secrets'
 import { loadGoogleMapsScript } from '../mapMemo/utils/googleMaps'
 import { addGeoJsonPolygons, createPolygonLabelMarker, getDelbydelName } from '../mapMemo/utils/polygons'
@@ -54,16 +55,51 @@ type GameEntry = {
   feature: google.maps.Data.Feature
 }
 
-const shuffleEntries = (entries: GameEntry[]) => {
+type RandomGenerator = () => number
+
+const isValidSeed = (seed: string) => seed.length === 8
+
+const hashSeed = (seed: string) => {
+  let hash = 2166136261
+  for (let index = 0; index < seed.length; index += 1) {
+    hash ^= seed.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return hash >>> 0
+}
+
+const createSeededRng = (seed: string): RandomGenerator => {
+  let state = hashSeed(seed) || 1
+  return () => {
+    state |= 0
+    state = (state + 0x6d2b79f5) | 0
+    let t = Math.imul(state ^ (state >>> 15), 1 | state)
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+const randomSeed = () => Math.random().toString(36).slice(2, 10).padEnd(8, '0').slice(0, 8)
+
+const shuffleEntriesWithRng = (entries: GameEntry[], rng: RandomGenerator) => {
   const result = [...entries]
   for (let index = result.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1))
+    const swapIndex = Math.floor(rng() * (index + 1))
     ;[result[index], result[swapIndex]] = [result[swapIndex], result[index]]
   }
   return result
 }
 
 export const DelbydelGame = () => {
+  const [searchParams] = useSearchParams()
+  const seedParam = searchParams.get('seed') ?? ''
+  const fallbackSeedRef = useRef<string>(randomSeed())
+  const effectiveSeed = useMemo(
+    function getEffectiveSeed() {
+      return isValidSeed(seedParam) ? seedParam : fallbackSeedRef.current
+    },
+    [seedParam],
+  )
   const mapElementRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
   const polygonCleanupRef = useRef<null | (() => void)>(null)
@@ -74,6 +110,7 @@ export const DelbydelGame = () => {
   const correctIdsRef = useRef<Map<string, 'first' | 'late'>>(new Map())
   const entriesRef = useRef<GameEntry[]>([])
   const allEntriesRef = useRef<GameEntry[]>([])
+  const baseOrderRef = useRef<GameEntry[]>([])
   const currentIndexRef = useRef(0)
   const attemptedCurrentRef = useRef(false)
   const flashTimeoutRef = useRef<number | null>(null)
@@ -166,13 +203,21 @@ export const DelbydelGame = () => {
   const applyModeEntries = useCallback(
     function applyModeEntries(sourceEntries: GameEntry[], count: number) {
       const maxCount = Math.min(count, sourceEntries.length)
-      const nextEntries = shuffleEntries(sourceEntries).slice(0, maxCount)
+      const nextEntries = sourceEntries.slice(0, maxCount)
       entriesRef.current = nextEntries
       setEntries(nextEntries)
       resetGameState()
       refreshStyles()
     },
     [refreshStyles, resetGameState],
+  )
+
+  const getSeededOrder = useCallback(
+    function getSeededOrder(sourceEntries: GameEntry[]) {
+      const rng = createSeededRng(effectiveSeed)
+      return shuffleEntriesWithRng(sourceEntries, rng)
+    },
+    [effectiveSeed],
   )
 
   const advanceToNext = useCallback(function advanceToNext(nextIndex: number) {
@@ -294,7 +339,9 @@ export const DelbydelGame = () => {
               })
               .filter((entry): entry is GameEntry => Boolean(entry))
             allEntriesRef.current = rawEntries
-            applyModeEntries(rawEntries, modeCount)
+            const seededEntries = getSeededOrder(rawEntries)
+            baseOrderRef.current = seededEntries
+            applyModeEntries(seededEntries, modeCount)
           },
           onFeatureClick: (feature) => handleFeatureClick(feature),
           onFeatureHover: (feature, isHovering) => handleFeatureHover(feature, isHovering),
@@ -320,6 +367,7 @@ export const DelbydelGame = () => {
     [
       applyModeEntries,
       advanceToNext,
+      getSeededOrder,
       getStyleForFeature,
       handleFeatureClick,
       handleFeatureHover,
@@ -334,9 +382,11 @@ export const DelbydelGame = () => {
       if (allEntriesRef.current.length === 0) {
         return
       }
-      applyModeEntries(allEntriesRef.current, modeCount)
+      const seededEntries = getSeededOrder(allEntriesRef.current)
+      baseOrderRef.current = seededEntries
+      applyModeEntries(seededEntries, modeCount)
     },
-    [applyModeEntries, modeCount],
+    [applyModeEntries, getSeededOrder, modeCount],
   )
 
   useEffect(function cleanupOnUnmount() {
