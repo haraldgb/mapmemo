@@ -1,7 +1,7 @@
 /// <reference types="@types/google.maps" />
 import { useEffect, useRef, useState } from 'react'
 import { GOOGLE_MAPS_API_KEY } from '../../../.secrets/secrets'
-import { addGeoJsonPolygons } from './polygons'
+import { addGeoJsonPolygons } from './utils/polygons'
 
 const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
 const MAP_CONTAINER_STYLE: React.CSSProperties = {
