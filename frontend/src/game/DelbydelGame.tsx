@@ -43,6 +43,12 @@ const FLASH_STYLE: google.maps.Data.StyleOptions = {
   fillOpacity: 0.55,
 }
 
+const MODE_OPTIONS = [
+  { label: '10', value: 10 },
+  { label: '25', value: 25 },
+  { label: 'Alle (99)', value: 99 },
+] as const
+
 type GameEntry = {
   id: string
   feature: google.maps.Data.Feature
@@ -67,18 +73,22 @@ export const DelbydelGame = () => {
   const flashIdRef = useRef<string | null>(null)
   const correctIdsRef = useRef<Map<string, 'first' | 'late'>>(new Map())
   const entriesRef = useRef<GameEntry[]>([])
+  const allEntriesRef = useRef<GameEntry[]>([])
   const currentIndexRef = useRef(0)
   const attemptedCurrentRef = useRef(false)
   const flashTimeoutRef = useRef<number | null>(null)
 
   const [isMapReady, setIsMapReady] = useState(false)
+  const [modeCount, setModeCount] = useState(10)
   const [entries, setEntries] = useState<GameEntry[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [firstTryCorrectCount, setFirstTryCorrectCount] = useState(0)
+  const [lateCorrectCount, setLateCorrectCount] = useState(0)
 
   const total = entries.length
   const currentEntry = entries[currentIndex] ?? null
-  const scorePercent = total === 0 ? 0 : Math.round((firstTryCorrectCount / total) * 100)
+  const answeredCount = firstTryCorrectCount + lateCorrectCount
+  const scorePercent = answeredCount === 0 ? 0 : Math.round((firstTryCorrectCount / answeredCount) * 100)
   const isComplete = total > 0 && currentIndex >= total
 
   const getStyleForFeature = useCallback(function getStyleForFeature(feature: google.maps.Data.Feature) {
@@ -138,6 +148,33 @@ export const DelbydelGame = () => {
     }, 650)
   }, [refreshStyles])
 
+  const resetGameState = useCallback(function resetGameState() {
+    correctIdsRef.current = new Map()
+    labelMarkersRef.current.forEach((marker) => {
+      marker.map = null
+    })
+    labelMarkersRef.current.clear()
+    attemptedCurrentRef.current = false
+    setFirstTryCorrectCount(0)
+    setLateCorrectCount(0)
+    flashIdRef.current = null
+    hoveredIdRef.current = null
+    currentIndexRef.current = 0
+    setCurrentIndex(0)
+  }, [])
+
+  const applyModeEntries = useCallback(
+    function applyModeEntries(sourceEntries: GameEntry[], count: number) {
+      const maxCount = Math.min(count, sourceEntries.length)
+      const nextEntries = shuffleEntries(sourceEntries).slice(0, maxCount)
+      entriesRef.current = nextEntries
+      setEntries(nextEntries)
+      resetGameState()
+      refreshStyles()
+    },
+    [refreshStyles, resetGameState],
+  )
+
   const advanceToNext = useCallback(function advanceToNext(nextIndex: number) {
     currentIndexRef.current = nextIndex
     setCurrentIndex(nextIndex)
@@ -161,6 +198,8 @@ export const DelbydelGame = () => {
       if (clickedId === targetEntry.id) {
         if (!attemptedCurrentRef.current) {
           setFirstTryCorrectCount((count) => count + 1)
+        } else {
+          setLateCorrectCount((count) => count + 1)
         }
         const result: 'first' | 'late' = attemptedCurrentRef.current ? 'late' : 'first'
         const nextCorrect = new Map(correctIdsRef.current)
@@ -245,28 +284,17 @@ export const DelbydelGame = () => {
             if (!isActive) {
               return
             }
-            const nextEntries = shuffleEntries(
-              features
-                .map((feature) => {
-                  const id = getDelbydelName(feature)
-                  if (!id) {
-                    return null
-                  }
-                  return { id, feature }
-                })
-                .filter((entry): entry is GameEntry => Boolean(entry)),
-            )
-            entriesRef.current = nextEntries
-            setEntries(nextEntries)
-            correctIdsRef.current = new Map()
-            labelMarkersRef.current.forEach((marker) => {
-              marker.map = null
-            })
-            labelMarkersRef.current.clear()
-            attemptedCurrentRef.current = false
-            setFirstTryCorrectCount(0)
-            advanceToNext(0)
-            refreshStyles()
+            const rawEntries = features
+              .map((feature) => {
+                const id = getDelbydelName(feature)
+                if (!id) {
+                  return null
+                }
+                return { id, feature }
+              })
+              .filter((entry): entry is GameEntry => Boolean(entry))
+            allEntriesRef.current = rawEntries
+            applyModeEntries(rawEntries, modeCount)
           },
           onFeatureClick: (feature) => handleFeatureClick(feature),
           onFeatureHover: (feature, isHovering) => handleFeatureHover(feature, isHovering),
@@ -289,7 +317,26 @@ export const DelbydelGame = () => {
         }
       }
     },
-    [advanceToNext, getStyleForFeature, handleFeatureClick, handleFeatureHover, isMapReady, refreshStyles],
+    [
+      applyModeEntries,
+      advanceToNext,
+      getStyleForFeature,
+      handleFeatureClick,
+      handleFeatureHover,
+      isMapReady,
+      modeCount,
+      refreshStyles,
+    ],
+  )
+
+  useEffect(
+    function applyModeOnChange() {
+      if (allEntriesRef.current.length === 0) {
+        return
+      }
+      applyModeEntries(allEntriesRef.current, modeCount)
+    },
+    [applyModeEntries, modeCount],
   )
 
   useEffect(function cleanupOnUnmount() {
@@ -325,10 +372,46 @@ export const DelbydelGame = () => {
         width: '100vw',
       }}
     >
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: '22px', fontWeight: 600 }}>{promptText}</div>
-        <div style={{ fontSize: '18px', color: '#4f4f4f', marginTop: '4px' }}>
-          Score: {firstTryCorrectCount}/{total} ({scorePercent}%)
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr auto 1fr',
+          alignItems: 'center',
+          gap: '12px',
+        }}
+      >
+        <div style={{ display: 'inline-flex', gap: '8px', justifySelf: 'center', paddingTop: '4px' }}>
+          {MODE_OPTIONS.map((mode) => {
+            const isActive = mode.value === modeCount
+            return (
+              <button
+                key={mode.value}
+                type="button"
+                onClick={() => setModeCount(mode.value)}
+                style={{
+                  borderRadius: '999px',
+                  border: isActive ? '1px solid #6f2dbd' : '1px solid #d0d0d0',
+                  padding: '6px 12px',
+                  background: isActive ? '#6f2dbd' : '#ffffff',
+                  color: isActive ? '#ffffff' : '#3f3f3f',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {mode.label}
+              </button>
+            )
+          })}
+        </div>
+        <div style={{ textAlign: 'center', fontSize: '22px', fontWeight: 600 }}>
+          {promptText}
+        </div>
+        <div style={{ fontSize: '18px', color: 'rgba(200, 200, 200, 0.7)', justifySelf: 'center' }}>
+          <span style={{ color: '#2f9e44', fontWeight: 600 }}>Riktig: {firstTryCorrectCount}</span>
+          <span style={{ margin: '0 6px' }}>-</span>
+          <span style={{ color: '#e03131', fontWeight: 600 }}>Feil: {lateCorrectCount}</span>{' '}
+          <span style={{ margin: '0 6px' }}>-</span>
+          {scorePercent}%
         </div>
       </div>
       <div ref={mapElementRef} style={MAP_CONTAINER_STYLE} />
