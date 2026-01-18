@@ -85,7 +85,7 @@ const loadApiKey = async () => {
     //   console.log('hva med her')
     //   return payload
     // })
-    client.getSecret({ name: googleMapsSecretName}).then((smth) => {
+    client.accessSecretVersion({ name: googleMapsSecretName}).then((smth) => {
       console.log(smth)
       return smth
     })
