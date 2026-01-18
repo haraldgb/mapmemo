@@ -75,14 +75,16 @@ const loadApiKey = async () => {
 
     console.log('is this where it is going wrong?')
     console.log(googleMapsSecretName)
-    return client.accessSecretVersion({ name: `projects/-/serviceAccounts/${process.env.GCP_SERVICE_ACCOUNT_EMAIL}`}).then(([version]) => {
-      const payload = version.payload?.data?.toString()
-      if (!payload) {
-        throw new Error('Google Maps API key secret payload is empty')
-      }
-      console.log('hva med her')
-      return payload
-    })
+    const nameString = `projects/-/serviceAccounts/${process.env.GCP_SERVICE_ACCOUNT_EMAIL}`
+    // return client.accessSecretVersion({ name: nameString}).then(([version]) => {
+    //   const payload = version.payload?.data?.toString()
+    //   if (!payload) {
+    //     throw new Error('Google Maps API key secret payload is empty')
+    //   }
+    //   console.log('hva med her')
+    //   return payload
+    // })
+    return client.getSecret({ name: googleMapsSecretName})
   }).catch((error) => {
     console.error('Error loading API key:', error)
     throw error
