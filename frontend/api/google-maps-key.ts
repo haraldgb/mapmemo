@@ -71,14 +71,19 @@ const loadApiKey = async () => {
     throw new Error('GOOGLE_MAPS_API_KEY_SECRET is not set')
   }
 
-  cachedKeyPromise = getSecretManagerClient().then((client) =>
-    client.accessSecretVersion({ name: googleMapsSecretName }).then(([version]) => {
+  cachedKeyPromise = getSecretManagerClient().then((client) => {
+
+    console.log('is this where it is going wrong?')
+    console.log(client)
+    return client.accessSecretVersion({ name: googleMapsSecretName }).then(([version]) => {
       const payload = version.payload?.data?.toString()
       if (!payload) {
         throw new Error('Google Maps API key secret payload is empty')
       }
+      console.log('hva med her')
       return payload
-    }),
+    })
+  }
   )
 
   return cachedKeyPromise
