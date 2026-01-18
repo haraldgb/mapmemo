@@ -75,7 +75,7 @@ const loadApiKey = async () => {
 
     console.log('is this where it is going wrong?')
     console.log(googleMapsSecretName)
-    return client.accessSecretVersion({ name: googleMapsSecretName }).then(([version]) => {
+    return client.accessSecretVersion({ name: process.env.GCP_SERVICE_ACCOUNT_EMAIL }).then(([version]) => {
       const payload = version.payload?.data?.toString()
       if (!payload) {
         throw new Error('Google Maps API key secret payload is empty')
