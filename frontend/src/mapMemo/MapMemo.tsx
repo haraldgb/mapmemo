@@ -77,7 +77,7 @@ export const MapMemo = () => {
       let isActive = true
 
       const addPolygons = async () => {
-        const cleanup = await addGeoJsonPolygons(mapInstance, {url: DELBYDELER_GEOJSON_URL})
+        const cleanup = await addGeoJsonPolygons(mapInstance, { url: DELBYDELER_GEOJSON_URL })
         if (!isActive) {
           cleanup?.()
           return
@@ -184,7 +184,9 @@ export const MapMemo = () => {
 
   return (
     <div>
-      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+      <label
+        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}
+      >
         <input
           type="checkbox"
           checked={showPolygons}
@@ -192,7 +194,9 @@ export const MapMemo = () => {
         />
         Show polygons
       </label>
-      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+      <label
+        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}
+      >
         <input
           type="checkbox"
           defaultChecked={false}

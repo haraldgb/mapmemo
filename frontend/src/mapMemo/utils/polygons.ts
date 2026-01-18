@@ -1,4 +1,4 @@
-import { SUB_DISTRICT_KEY } from "../../game/consts"
+import { SUB_DISTRICT_KEY } from '../../game/consts'
 
 type PolygonStyle = {
   strokeColor: string
@@ -42,7 +42,10 @@ const getPolygonStyle = (feature: google.maps.Data.Feature): PolygonStyle => {
 
 type LatLng = google.maps.LatLng
 
-export const getFeatureLabel = (feature: google.maps.Data.Feature, labelProperty: string): string => {
+export const getFeatureLabel = (
+  feature: google.maps.Data.Feature,
+  labelProperty: string,
+): string => {
   const rawLabel = feature.getProperty(labelProperty)
   if (typeof rawLabel !== 'string') {
     throw new Error(`${labelProperty} property is not a string`)
@@ -58,8 +61,8 @@ export const getFeatureLabel = (feature: google.maps.Data.Feature, labelProperty
 
 /**
  * Collect all points from a Google Maps Data Geometry into an array of LatLng objects.
- * @param geometry 
- * @returns 
+ * @param geometry
+ * @returns
  */
 const collectGeometryPoints = (geometry: google.maps.Data.Geometry): LatLng[] => {
   switch (true) {
@@ -87,8 +90,8 @@ const collectGeometryPoints = (geometry: google.maps.Data.Geometry): LatLng[] =>
 /**
  * Simple calculation average of height and width of the points.
  * An uneven distribution of points will result in a center shifted to the side with more points.
- * @param points 
- * @returns 
+ * @param points
+ * @returns
  */
 const getPointsCenter = (points: LatLng[]): google.maps.LatLngLiteral => {
   if (points.length === 0) {
@@ -143,7 +146,10 @@ export const createPolygonLabelMarker = (
 type PolygonLayerOptions = {
   url: string
   style?: (feature: google.maps.Data.Feature) => google.maps.Data.StyleOptions
-  onLoaded?: (payload: { features: google.maps.Data.Feature[]; map: google.maps.Map }) => void | Promise<void>
+  onLoaded?: (payload: {
+    features: google.maps.Data.Feature[]
+    map: google.maps.Map
+  }) => void | Promise<void>
   onFeatureClick?: (feature: google.maps.Data.Feature, event: google.maps.Data.MouseEvent) => void
   onFeatureHover?: (
     feature: google.maps.Data.Feature,
@@ -164,7 +170,7 @@ type GeoJsonObject = {
   [key: string]: unknown
 }
 
-const getGeoJsonType = (geojson: GeoJsonObject): "EPSG:3857" | "unknown" => {
+const getGeoJsonType = (geojson: GeoJsonObject): 'EPSG:3857' | 'unknown' => {
   const crsName = geojson.crs?.properties?.name ?? ''
   return crsName.toUpperCase().includes('EPSG:3857') ? 'EPSG:3857' : 'unknown'
 }
@@ -214,14 +220,11 @@ const convertGeoJsonToLatLng = (geojson: GeoJsonObject) => {
 
 /**
  * Add GeoJSON polygons to a Google Maps map.
- * @param map 
- * @param options 
+ * @param map
+ * @param options
  * @returns cleanup function
  */
-export const addGeoJsonPolygons = async (
-  map: google.maps.Map,
-  options: PolygonLayerOptions,
-) => {
+export const addGeoJsonPolygons = async (map: google.maps.Map, options: PolygonLayerOptions) => {
   const controller = new AbortController()
   let addedFeatures: google.maps.Data.Feature[] = []
   let labelMarkers: google.maps.marker.AdvancedMarkerElement[] = []

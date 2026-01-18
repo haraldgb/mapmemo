@@ -3,7 +3,11 @@ import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { GOOGLE_MAPS_API_KEY } from '../../../.secrets/secrets'
 import { loadGoogleMapsScript } from '../mapMemo/utils/googleMaps'
-import { addGeoJsonPolygons, createPolygonLabelMarker, getFeatureLabel } from '../mapMemo/utils/polygons'
+import {
+  addGeoJsonPolygons,
+  createPolygonLabelMarker,
+  getFeatureLabel,
+} from '../mapMemo/utils/polygons'
 import {
   CORRECT_STYLE,
   DELBYDELER_GEOJSON_URL,
@@ -50,7 +54,8 @@ export const DelbydelGame = () => {
   const total = entries.length
   const currentEntry = entries[currentIndex] ?? null
   const answeredCount = firstTryCorrectCount + lateCorrectCount
-  const scorePercent = answeredCount === 0 ? 0 : Math.round((firstTryCorrectCount / answeredCount) * 100)
+  const scorePercent =
+    answeredCount === 0 ? 0 : Math.round((firstTryCorrectCount / answeredCount) * 100)
   const isComplete = total > 0 && currentIndex >= total
 
   const getStyleForFeature = (feature: google.maps.Data.Feature) => {
@@ -83,17 +88,17 @@ export const DelbydelGame = () => {
   }
 
   const handleFeatureHover = (feature: google.maps.Data.Feature, isHovering: boolean) => {
-      const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
-      if (!id) {
-        return
-      }
-      if (isHovering) {
-        hoveredIdRef.current = id
-      } else if (hoveredIdRef.current === id) {
-        hoveredIdRef.current = null
-      }
-      refreshStyles()
+    const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
+    if (!id) {
+      return
     }
+    if (isHovering) {
+      hoveredIdRef.current = id
+    } else if (hoveredIdRef.current === id) {
+      hoveredIdRef.current = null
+    }
+    refreshStyles()
+  }
 
   const flashCorrectTarget = (targetId: string, duration: number = 650) => {
     flashIdRef.current = targetId
@@ -123,17 +128,17 @@ export const DelbydelGame = () => {
   }
 
   const applyModeEntries = (sourceEntries: GameEntry[], count: number) => {
-      const maxCount = Math.min(count, sourceEntries.length)
-      const nextEntries = sourceEntries.slice(0, maxCount)
-      entriesRef.current = nextEntries
-      setEntries(nextEntries)
-      resetGameState()
-      refreshStyles()
+    const maxCount = Math.min(count, sourceEntries.length)
+    const nextEntries = sourceEntries.slice(0, maxCount)
+    entriesRef.current = nextEntries
+    setEntries(nextEntries)
+    resetGameState()
+    refreshStyles()
   }
 
   const getSeededOrder = (sourceEntries: GameEntry[]) => {
-      const rng = createSeededRng(effectiveSeed)
-      return shuffleEntriesWithRng(sourceEntries, rng)
+    const rng = createSeededRng(effectiveSeed)
+    return shuffleEntriesWithRng(sourceEntries, rng)
   }
 
   const advanceToNext = (nextIndex: number) => {
@@ -143,57 +148,57 @@ export const DelbydelGame = () => {
   }
 
   const handleFeatureClick = (feature: google.maps.Data.Feature) => {
-      const targetEntry = entriesRef.current[currentIndexRef.current]
-      const isGameComplete = currentIndexRef.current >= entriesRef.current.length
-      if (!targetEntry || isGameComplete) {
-        return
+    const targetEntry = entriesRef.current[currentIndexRef.current]
+    const isGameComplete = currentIndexRef.current >= entriesRef.current.length
+    if (!targetEntry || isGameComplete) {
+      return
+    }
+    const clickedId = getFeatureLabel(feature, SUB_DISTRICT_KEY)
+    if (!clickedId) {
+      return
+    }
+    if (correctIdsRef.current.has(clickedId)) {
+      return
+    }
+    if (clickedId === targetEntry.id) {
+      if (!attemptedCurrentRef.current) {
+        setFirstTryCorrectCount((count) => count + 1)
+      } else {
+        setLateCorrectCount((count) => count + 1)
       }
-      const clickedId = getFeatureLabel(feature, SUB_DISTRICT_KEY)
-      if (!clickedId) {
-        return
-      }
-      if (correctIdsRef.current.has(clickedId)) {
-        return
-      }
-      if (clickedId === targetEntry.id) {
-        if (!attemptedCurrentRef.current) {
-          setFirstTryCorrectCount((count) => count + 1)
-        } else {
-          setLateCorrectCount((count) => count + 1)
-        }
-        const result: 'first' | 'late' = attemptedCurrentRef.current ? 'late' : 'first'
-        const nextCorrect = new Map(correctIdsRef.current)
-        nextCorrect.set(clickedId, result)
-        correctIdsRef.current = nextCorrect
+      const result: 'first' | 'late' = attemptedCurrentRef.current ? 'late' : 'first'
+      const nextCorrect = new Map(correctIdsRef.current)
+      nextCorrect.set(clickedId, result)
+      correctIdsRef.current = nextCorrect
 
-        if (markerConstructorRef.current && mapInstanceRef.current) {
-          if (!labelMarkersRef.current.has(clickedId)) {
-            const marker = createPolygonLabelMarker(
-              mapInstanceRef.current,
-              feature,
-              markerConstructorRef.current,
-            )
+      if (markerConstructorRef.current && mapInstanceRef.current) {
+        if (!labelMarkersRef.current.has(clickedId)) {
+          const marker = createPolygonLabelMarker(
+            mapInstanceRef.current,
+            feature,
+            markerConstructorRef.current,
+          )
 
-            if (marker) {
-              labelMarkersRef.current.set(clickedId, marker)
-            }
+          if (marker) {
+            labelMarkersRef.current.set(clickedId, marker)
           }
         }
-
-        refreshStyles()
-        advanceToNext(currentIndexRef.current + 1)
-        return
       }
-      attemptedCurrentRef.current = true
-      flashCorrectTarget(targetEntry.id)
+
+      refreshStyles()
+      advanceToNext(currentIndexRef.current + 1)
+      return
     }
+    attemptedCurrentRef.current = true
+    flashCorrectTarget(targetEntry.id)
+  }
 
   useEffect(function initializeMap() {
     let isMounted = true
 
     const startMap = async () => {
       await loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
-      
+
       if (typeof google?.maps?.importLibrary !== 'function') {
         return
       }
@@ -323,11 +328,12 @@ export const DelbydelGame = () => {
     }
   }, [])
 
-  const promptText = total === 0 
-    ? 'Loading delbydeler...' 
-    : isComplete 
-      ? 'All delbydeler completed!' 
-      : `Klikk på delbydel: ${currentEntry?.id ?? ''}`
+  const promptText =
+    total === 0
+      ? 'Loading delbydeler...'
+      : isComplete
+        ? 'All delbydeler completed!'
+        : `Klikk på delbydel: ${currentEntry?.id ?? ''}`
 
   return (
     <section
@@ -347,7 +353,9 @@ export const DelbydelGame = () => {
           gap: '12px',
         }}
       >
-        <div style={{ display: 'inline-flex', gap: '8px', justifySelf: 'center', paddingTop: '4px' }}>
+        <div
+          style={{ display: 'inline-flex', gap: '8px', justifySelf: 'center', paddingTop: '4px' }}
+        >
           {MODE_OPTIONS.map((mode) => {
             const isActive = mode.value === modeCount
             return (
@@ -370,9 +378,7 @@ export const DelbydelGame = () => {
             )
           })}
         </div>
-        <div style={{ textAlign: 'center', fontSize: '22px', fontWeight: 600 }}>
-          {promptText}
-        </div>
+        <div style={{ textAlign: 'center', fontSize: '22px', fontWeight: 600 }}>{promptText}</div>
         <div style={{ fontSize: '18px', color: 'rgba(200, 200, 200, 0.7)', justifySelf: 'center' }}>
           <span style={{ color: '#2f9e44', fontWeight: 600 }}>Riktig: {firstTryCorrectCount}</span>
           <span style={{ margin: '0 6px' }}>-</span>

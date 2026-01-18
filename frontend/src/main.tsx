@@ -13,7 +13,7 @@ createRoot(rootElement!).render(
   <StrictMode>
     <Provider store={store}>
       <ErrorBoundary FallbackComponent={ErrorFallbackAntd}>
-      <App />
+        <App />
       </ErrorBoundary>
     </Provider>
   </StrictMode>,
