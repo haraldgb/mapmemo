@@ -76,6 +76,7 @@ const loadApiKey = async () => {
     console.log('is this where it is going wrong?')
     console.log(googleMapsSecretName)
     const nameString = `projects/-/serviceAccounts/${process.env.GCP_SERVICE_ACCOUNT_EMAIL}`
+    console.log(nameString)
     // return client.accessSecretVersion({ name: nameString}).then(([version]) => {
     //   const payload = version.payload?.data?.toString()
     //   if (!payload) {
@@ -84,7 +85,12 @@ const loadApiKey = async () => {
     //   console.log('hva med her')
     //   return payload
     // })
-    return client.getSecret({ name: googleMapsSecretName})
+    client.getSecret({ name: googleMapsSecretName}).then((smth) => {
+      console.log(smth)
+      return smth
+    })
+    console.log(secret)
+    throw new Error('test')
   }).catch((error) => {
     console.error('Error loading API key:', error)
     throw error
