@@ -21,6 +21,7 @@ export const loadGoogleMapsScript = (apiKey: string) => {
       existingScript.addEventListener('load', onLoad, { once: true })
       existingScript.addEventListener('error', onError, { once: true })
     })
+    return googleMapsScriptPromise
   }
 
   googleMapsScriptPromise = new Promise<void>((resolve, reject) => {

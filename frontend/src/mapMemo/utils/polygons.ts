@@ -25,7 +25,7 @@ const hashStringToColor = (value: string): string => {
   return `hsl(${hue}, 60%, 50%)`
 }
 
-const getPolygonStyle = (feature: google.maps.Data.Feature): PolygonStyle => {
+const getPolygonStylingFunction = (feature: google.maps.Data.Feature): PolygonStyle => {
   const rawId = feature.getProperty(SUB_DISTRICT_KEY)
   if (typeof rawId !== 'string' || rawId.trim() === '') {
     return DEFAULT_POLYGON_STYLE
@@ -256,8 +256,8 @@ export const addGeoJsonPolygons = async (map: google.maps.Map, options: PolygonL
       geojson = conversion.geojson
     }
     addedFeatures = map.data.addGeoJson(geojson)
-    const style = options.style ?? getPolygonStyle
-    map.data.setStyle(style)
+    const stylingFunction = options.style ?? getPolygonStylingFunction
+    map.data.setStyle(stylingFunction)
     if (options.onFeatureClick) {
       listeners.push(
         map.data.addListener('click', (event: google.maps.Data.MouseEvent) => {
