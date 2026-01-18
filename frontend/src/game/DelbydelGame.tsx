@@ -1,8 +1,8 @@
 /// <reference types="@types/google.maps" />
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { GOOGLE_MAPS_API_KEY } from '../../../.secrets/secrets'
 import { loadGoogleMapsScript } from '../mapMemo/utils/googleMaps'
+import { fetchGoogleMapsApiKey } from '../mapMemo/utils/googleMapsApiKey'
 import {
   addGeoJsonPolygons,
   createPolygonLabelMarker,
@@ -215,7 +215,8 @@ export const DelbydelGame = () => {
     let isMounted = true
 
     const startMap = async () => {
-      await loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+      const apiKey = await fetchGoogleMapsApiKey()
+      await loadGoogleMapsScript(apiKey)
 
       if (typeof google?.maps?.importLibrary !== 'function') {
         return

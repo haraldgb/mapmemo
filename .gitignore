@@ -1,6 +1,7 @@
 # Private files
 tanker.txt
 .secrets
+.env
 
 # Editor directories and files
 .vscode/*
