@@ -1,5 +1,5 @@
 /// <reference types="@types/google.maps" />
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { GOOGLE_MAPS_API_KEY } from '../../../.secrets/secrets'
 import { loadGoogleMapsScript } from '../mapMemo/utils/googleMaps'
@@ -141,6 +141,24 @@ export const DelbydelGame = () => {
     return shuffleEntriesWithRng(sourceEntries, rng)
   }
 
+  const handlePolygonsLoaded = useEffectEvent(function handlePolygonsLoadedEvent(
+    features: google.maps.Data.Feature[],
+  ) {
+    const rawEntries = features
+      .map((feature) => {
+        const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
+        if (!id) {
+          throw new Error('No id found for maps data feature')
+        }
+        return { id, feature }
+      })
+      .filter((entry): entry is GameEntry => Boolean(entry))
+    allEntriesRef.current = rawEntries
+    const seededEntries = getSeededOrder(rawEntries)
+    baseOrderRef.current = seededEntries
+    applyModeEntries(seededEntries, modeCount)
+  })
+
   const advanceToNext = (nextIndex: number) => {
     currentIndexRef.current = nextIndex
     setCurrentIndex(nextIndex)
@@ -255,19 +273,7 @@ export const DelbydelGame = () => {
             if (!isActive) {
               return
             }
-            const rawEntries = features
-              .map((feature) => {
-                const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
-                if (!id) {
-                  throw new Error('No id found for maps data feature')
-                }
-                return { id, feature }
-              })
-              .filter((entry): entry is GameEntry => Boolean(entry))
-            allEntriesRef.current = rawEntries
-            const seededEntries = getSeededOrder(rawEntries)
-            baseOrderRef.current = seededEntries
-            applyModeEntries(seededEntries, modeCount)
+            handlePolygonsLoaded(features)
           },
           onFeatureClick: (feature) => handleFeatureClick(feature),
           onFeatureHover: (feature, isHovering) => handleFeatureHover(feature, isHovering),
@@ -298,7 +304,6 @@ export const DelbydelGame = () => {
       handleFeatureClick,
       handleFeatureHover,
       isMapReady,
-      modeCount,
       refreshStyles,
     ],
   )
