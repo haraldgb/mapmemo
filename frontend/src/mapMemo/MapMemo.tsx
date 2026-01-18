@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { GOOGLE_MAPS_API_KEY } from '../../../.secrets/secrets'
 import { loadGoogleMapsScript } from './utils/googleMaps'
 import { addGeoJsonPolygons } from './utils/polygons'
+import { DELBYDELER_GEOJSON_URL } from '../game/consts'
 
 const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
 const MAP_CONTAINER_STYLE: React.CSSProperties = {
@@ -76,7 +77,7 @@ export const MapMemo = () => {
       let isActive = true
 
       const addPolygons = async () => {
-        const cleanup = await addGeoJsonPolygons(mapInstance)
+        const cleanup = await addGeoJsonPolygons(mapInstance, {url: DELBYDELER_GEOJSON_URL})
         if (!isActive) {
           cleanup?.()
           return

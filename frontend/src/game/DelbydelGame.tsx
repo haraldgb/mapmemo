@@ -1,105 +1,30 @@
 /// <reference types="@types/google.maps" />
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { GOOGLE_MAPS_API_KEY } from '../../../.secrets/secrets'
 import { loadGoogleMapsScript } from '../mapMemo/utils/googleMaps'
-import { addGeoJsonPolygons, createPolygonLabelMarker, getDelbydelName } from '../mapMemo/utils/polygons'
-
-const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
-const MAP_CONTAINER_STYLE: React.CSSProperties = {
-  width: '100%',
-  flex: 1,
-  borderRadius: '12px',
-  border: '1px solid #e2e2e2',
-}
-
-const OUTLINE_STYLE: google.maps.Data.StyleOptions = {
-  strokeColor: '#6f2dbd',
-  strokeOpacity: 0.9,
-  strokeWeight: 1.5,
-  fillColor: '#6f2dbd',
-  fillOpacity: 0,
-}
-const HOVER_STYLE: google.maps.Data.StyleOptions = {
-  ...OUTLINE_STYLE,
-  fillColor: '#9b9b9b',
-  fillOpacity: 0.35,
-}
-const CORRECT_STYLE: google.maps.Data.StyleOptions = {
-  ...OUTLINE_STYLE,
-  strokeColor: '#2f9e44',
-  fillColor: '#2f9e44',
-  fillOpacity: 0.45,
-}
-const LATE_STYLE: google.maps.Data.StyleOptions = {
-  ...OUTLINE_STYLE,
-  strokeColor: '#f2c94c',
-  fillColor: '#f2c94c',
-  fillOpacity: 0.55,
-}
-const FLASH_STYLE: google.maps.Data.StyleOptions = {
-  ...OUTLINE_STYLE,
-  strokeColor: '#f2c94c',
-  fillColor: '#f2c94c',
-  fillOpacity: 0.55,
-}
-
-const MODE_OPTIONS = [
-  { label: '10', value: 10 },
-  { label: '25', value: 25 },
-  { label: 'Alle (99)', value: 99 },
-] as const
-
-type GameEntry = {
-  id: string
-  feature: google.maps.Data.Feature
-}
-
-type RandomGenerator = () => number
-
-const isValidSeed = (seed: string) => seed.length === 8
-
-const hashSeed = (seed: string) => {
-  let hash = 2166136261
-  for (let index = 0; index < seed.length; index += 1) {
-    hash ^= seed.charCodeAt(index)
-    hash = Math.imul(hash, 16777619)
-  }
-  return hash >>> 0
-}
-
-const createSeededRng = (seed: string): RandomGenerator => {
-  let state = hashSeed(seed) || 1
-  return () => {
-    state |= 0
-    state = (state + 0x6d2b79f5) | 0
-    let t = Math.imul(state ^ (state >>> 15), 1 | state)
-    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t)
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
-}
-
-const randomSeed = () => Math.random().toString(36).slice(2, 10).padEnd(8, '0').slice(0, 8)
-
-const shuffleEntriesWithRng = (entries: GameEntry[], rng: RandomGenerator) => {
-  const result = [...entries]
-  for (let index = result.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(rng() * (index + 1))
-    ;[result[index], result[swapIndex]] = [result[swapIndex], result[index]]
-  }
-  return result
-}
+import { addGeoJsonPolygons, createPolygonLabelMarker, getFeatureLabel } from '../mapMemo/utils/polygons'
+import {
+  CORRECT_STYLE,
+  DELBYDELER_GEOJSON_URL,
+  FLASH_STYLE,
+  HOVER_STYLE,
+  LATE_STYLE,
+  MAP_CONTAINER_STYLE,
+  MODE_OPTIONS,
+  OSLO_CENTER,
+  OUTLINE_STYLE,
+  SUB_DISTRICT_KEY,
+} from './consts.ts'
+import { createSeededRng, isValidSeed, randomSeed, shuffleEntriesWithRng } from './utils.ts'
+import type { GameEntry } from './types.ts'
 
 export const DelbydelGame = () => {
-  const [searchParams] = useSearchParams()
-  const seedParam = searchParams.get('seed') ?? ''
+  const [urlQueryParams] = useSearchParams()
+  const seedParam = urlQueryParams.get('seed') ?? ''
   const fallbackSeedRef = useRef<string>(randomSeed())
-  const effectiveSeed = useMemo(
-    function getEffectiveSeed() {
-      return isValidSeed(seedParam) ? seedParam : fallbackSeedRef.current
-    },
-    [seedParam],
-  )
+  const effectiveSeed = isValidSeed(seedParam) ? seedParam : fallbackSeedRef.current
+
   const mapElementRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
   const polygonCleanupRef = useRef<null | (() => void)>(null)
@@ -128,8 +53,8 @@ export const DelbydelGame = () => {
   const scorePercent = answeredCount === 0 ? 0 : Math.round((firstTryCorrectCount / answeredCount) * 100)
   const isComplete = total > 0 && currentIndex >= total
 
-  const getStyleForFeature = useCallback(function getStyleForFeature(feature: google.maps.Data.Feature) {
-    const id = getDelbydelName(feature)
+  const getStyleForFeature = (feature: google.maps.Data.Feature) => {
+    const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
     if (!id) {
       return OUTLINE_STYLE
     }
@@ -147,19 +72,18 @@ export const DelbydelGame = () => {
       return HOVER_STYLE
     }
     return OUTLINE_STYLE
-  }, [])
+  }
 
-  const refreshStyles = useCallback(function refreshStyles() {
+  const refreshStyles = () => {
     const map = mapInstanceRef.current
     if (!map) {
       return
     }
     map.data.setStyle(getStyleForFeature)
-  }, [getStyleForFeature])
+  }
 
-  const handleFeatureHover = useCallback(
-    function handleFeatureHover(feature: google.maps.Data.Feature, isHovering: boolean) {
-      const id = getDelbydelName(feature)
+  const handleFeatureHover = (feature: google.maps.Data.Feature, isHovering: boolean) => {
+      const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
       if (!id) {
         return
       }
@@ -169,11 +93,9 @@ export const DelbydelGame = () => {
         hoveredIdRef.current = null
       }
       refreshStyles()
-    },
-    [refreshStyles],
-  )
+    }
 
-  const flashCorrectTarget = useCallback(function flashCorrectTarget(targetId: string) {
+  const flashCorrectTarget = (targetId: string, duration: number = 650) => {
     flashIdRef.current = targetId
     refreshStyles()
     if (flashTimeoutRef.current) {
@@ -182,10 +104,10 @@ export const DelbydelGame = () => {
     flashTimeoutRef.current = window.setTimeout(() => {
       flashIdRef.current = null
       refreshStyles()
-    }, 650)
-  }, [refreshStyles])
+    }, duration)
+  }
 
-  const resetGameState = useCallback(function resetGameState() {
+  const resetGameState = () => {
     correctIdsRef.current = new Map()
     labelMarkersRef.current.forEach((marker) => {
       marker.map = null
@@ -198,42 +120,35 @@ export const DelbydelGame = () => {
     hoveredIdRef.current = null
     currentIndexRef.current = 0
     setCurrentIndex(0)
-  }, [])
+  }
 
-  const applyModeEntries = useCallback(
-    function applyModeEntries(sourceEntries: GameEntry[], count: number) {
+  const applyModeEntries = (sourceEntries: GameEntry[], count: number) => {
       const maxCount = Math.min(count, sourceEntries.length)
       const nextEntries = sourceEntries.slice(0, maxCount)
       entriesRef.current = nextEntries
       setEntries(nextEntries)
       resetGameState()
       refreshStyles()
-    },
-    [refreshStyles, resetGameState],
-  )
+  }
 
-  const getSeededOrder = useCallback(
-    function getSeededOrder(sourceEntries: GameEntry[]) {
+  const getSeededOrder = (sourceEntries: GameEntry[]) => {
       const rng = createSeededRng(effectiveSeed)
       return shuffleEntriesWithRng(sourceEntries, rng)
-    },
-    [effectiveSeed],
-  )
+  }
 
-  const advanceToNext = useCallback(function advanceToNext(nextIndex: number) {
+  const advanceToNext = (nextIndex: number) => {
     currentIndexRef.current = nextIndex
     setCurrentIndex(nextIndex)
     attemptedCurrentRef.current = false
-  }, [])
+  }
 
-  const handleFeatureClick = useCallback(
-    function handleFeatureClick(feature: google.maps.Data.Feature) {
+  const handleFeatureClick = (feature: google.maps.Data.Feature) => {
       const targetEntry = entriesRef.current[currentIndexRef.current]
       const isGameComplete = currentIndexRef.current >= entriesRef.current.length
       if (!targetEntry || isGameComplete) {
         return
       }
-      const clickedId = getDelbydelName(feature)
+      const clickedId = getFeatureLabel(feature, SUB_DISTRICT_KEY)
       if (!clickedId) {
         return
       }
@@ -250,6 +165,7 @@ export const DelbydelGame = () => {
         const nextCorrect = new Map(correctIdsRef.current)
         nextCorrect.set(clickedId, result)
         correctIdsRef.current = nextCorrect
+
         if (markerConstructorRef.current && mapInstanceRef.current) {
           if (!labelMarkersRef.current.has(clickedId)) {
             const marker = createPolygonLabelMarker(
@@ -257,36 +173,40 @@ export const DelbydelGame = () => {
               feature,
               markerConstructorRef.current,
             )
+
             if (marker) {
               labelMarkersRef.current.set(clickedId, marker)
             }
           }
         }
+
         refreshStyles()
         advanceToNext(currentIndexRef.current + 1)
         return
       }
       attemptedCurrentRef.current = true
       flashCorrectTarget(targetEntry.id)
-    },
-    [advanceToNext, flashCorrectTarget, refreshStyles],
-  )
+    }
 
   useEffect(function initializeMap() {
     let isMounted = true
 
     const startMap = async () => {
       await loadGoogleMapsScript(GOOGLE_MAPS_API_KEY)
+      
       if (typeof google?.maps?.importLibrary !== 'function') {
         return
       }
+
       const { Map } = (await google.maps.importLibrary('maps')) as google.maps.MapsLibrary
       const { AdvancedMarkerElement } = (await google.maps.importLibrary(
         'marker',
       )) as google.maps.MarkerLibrary
+
       if (!isMounted || !mapElementRef.current || mapInstanceRef.current) {
         return
       }
+
       try {
         mapInstanceRef.current = new Map(mapElementRef.current, {
           mapId: '5da3993597ca412079e99b4c',
@@ -302,6 +222,7 @@ export const DelbydelGame = () => {
       } catch {
         return
       }
+
       markerConstructorRef.current = AdvancedMarkerElement
       setIsMapReady(true)
     }
@@ -323,7 +244,7 @@ export const DelbydelGame = () => {
 
       const addPolygons = async () => {
         const cleanup = await addGeoJsonPolygons(mapInstance, {
-          includeLabels: false,
+          url: DELBYDELER_GEOJSON_URL,
           style: getStyleForFeature,
           onLoaded: ({ features }) => {
             if (!isActive) {
@@ -331,9 +252,9 @@ export const DelbydelGame = () => {
             }
             const rawEntries = features
               .map((feature) => {
-                const id = getDelbydelName(feature)
+                const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
                 if (!id) {
-                  return null
+                  throw new Error('No id found for maps data feature')
                 }
                 return { id, feature }
               })
@@ -402,15 +323,11 @@ export const DelbydelGame = () => {
     }
   }, [])
 
-  const promptText = useMemo(function getPromptText() {
-    if (total === 0) {
-      return 'Loading delbydeler...'
-    }
-    if (isComplete) {
-      return 'All delbydeler completed!'
-    }
-    return `Klikk på delbydel: ${currentEntry?.id ?? ''}`
-  }, [currentEntry?.id, isComplete, total])
+  const promptText = total === 0 
+    ? 'Loading delbydeler...' 
+    : isComplete 
+      ? 'All delbydeler completed!' 
+      : `Klikk på delbydel: ${currentEntry?.id ?? ''}`
 
   return (
     <section
