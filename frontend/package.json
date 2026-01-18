@@ -13,9 +13,11 @@
   },
   "dependencies": {
     "@reduxjs/toolkit": "^2.11.2",
+    "antd": "^6.2.0",
     "axios": "^1.13.2",
     "react": "19.3.0-canary-4a3d993e-20260114",
     "react-dom": "19.3.0-canary-4a3d993e-20260114",
+    "react-error-boundary": "^6.1.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.12.0"
   },
