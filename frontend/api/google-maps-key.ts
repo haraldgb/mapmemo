@@ -74,7 +74,7 @@ const loadApiKey = async () => {
   cachedKeyPromise = getSecretManagerClient().then((client) => {
 
     console.log('is this where it is going wrong?')
-    console.log(client)
+    console.log(googleMapsSecretName)
     return client.accessSecretVersion({ name: googleMapsSecretName }).then(([version]) => {
       const payload = version.payload?.data?.toString()
       if (!payload) {
