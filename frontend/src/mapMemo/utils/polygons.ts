@@ -287,7 +287,12 @@ export const addGeoJsonPolygons = async (map: google.maps.Map, options: PolygonL
       )
     }
     if (options.onLoaded) {
-      await options.onLoaded({ features: addedFeatures, map })
+      await options
+        .onLoaded({ features: addedFeatures, map })
+        ?.then(() => {})
+        .catch((error) => {
+          throw error
+        })
     }
   } catch (error) {
     if ((error as Error).name === 'AbortError') {
