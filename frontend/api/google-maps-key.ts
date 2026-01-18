@@ -83,8 +83,10 @@ const loadApiKey = async () => {
       console.log('hva med her')
       return payload
     })
-  }
-  )
+  }).catch((error) => {
+    console.error('Error loading API key:', error)
+    throw error
+  })
 
   return cachedKeyPromise
 }
