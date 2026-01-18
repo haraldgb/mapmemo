@@ -18,6 +18,7 @@ export const fetchGoogleMapsApiKey = async () => {
     }
     const data = (await response.json()) as ApiKeyResponse
     if (!data.apiKey) {
+      googleMapsApiKeyPromise = null
       throw new Error('Google Maps API key is missing')
     }
     return data.apiKey
