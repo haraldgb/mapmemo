@@ -29,6 +29,7 @@ export default defineConfig([
       'import/no-default-export': 'error',
       'brace-style': ['error', '1tbs', { allowSingleLine: false }],
       curly: ['error', 'all'],
+      'no-throw-literal': 'error',
       // 'no-warning-comments': ['warn', { terms: ['TODO'], location: 'start' }],
       'no-unreachable': 'warn',
       'no-console': 'error',
@@ -52,6 +53,7 @@ export default defineConfig([
           paths: [],
         },
       ],
+      'react-hooks/exhaustive-deps': 'off',
     },
   },
   {

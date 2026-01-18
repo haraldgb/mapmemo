@@ -1,3 +1,5 @@
+import { SUB_DISTRICT_KEY } from '../../game/consts'
+
 type PolygonStyle = {
   strokeColor: string
   strokeOpacity: number
@@ -23,8 +25,8 @@ const hashStringToColor = (value: string): string => {
   return `hsl(${hue}, 60%, 50%)`
 }
 
-const getPolygonStyle = (feature: google.maps.Data.Feature): PolygonStyle => {
-  const rawId = feature.getProperty('DELBYDELSN')
+const getPolygonStylingFunction = (feature: google.maps.Data.Feature): PolygonStyle => {
+  const rawId = feature.getProperty(SUB_DISTRICT_KEY)
   if (typeof rawId !== 'string' || rawId.trim() === '') {
     return DEFAULT_POLYGON_STYLE
   }
@@ -40,45 +42,60 @@ const getPolygonStyle = (feature: google.maps.Data.Feature): PolygonStyle => {
 
 type LatLng = google.maps.LatLng
 
-const getFeatureLabel = (feature: google.maps.Data.Feature): string | null => {
-  const rawLabel = feature.getProperty('DELBYDELSN')
+export const getFeatureLabel = (
+  feature: google.maps.Data.Feature,
+  labelProperty: string,
+): string => {
+  const rawLabel = feature.getProperty(labelProperty)
   if (typeof rawLabel !== 'string') {
-    return null
+    throw new Error(`${labelProperty} property is not a string`)
   }
+
   const label = rawLabel.trim()
-  return label.length > 0 ? label : null
+  if (label.length === 0) {
+    throw new Error(`${labelProperty} property is an empty string`)
+  }
+
+  return label
 }
 
+/**
+ * Collect all points from a Google Maps Data Geometry into an array of LatLng objects.
+ * @param geometry
+ * @returns
+ */
 const collectGeometryPoints = (geometry: google.maps.Data.Geometry): LatLng[] => {
-  if (geometry instanceof google.maps.Data.Point) {
-    return [geometry.get()]
+  switch (true) {
+    case geometry instanceof google.maps.Data.Point:
+      return [geometry.get()]
+    case geometry instanceof google.maps.Data.MultiPoint:
+      return geometry.getArray()
+    case geometry instanceof google.maps.Data.LineString:
+      return geometry.getArray()
+    case geometry instanceof google.maps.Data.MultiLineString:
+      return geometry.getArray().flatMap((line) => line.getArray())
+    case geometry instanceof google.maps.Data.Polygon:
+      return geometry.getArray().flatMap((path) => path.getArray())
+    case geometry instanceof google.maps.Data.MultiPolygon:
+      return geometry
+        .getArray()
+        .flatMap((polygon) => polygon.getArray().flatMap((path) => path.getArray()))
+    case geometry instanceof google.maps.Data.GeometryCollection:
+      return geometry.getArray().flatMap((item) => collectGeometryPoints(item))
+    default:
+      throw new Error('Unknown geometry type')
   }
-  if (geometry instanceof google.maps.Data.MultiPoint) {
-    return geometry.getArray()
-  }
-  if (geometry instanceof google.maps.Data.LineString) {
-    return geometry.getArray()
-  }
-  if (geometry instanceof google.maps.Data.MultiLineString) {
-    return geometry.getArray().flatMap((line) => line.getArray())
-  }
-  if (geometry instanceof google.maps.Data.Polygon) {
-    return geometry.getArray().flatMap((path) => path.getArray())
-  }
-  if (geometry instanceof google.maps.Data.MultiPolygon) {
-    return geometry
-      .getArray()
-      .flatMap((polygon) => polygon.getArray().flatMap((path) => path.getArray()))
-  }
-  if (geometry instanceof google.maps.Data.GeometryCollection) {
-    return geometry.getArray().flatMap((item) => collectGeometryPoints(item))
-  }
-  return []
 }
 
-const getPointsCenter = (points: LatLng[]): google.maps.LatLngLiteral | null => {
+/**
+ * Simple calculation average of height and width of the points.
+ * An uneven distribution of points will result in a center shifted to the side with more points.
+ * @param points
+ * @returns
+ */
+const getPointsCenter = (points: LatLng[]): google.maps.LatLngLiteral => {
   if (points.length === 0) {
-    return null
+    throw new Error('No points provided')
   }
   const total = points.reduce(
     (acc, point) => {
@@ -105,38 +122,40 @@ const createPolygonLabelElement = (label: string) => {
   return element
 }
 
-const addPolygonLabels = (
+export const createPolygonLabelMarker = (
   map: google.maps.Map,
-  features: google.maps.Data.Feature[],
+  feature: google.maps.Data.Feature,
   AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement,
-): google.maps.marker.AdvancedMarkerElement[] => {
-  const markers: google.maps.marker.AdvancedMarkerElement[] = []
-  features.forEach((feature) => {
-    const label = getFeatureLabel(feature)
-    if (!label) {
-      return
-    }
-    const geometry = feature.getGeometry()
-    if (!geometry) {
-      return
-    }
-    const center = getPointsCenter(collectGeometryPoints(geometry))
-    if (!center) {
-      return
-    }
-    const marker = new AdvancedMarkerElement({
-      position: center,
-      map,
-      content: createPolygonLabelElement(label),
-      title: label,
-    })
-    markers.push(marker)
+): google.maps.marker.AdvancedMarkerElement => {
+  const label = getFeatureLabel(feature, SUB_DISTRICT_KEY)
+
+  const geometry = feature.getGeometry()
+  if (!geometry) {
+    throw new Error('No geometry provided in Google Maps Data Feature')
+  }
+
+  const center = getPointsCenter(collectGeometryPoints(geometry))
+  return new AdvancedMarkerElement({
+    position: center,
+    map,
+    content: createPolygonLabelElement(label),
+    title: label,
   })
-  return markers
 }
 
 type PolygonLayerOptions = {
-  url?: string
+  url: string
+  style?: (feature: google.maps.Data.Feature) => google.maps.Data.StyleOptions
+  onLoaded?: (payload: {
+    features: google.maps.Data.Feature[]
+    map: google.maps.Map
+  }) => void | Promise<void>
+  onFeatureClick?: (feature: google.maps.Data.Feature, event: google.maps.Data.MouseEvent) => void
+  onFeatureHover?: (
+    feature: google.maps.Data.Feature,
+    isHovering: boolean,
+    event: google.maps.Data.MouseEvent,
+  ) => void
 }
 
 type GeoJsonObject = {
@@ -151,7 +170,7 @@ type GeoJsonObject = {
   [key: string]: unknown
 }
 
-const getGeoJsonType = (geojson: GeoJsonObject): "EPSG:3857" | "unknown" => {
+const getGeoJsonType = (geojson: GeoJsonObject): 'EPSG:3857' | 'unknown' => {
   const crsName = geojson.crs?.properties?.name ?? ''
   return crsName.toUpperCase().includes('EPSG:3857') ? 'EPSG:3857' : 'unknown'
 }
@@ -199,16 +218,21 @@ const convertGeoJsonToLatLng = (geojson: GeoJsonObject) => {
   return { geojson, convertedPoints }
 }
 
-export const addGeoJsonPolygons = async (
-  map: google.maps.Map,
-  options: PolygonLayerOptions = {},
-) => {
+/**
+ * Add GeoJSON polygons to a Google Maps map.
+ * @param map
+ * @param options
+ * @returns cleanup function
+ */
+export const addGeoJsonPolygons = async (map: google.maps.Map, options: PolygonLayerOptions) => {
   const controller = new AbortController()
   let addedFeatures: google.maps.Data.Feature[] = []
   let labelMarkers: google.maps.marker.AdvancedMarkerElement[] = []
+  const listeners: google.maps.MapsEventListener[] = []
 
   const cleanup = () => {
     controller.abort()
+    listeners.forEach((listener) => listener.remove())
     addedFeatures.forEach((feature) => {
       map.data.remove(feature)
     })
@@ -219,7 +243,7 @@ export const addGeoJsonPolygons = async (
     labelMarkers = []
   }
 
-  const url = options.url ?? '/Delbydeler_1854838652447253595.geojson'
+  const url = options.url
 
   try {
     const response = await fetch(url, { signal: controller.signal })
@@ -232,11 +256,44 @@ export const addGeoJsonPolygons = async (
       geojson = conversion.geojson
     }
     addedFeatures = map.data.addGeoJson(geojson)
-    map.data.setStyle(getPolygonStyle)
-    const { AdvancedMarkerElement } = (await google.maps.importLibrary(
-      'marker',
-    )) as google.maps.MarkerLibrary
-    labelMarkers = addPolygonLabels(map, addedFeatures, AdvancedMarkerElement)
+    const stylingFunction = options.style ?? getPolygonStylingFunction
+    map.data.setStyle(stylingFunction)
+    if (options.onFeatureClick) {
+      listeners.push(
+        map.data.addListener('click', (event: google.maps.Data.MouseEvent) => {
+          if (!event.feature) {
+            return
+          }
+          options.onFeatureClick?.(event.feature, event)
+        }),
+      )
+    }
+    if (options.onFeatureHover) {
+      listeners.push(
+        map.data.addListener('mouseover', (event: google.maps.Data.MouseEvent) => {
+          if (!event.feature) {
+            return
+          }
+          options.onFeatureHover?.(event.feature, true, event)
+        }),
+      )
+      listeners.push(
+        map.data.addListener('mouseout', (event: google.maps.Data.MouseEvent) => {
+          if (!event.feature) {
+            return
+          }
+          options.onFeatureHover?.(event.feature, false, event)
+        }),
+      )
+    }
+    if (options.onLoaded) {
+      await options
+        .onLoaded({ features: addedFeatures, map })
+        ?.then(() => {})
+        .catch((error) => {
+          throw error
+        })
+    }
   } catch (error) {
     if ((error as Error).name === 'AbortError') {
       return cleanup
