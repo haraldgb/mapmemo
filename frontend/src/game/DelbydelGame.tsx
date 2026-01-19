@@ -14,8 +14,6 @@ import {
   FLASH_STYLE,
   HOVER_STYLE,
   LATE_STYLE,
-  MAP_CONTAINER_STYLE,
-  MODE_OPTIONS,
   OSLO_CENTER,
   OUTLINE_STYLE,
   SUB_DISTRICT_KEY,
@@ -27,6 +25,7 @@ import {
   shuffleEntriesWithRng,
 } from './utils.ts'
 import type { GameEntry } from './types.ts'
+import { GameOverlay } from './GameOverlay.tsx'
 
 export const DelbydelGame = () => {
   const [urlQueryParams] = useSearchParams()
@@ -55,6 +54,7 @@ export const DelbydelGame = () => {
   const attemptedCurrentRef = useRef(false)
   const flashTimeoutRef = useRef<number | null>(null)
 
+  const [isMapInitialized, setIsMapInitialized] = useState(false)
   const [isMapReady, setIsMapReady] = useState(false)
   const [modeCount, setModeCount] = useState(10)
   const [entries, setEntries] = useState<GameEntry[]>([])
@@ -256,19 +256,19 @@ export const DelbydelGame = () => {
           mapId: '5da3993597ca412079e99b4c',
           center: OSLO_CENTER,
           zoom: 11,
-          mapTypeControl: true,
-          mapTypeControlOptions: {
-            style: google.maps.MapTypeControlStyle.DEFAULT,
-          },
+          mapTypeControl: false,
           fullscreenControl: true,
-          streetViewControl: true,
+          fullscreenControlOptions: {
+            position: google.maps.ControlPosition.RIGHT_BOTTOM,
+          },
+          streetViewControl: false,
         })
       } catch {
         return
       }
 
       markerConstructorRef.current = AdvancedMarkerElement
-      setIsMapReady(true)
+      setIsMapInitialized(true)
     }
 
     void startMap()
@@ -280,7 +280,7 @@ export const DelbydelGame = () => {
 
   useEffect(
     function renderGamePolygons() {
-      if (!isMapReady || !mapInstanceRef.current) {
+      if (!isMapInitialized || !mapInstanceRef.current) {
         return
       }
       const mapInstance = mapInstanceRef.current
@@ -295,6 +295,18 @@ export const DelbydelGame = () => {
               return
             }
             handlePolygonsLoaded(features)
+            if (isActive) {
+              google.maps.event.addListenerOnce(
+                mapInstance,
+                'tilesloaded',
+                () => {
+                  if (!isActive) {
+                    return
+                  }
+                  setIsMapReady(true)
+                },
+              )
+            }
           },
           onFeatureClick: (feature) => handleFeatureClick(feature),
           onFeatureHover: (feature, isHovering) =>
@@ -325,7 +337,7 @@ export const DelbydelGame = () => {
       getStyleForFeature,
       handleFeatureClick,
       handleFeatureHover,
-      isMapReady,
+      isMapInitialized,
       refreshStyles,
     ],
   )
@@ -362,79 +374,36 @@ export const DelbydelGame = () => {
         ? 'All delbydeler completed!'
         : `Klikk på delbydel: ${currentEntry?.id ?? ''}`
 
+  const mapStatusLabel = isMapInitialized ? 'Tegner kart...' : 'Henter kart...'
+
   return (
-    <section
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
-        height: '100vh',
-        width: '100vw',
-      }}
-    >
+    <section className='flex min-h-0 flex-1'>
       <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
-          alignItems: 'center',
-          gap: '12px',
-        }}
+        className='relative flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white'
+        aria-busy={!isMapInitialized}
+        aria-live='polite'
       >
+        {isMapReady && (
+          <GameOverlay
+            modeCount={modeCount}
+            promptText={promptText}
+            firstTryCorrectCount={firstTryCorrectCount}
+            lateCorrectCount={lateCorrectCount}
+            scorePercent={scorePercent}
+            onModeChange={setModeCount}
+          />
+        )}
         <div
-          style={{
-            display: 'inline-flex',
-            gap: '8px',
-            justifySelf: 'center',
-            paddingTop: '4px',
-          }}
-        >
-          {MODE_OPTIONS.map((mode) => {
-            const isActive = mode.value === modeCount
-            return (
-              <button
-                key={mode.value}
-                type='button'
-                onClick={() => setModeCount(mode.value)}
-                style={{
-                  borderRadius: '999px',
-                  border: isActive ? '1px solid #6f2dbd' : '1px solid #d0d0d0',
-                  padding: '6px 12px',
-                  background: isActive ? '#6f2dbd' : '#ffffff',
-                  color: isActive ? '#ffffff' : '#3f3f3f',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                {mode.label}
-              </button>
-            )
-          })}
-        </div>
-        <div style={{ textAlign: 'center', fontSize: '22px', fontWeight: 600 }}>
-          {promptText}
-        </div>
-        <div
-          style={{
-            fontSize: '18px',
-            color: 'rgba(200, 200, 200, 0.7)',
-            justifySelf: 'center',
-          }}
-        >
-          <span style={{ color: '#2f9e44', fontWeight: 600 }}>
-            Riktig: {firstTryCorrectCount}
-          </span>
-          <span style={{ margin: '0 6px' }}>-</span>
-          <span style={{ color: '#e03131', fontWeight: 600 }}>
-            Feil: {lateCorrectCount}
-          </span>{' '}
-          <span style={{ margin: '0 6px' }}>-</span>
-          {scorePercent}%
-        </div>
+          ref={mapElementRef}
+          className={`absolute inset-0 transition-opacity duration-300 ${isMapReady ? 'opacity-100' : 'opacity-0'}`}
+        />
+        {!isMapReady && (
+          <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-white/80 text-sm font-medium text-slate-600'>
+            <div className='h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-sky-500' />
+            {mapStatusLabel}
+          </div>
+        )}
       </div>
-      <div
-        ref={mapElementRef}
-        style={MAP_CONTAINER_STYLE}
-      />
     </section>
   )
 }

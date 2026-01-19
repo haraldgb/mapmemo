@@ -6,12 +6,8 @@ import { addGeoJsonPolygons } from './utils/polygons'
 import { DELBYDELER_GEOJSON_URL } from '../game/consts'
 
 const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
-const MAP_CONTAINER_STYLE: React.CSSProperties = {
-  height: '320px',
-  width: '720px',
-  borderRadius: '12px',
-  border: '1px solid #e2e2e2',
-}
+const MAP_CONTAINER_CLASS =
+  'relative h-80 w-full max-w-3xl overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm'
 
 export const MapMemo = () => {
   const mapElementRef = useRef<HTMLDivElement | null>(null)
@@ -196,50 +192,47 @@ export const MapMemo = () => {
   )
 
   return (
-    <div>
-      <label
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          marginBottom: '8px',
-        }}
-      >
-        <input
-          type='checkbox'
-          checked={showPolygons}
-          onChange={(event) => setShowPolygons(event.target.checked)}
-        />
-        Show polygons
-      </label>
-      <label
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '8px',
-          marginBottom: '8px',
-        }}
-      >
-        <input
-          type='checkbox'
-          defaultChecked={false}
-          onChange={(event) => {
-            showMarkersRef.current = event.target.checked
-            if (!mapInstanceRef.current) {
-              return
-            }
-            const mapInstance = mapInstanceRef.current
-            markersRef.current.forEach((marker) => {
-              marker.map = showMarkersRef.current ? mapInstance : null
-            })
-          }}
-        />
-        Show markers
-      </label>
+    <div className='space-y-4'>
+      <div className='flex flex-wrap gap-3'>
+        <label className='inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm'>
+          <input
+            type='checkbox'
+            checked={showPolygons}
+            onChange={(event) => setShowPolygons(event.target.checked)}
+          />
+          Show polygons
+        </label>
+        <label className='inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm'>
+          <input
+            type='checkbox'
+            defaultChecked={false}
+            onChange={(event) => {
+              showMarkersRef.current = event.target.checked
+              if (!mapInstanceRef.current) {
+                return
+              }
+              const mapInstance = mapInstanceRef.current
+              markersRef.current.forEach((marker) => {
+                marker.map = showMarkersRef.current ? mapInstance : null
+              })
+            }}
+          />
+          Show markers
+        </label>
+      </div>
       <div
+        className={MAP_CONTAINER_CLASS}
         ref={mapElementRef}
-        style={MAP_CONTAINER_STYLE}
-      />
+        aria-busy={!isMapReady}
+        aria-live='polite'
+      >
+        {!isMapReady && (
+          <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/80 text-sm font-medium text-slate-600'>
+            <div className='h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-sky-500' />
+            Loading map…
+          </div>
+        )}
+      </div>
     </div>
   )
 }
