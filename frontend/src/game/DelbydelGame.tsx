@@ -14,7 +14,6 @@ import {
   FLASH_STYLE,
   HOVER_STYLE,
   LATE_STYLE,
-  MAP_CONTAINER_STYLE,
   MODE_OPTIONS,
   OSLO_CENTER,
   OUTLINE_STYLE,
@@ -55,6 +54,7 @@ export const DelbydelGame = () => {
   const attemptedCurrentRef = useRef(false)
   const flashTimeoutRef = useRef<number | null>(null)
 
+  const [isMapInitialized, setIsMapInitialized] = useState(false)
   const [isMapReady, setIsMapReady] = useState(false)
   const [modeCount, setModeCount] = useState(10)
   const [entries, setEntries] = useState<GameEntry[]>([])
@@ -268,7 +268,7 @@ export const DelbydelGame = () => {
       }
 
       markerConstructorRef.current = AdvancedMarkerElement
-      setIsMapReady(true)
+      setIsMapInitialized(true)
     }
 
     void startMap()
@@ -280,7 +280,7 @@ export const DelbydelGame = () => {
 
   useEffect(
     function renderGamePolygons() {
-      if (!isMapReady || !mapInstanceRef.current) {
+      if (!isMapInitialized || !mapInstanceRef.current) {
         return
       }
       const mapInstance = mapInstanceRef.current
@@ -295,6 +295,18 @@ export const DelbydelGame = () => {
               return
             }
             handlePolygonsLoaded(features)
+            if (isActive) {
+              google.maps.event.addListenerOnce(
+                mapInstance,
+                'tilesloaded',
+                () => {
+                  if (!isActive) {
+                    return
+                  }
+                  setIsMapReady(true)
+                },
+              )
+            }
           },
           onFeatureClick: (feature) => handleFeatureClick(feature),
           onFeatureHover: (feature, isHovering) =>
@@ -325,7 +337,7 @@ export const DelbydelGame = () => {
       getStyleForFeature,
       handleFeatureClick,
       handleFeatureHover,
-      isMapReady,
+      isMapInitialized,
       refreshStyles,
     ],
   )
@@ -362,6 +374,8 @@ export const DelbydelGame = () => {
         ? 'All delbydeler completed!'
         : `Klikk på delbydel: ${currentEntry?.id ?? ''}`
 
+  const mapStatusLabel = isMapInitialized ? 'Tegner kart...' : 'Henter kart...'
+
   return (
     <section className='flex min-h-0 flex-1 flex-col gap-4'>
       <div className='grid items-center gap-3 text-center md:grid-cols-[1fr_auto_1fr]'>
@@ -384,9 +398,7 @@ export const DelbydelGame = () => {
             )
           })}
         </div>
-        <div className='text-xl font-semibold text-slate-900'>
-          {promptText}
-        </div>
+        <div className='text-xl font-semibold text-slate-900'>{promptText}</div>
         <div className='text-base font-medium text-slate-400 md:text-center'>
           <span className='font-semibold text-emerald-600'>
             Riktig: {firstTryCorrectCount}
@@ -400,9 +412,21 @@ export const DelbydelGame = () => {
         </div>
       </div>
       <div
-        ref={mapElementRef}
-        style={MAP_CONTAINER_STYLE}
-      />
+        className='relative flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white'
+        aria-busy={!isMapInitialized}
+        aria-live='polite'
+      >
+        <div
+          ref={mapElementRef}
+          className={`absolute inset-0 transition-opacity duration-300 ${isMapReady ? 'opacity-100' : 'opacity-0'}`}
+        />
+        {!isMapReady && (
+          <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-white/80 text-sm font-medium text-slate-600'>
+            <div className='h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-sky-500' />
+            {mapStatusLabel}
+          </div>
+        )}
+      </div>
     </section>
   )
 }

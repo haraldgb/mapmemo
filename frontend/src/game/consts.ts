@@ -1,18 +1,9 @@
-import type { CSSProperties } from 'react'
-
 export const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
 
 export const DELBYDELER_GEOJSON_URL = '/Delbydeler_1854838652447253595.geojson'
 
 // Key for the sub-district label property in the GeoJSON data for Oslo.
 export const SUB_DISTRICT_KEY = 'DELBYDELSN'
-
-export const MAP_CONTAINER_STYLE: CSSProperties = {
-  width: '100%',
-  flex: 1,
-  borderRadius: '12px',
-  border: '1px solid #e2e2e2',
-}
 
 export const OUTLINE_STYLE: google.maps.Data.StyleOptions = {
   strokeColor: '#6f2dbd',
