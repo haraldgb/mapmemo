@@ -1,10 +1,13 @@
 import type { Plugin } from 'vite'
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager'
 
-export const googleMapsSecretPlugin = (
-  googleMapsSecretName: string | undefined,
-): Plugin => {
-  const client = new SecretManagerServiceClient()
+/**
+ * Vite plugin that makes the Google Maps API key available to the frontend during development.
+ * For production, see the serverless api/google-maps-key endpoint instead.
+ * @param googleMapsSecretName The name of the Google Maps API key secret in the Google Cloud Secret Manager.
+ * @returns
+ */
+export const googleMapsSecretPlugin = (googleMapsSecretName: string): Plugin => {
   let cachedKeyPromise: Promise<string> | null = null
 
   const loadApiKey = async () => {
@@ -12,13 +15,15 @@ export const googleMapsSecretPlugin = (
       return cachedKeyPromise
     }
     if (!googleMapsSecretName) {
-      throw new Error('GOOGLE_MAPS_API_KEY_SECRET is not set')
+      throw new Error('Maps API key secret plugin parameter is empty / not set.')
     }
+    const client = new SecretManagerServiceClient()
     cachedKeyPromise = client
       .accessSecretVersion({ name: googleMapsSecretName })
       .then(([version]) => {
         const payload = version.payload?.data?.toString()
         if (!payload) {
+          cachedKeyPromise = null
           throw new Error('Google Maps API key secret payload is empty')
         }
         return payload

@@ -8,12 +8,21 @@ importers:
 
   .:
     dependencies:
+      '@google-cloud/secret-manager':
+        specifier: ^6.1.1
+        version: 6.1.1
       '@reduxjs/toolkit':
         specifier: ^2.11.2
         version: 2.11.2(react-redux@9.2.0(@types/react@19.2.8)(react@19.3.0-canary-4a3d993e-20260114)(redux@5.0.1))(react@19.3.0-canary-4a3d993e-20260114)
+      '@vercel/oidc':
+        specifier: ^3.1.0
+        version: 3.1.0
       antd:
         specifier: ^6.2.0
         version: 6.2.0(react-dom@19.3.0-canary-4a3d993e-20260114(react@19.3.0-canary-4a3d993e-20260114))(react@19.3.0-canary-4a3d993e-20260114)
+      google-auth-library:
+        specifier: ^10.5.0
+        version: 10.5.0
       react:
         specifier: 19.3.0-canary-4a3d993e-20260114
         version: 19.3.0-canary-4a3d993e-20260114
@@ -33,9 +42,6 @@ importers:
       '@eslint/js':
         specifier: ^9.39.1
         version: 9.39.2
-      '@google-cloud/secret-manager':
-        specifier: ^6.1.1
-        version: 6.1.1
       '@types/google.maps':
         specifier: ^3.58.1
         version: 3.58.1
@@ -1026,6 +1032,10 @@ packages:
   '@typescript-eslint/visitor-keys@8.53.0':
     resolution: {integrity: sha512-LZ2NqIHFhvFwxG0qZeLL9DvdNAHPGCY5dIRwBhyYeU+LfLhcStE1ImjsuTG/WaVh3XysGaeLW8Rqq7cGkPCFvw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@vercel/oidc@3.1.0':
+    resolution: {integrity: sha512-Fw28YZpRnA3cAHHDlkt7xQHiJ0fcL+NRcIqsocZQUSmbzeIKRpwttJjik5ZGanXP+vlA4SbTg+AbA3bP363l+w==}
+    engines: {node: '>= 20'}
 
   '@vitejs/plugin-react@5.1.2':
     resolution: {integrity: sha512-EcA07pHJouywpzsoTUqNh5NwGayl2PPVEJKUSinGGSxFGYn+shYbqMGBg6FXDqgXum9Ou/ecb+411ssw8HImJQ==}
@@ -3323,6 +3333,8 @@ snapshots:
     dependencies:
       '@typescript-eslint/types': 8.53.0
       eslint-visitor-keys: 4.2.1
+
+  '@vercel/oidc@3.1.0': {}
 
   '@vitejs/plugin-react@5.1.2(vite@7.3.1(@types/node@24.10.8))':
     dependencies:
