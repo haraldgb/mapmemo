@@ -3,8 +3,6 @@ import { AppFooter } from './components/AppFooter'
 import { AppHeader } from './components/AppHeader'
 import { DelbydelGame } from './game/DelbydelGame'
 import { Landing } from './landingPage/Landing'
-import { MapMemoPage } from './mapMemo/MapMemoPage'
-import { MapMemo } from './mapMemo/MapMemo'
 
 const AppLayout = () => {
   const appVersion = 'N/A'
@@ -27,14 +25,6 @@ const AppLayout = () => {
           <Route
             path='/'
             element={<Landing />}
-          />
-          <Route
-            path='/mapmemo'
-            element={
-              <MapMemoPage>
-                <MapMemo />
-              </MapMemoPage>
-            }
           />
           <Route
             path='/game'

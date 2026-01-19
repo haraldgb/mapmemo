@@ -1,4 +1,4 @@
-import { SUB_DISTRICT_KEY } from '../../game/consts'
+import { SUB_DISTRICT_KEY } from '../game/consts'
 
 type PolygonStyle = {
   strokeColor: string

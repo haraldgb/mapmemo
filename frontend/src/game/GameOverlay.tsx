@@ -39,9 +39,7 @@ export const GameOverlay = ({
             )
           })}
         </div>
-        <div className='text-lg font-semibold text-slate-900'>
-          {promptText}
-        </div>
+        <div className='text-lg font-semibold text-slate-900'>{promptText}</div>
         <div className='text-sm font-medium text-slate-500 md:text-center'>
           <span className='font-semibold text-emerald-600'>
             Riktig: {firstTryCorrectCount}

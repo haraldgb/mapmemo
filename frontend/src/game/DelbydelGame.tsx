@@ -1,13 +1,13 @@
 /// <reference types="@types/google.maps" />
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { loadGoogleMapsScript } from '../mapMemo/utils/googleMaps'
-import { fetchGoogleMapsApiKey } from '../mapMemo/utils/googleMapsApiKey'
+import { loadGoogleMapsScript } from '../utils/googleMaps'
+import { fetchGoogleMapsApiKey } from '../utils/googleMapsApiKey'
 import {
   addGeoJsonPolygons,
   createPolygonLabelMarker,
   getFeatureLabel,
-} from '../mapMemo/utils/polygons'
+} from '../utils/polygons'
 import {
   CORRECT_STYLE,
   DELBYDELER_GEOJSON_URL,
