@@ -5,10 +5,12 @@ import { SecretManagerServiceClient } from '@google-cloud/secret-manager'
  * Vite plugin that makes the Google Maps API key available to the frontend during development.
  * For production, see the serverless api/google-maps-key endpoint instead.
  * @param googleMapsSecretName The name of the Google Maps API key secret in the Google Cloud Secret Manager.
+ * @param directAPIKey The Google Maps API key to use directly, if provided.
  * @returns
  */
 export const googleMapsSecretPlugin = (
   googleMapsSecretName: string,
+  directAPIKey: string | undefined,
 ): Plugin => {
   let cachedKeyPromise: Promise<string> | null = null
 
@@ -50,7 +52,7 @@ export const googleMapsSecretPlugin = (
     }
 
     try {
-      const apiKey = await loadApiKey()
+      const apiKey = directAPIKey ?? (await loadApiKey())
       res.statusCode = 200
       res.setHeader('Content-Type', 'application/json')
       res.end(JSON.stringify({ apiKey }))
