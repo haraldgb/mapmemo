@@ -1,78 +1,33 @@
 import type { Plugin } from 'vite'
 import { SecretManagerServiceClient } from '@google-cloud/secret-manager'
-import { ExternalAccountClient } from 'google-auth-library'
-import { getVercelOidcToken } from '@vercel/oidc'
 
-export const googleMapsSecretPlugin = (googleMapsSecretName: string | undefined): Plugin => {
-  const productionMode = process.env.PRODUCTION_MODE === 'production'
-  let cachedClientPromise: Promise<SecretManagerServiceClient> | null = null
+/**
+ * Vite plugin that makes the Google Maps API key available to the frontend during development.
+ * For production, see the serverless api/google-maps-key endpoint instead.
+ * @param googleMapsSecretName The name of the Google Maps API key secret in the Google Cloud Secret Manager.
+ * @returns
+ */
+export const googleMapsSecretPlugin = (googleMapsSecretName: string): Plugin => {
   let cachedKeyPromise: Promise<string> | null = null
-
-  const createSecretManagerClient = async () => {
-    if (!productionMode) {
-      return new SecretManagerServiceClient()
-    }
-
-    const projectId = process.env.GCP_PROJECT_ID
-    const projectNumber = process.env.GCP_PROJECT_NUMBER
-    const serviceAccountEmail = process.env.GCP_SERVICE_ACCOUNT_EMAIL
-    const workloadIdentityPoolId = process.env.GCP_WORKLOAD_IDENTITY_POOL_ID
-    const workloadIdentityPoolProviderId = process.env.GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID
-
-    if (
-      !projectId ||
-      !projectNumber ||
-      !serviceAccountEmail ||
-      !workloadIdentityPoolId ||
-      !workloadIdentityPoolProviderId
-    ) {
-      throw new Error('Missing GCP workload identity environment variables for production mode')
-    }
-
-    const authClient = ExternalAccountClient.fromJSON({
-      type: 'external_account',
-      audience: `//iam.googleapis.com/projects/${projectNumber}/locations/global/workloadIdentityPools/${workloadIdentityPoolId}/providers/${workloadIdentityPoolProviderId}`,
-      subject_token_type: 'urn:ietf:params:oauth:token-type:jwt',
-      token_url: 'https://sts.googleapis.com/v1/token',
-      service_account_impersonation_url: `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${serviceAccountEmail}:generateAccessToken`,
-      subject_token_supplier: {
-        getSubjectToken: getVercelOidcToken,
-      },
-    })
-    if (!authClient) {
-      throw new Error('Failed to initialize external account auth client')
-    }
-
-    return new SecretManagerServiceClient({
-      authClient,
-      projectId,
-    })
-  }
-
-  const getSecretManagerClient = async () => {
-    if (!cachedClientPromise) {
-      cachedClientPromise = createSecretManagerClient()
-    }
-    return cachedClientPromise
-  }
 
   const loadApiKey = async () => {
     if (cachedKeyPromise) {
       return cachedKeyPromise
     }
     if (!googleMapsSecretName) {
-      throw new Error('GOOGLE_MAPS_API_KEY_SECRET is not set')
+      throw new Error('Maps API key secret plugin parameter is empty / not set.')
     }
-    cachedKeyPromise = getSecretManagerClient().then((client) =>
-      client.accessSecretVersion({ name: googleMapsSecretName }).then(([version]) => {
+    const client = new SecretManagerServiceClient()
+    cachedKeyPromise = client
+      .accessSecretVersion({ name: googleMapsSecretName })
+      .then(([version]) => {
         const payload = version.payload?.data?.toString()
         if (!payload) {
           cachedKeyPromise = null
           throw new Error('Google Maps API key secret payload is empty')
         }
         return payload
-      }),
-    )
+      })
     return cachedKeyPromise
   }
 
