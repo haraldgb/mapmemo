@@ -97,7 +97,8 @@ const sendJson = (res: ApiResponse, statusCode: number, body: unknown) => {
   res.end(JSON.stringify(body))
 }
 
-// eslint-disable-next-line import/no-default-export
+// serverless vercel functions expect default exports, override eslint rule
+// eslint-disable-next-line import/no-default-export, 
 export default async function handler(req: { method?: string }, res: ApiResponse) {
   if (req.method && req.method !== 'GET') {
     sendJson(res, 405, { error: 'Method not allowed' })
