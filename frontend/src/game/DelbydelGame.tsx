@@ -20,20 +20,31 @@ import {
   OUTLINE_STYLE,
   SUB_DISTRICT_KEY,
 } from './consts.ts'
-import { createSeededRng, isValidSeed, randomSeed, shuffleEntriesWithRng } from './utils.ts'
+import {
+  createSeededRng,
+  isValidSeed,
+  randomSeed,
+  shuffleEntriesWithRng,
+} from './utils.ts'
 import type { GameEntry } from './types.ts'
 
 export const DelbydelGame = () => {
   const [urlQueryParams] = useSearchParams()
   const seedParam = urlQueryParams.get('seed') ?? ''
   const fallbackSeedRef = useRef<string>(randomSeed())
-  const effectiveSeed = isValidSeed(seedParam) ? seedParam : fallbackSeedRef.current
+  const effectiveSeed = isValidSeed(seedParam)
+    ? seedParam
+    : fallbackSeedRef.current
 
   const mapElementRef = useRef<HTMLDivElement | null>(null)
   const mapInstanceRef = useRef<google.maps.Map | null>(null)
   const polygonCleanupRef = useRef<null | (() => void)>(null)
-  const markerConstructorRef = useRef<typeof google.maps.marker.AdvancedMarkerElement | null>(null)
-  const labelMarkersRef = useRef(new Map<string, google.maps.marker.AdvancedMarkerElement>())
+  const markerConstructorRef = useRef<
+    typeof google.maps.marker.AdvancedMarkerElement | null
+  >(null)
+  const labelMarkersRef = useRef(
+    new Map<string, google.maps.marker.AdvancedMarkerElement>(),
+  )
   const hoveredIdRef = useRef<string | null>(null)
   const flashIdRef = useRef<string | null>(null)
   const correctIdsRef = useRef<Map<string, 'first' | 'late'>>(new Map())
@@ -55,7 +66,9 @@ export const DelbydelGame = () => {
   const currentEntry = entries[currentIndex] ?? null
   const answeredCount = firstTryCorrectCount + lateCorrectCount
   const scorePercent =
-    answeredCount === 0 ? 0 : Math.round((firstTryCorrectCount / answeredCount) * 100)
+    answeredCount === 0
+      ? 0
+      : Math.round((firstTryCorrectCount / answeredCount) * 100)
   const isComplete = total > 0 && currentIndex >= total
 
   const getStyleForFeature = (feature: google.maps.Data.Feature) => {
@@ -87,7 +100,10 @@ export const DelbydelGame = () => {
     map.data.setStyle(getStyleForFeature)
   }
 
-  const handleFeatureHover = (feature: google.maps.Data.Feature, isHovering: boolean) => {
+  const handleFeatureHover = (
+    feature: google.maps.Data.Feature,
+    isHovering: boolean,
+  ) => {
     const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
     if (!id) {
       return
@@ -141,23 +157,23 @@ export const DelbydelGame = () => {
     return shuffleEntriesWithRng(sourceEntries, rng)
   }
 
-  const handlePolygonsLoaded = useEffectEvent(function handlePolygonsLoadedEvent(
-    features: google.maps.Data.Feature[],
-  ) {
-    const rawEntries = features
-      .map((feature) => {
-        const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
-        if (!id) {
-          throw new Error('No id found for maps data feature')
-        }
-        return { id, feature }
-      })
-      .filter((entry): entry is GameEntry => Boolean(entry))
-    allEntriesRef.current = rawEntries
-    const seededEntries = getSeededOrder(rawEntries)
-    baseOrderRef.current = seededEntries
-    applyModeEntries(seededEntries, modeCount)
-  })
+  const handlePolygonsLoaded = useEffectEvent(
+    function handlePolygonsLoadedEvent(features: google.maps.Data.Feature[]) {
+      const rawEntries = features
+        .map((feature) => {
+          const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
+          if (!id) {
+            throw new Error('No id found for maps data feature')
+          }
+          return { id, feature }
+        })
+        .filter((entry): entry is GameEntry => Boolean(entry))
+      allEntriesRef.current = rawEntries
+      const seededEntries = getSeededOrder(rawEntries)
+      baseOrderRef.current = seededEntries
+      applyModeEntries(seededEntries, modeCount)
+    },
+  )
 
   const advanceToNext = (nextIndex: number) => {
     currentIndexRef.current = nextIndex
@@ -184,7 +200,9 @@ export const DelbydelGame = () => {
       } else {
         setLateCorrectCount((count) => count + 1)
       }
-      const result: 'first' | 'late' = attemptedCurrentRef.current ? 'late' : 'first'
+      const result: 'first' | 'late' = attemptedCurrentRef.current
+        ? 'late'
+        : 'first'
       const nextCorrect = new Map(correctIdsRef.current)
       nextCorrect.set(clickedId, result)
       correctIdsRef.current = nextCorrect
@@ -222,7 +240,9 @@ export const DelbydelGame = () => {
         return
       }
 
-      const { Map } = (await google.maps.importLibrary('maps')) as google.maps.MapsLibrary
+      const { Map } = (await google.maps.importLibrary(
+        'maps',
+      )) as google.maps.MapsLibrary
       const { AdvancedMarkerElement } = (await google.maps.importLibrary(
         'marker',
       )) as google.maps.MarkerLibrary
@@ -277,7 +297,8 @@ export const DelbydelGame = () => {
             handlePolygonsLoaded(features)
           },
           onFeatureClick: (feature) => handleFeatureClick(feature),
-          onFeatureHover: (feature, isHovering) => handleFeatureHover(feature, isHovering),
+          onFeatureHover: (feature, isHovering) =>
+            handleFeatureHover(feature, isHovering),
         })
         if (!isActive) {
           cleanup?.()
@@ -360,14 +381,19 @@ export const DelbydelGame = () => {
         }}
       >
         <div
-          style={{ display: 'inline-flex', gap: '8px', justifySelf: 'center', paddingTop: '4px' }}
+          style={{
+            display: 'inline-flex',
+            gap: '8px',
+            justifySelf: 'center',
+            paddingTop: '4px',
+          }}
         >
           {MODE_OPTIONS.map((mode) => {
             const isActive = mode.value === modeCount
             return (
               <button
                 key={mode.value}
-                type="button"
+                type='button'
                 onClick={() => setModeCount(mode.value)}
                 style={{
                   borderRadius: '999px',
@@ -384,16 +410,31 @@ export const DelbydelGame = () => {
             )
           })}
         </div>
-        <div style={{ textAlign: 'center', fontSize: '22px', fontWeight: 600 }}>{promptText}</div>
-        <div style={{ fontSize: '18px', color: 'rgba(200, 200, 200, 0.7)', justifySelf: 'center' }}>
-          <span style={{ color: '#2f9e44', fontWeight: 600 }}>Riktig: {firstTryCorrectCount}</span>
+        <div style={{ textAlign: 'center', fontSize: '22px', fontWeight: 600 }}>
+          {promptText}
+        </div>
+        <div
+          style={{
+            fontSize: '18px',
+            color: 'rgba(200, 200, 200, 0.7)',
+            justifySelf: 'center',
+          }}
+        >
+          <span style={{ color: '#2f9e44', fontWeight: 600 }}>
+            Riktig: {firstTryCorrectCount}
+          </span>
           <span style={{ margin: '0 6px' }}>-</span>
-          <span style={{ color: '#e03131', fontWeight: 600 }}>Feil: {lateCorrectCount}</span>{' '}
+          <span style={{ color: '#e03131', fontWeight: 600 }}>
+            Feil: {lateCorrectCount}
+          </span>{' '}
           <span style={{ margin: '0 6px' }}>-</span>
           {scorePercent}%
         </div>
       </div>
-      <div ref={mapElementRef} style={MAP_CONTAINER_STYLE} />
+      <div
+        ref={mapElementRef}
+        style={MAP_CONTAINER_STYLE}
+      />
     </section>
   )
 }

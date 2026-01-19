@@ -8,16 +8,22 @@ export const App = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Landing />} />
         <Route
-          path="/mapmemo"
+          path='/'
+          element={<Landing />}
+        />
+        <Route
+          path='/mapmemo'
           element={
             <MapMemoPage>
               <MapMemo />
             </MapMemoPage>
           }
         />
-        <Route path="/game" element={<DelbydelGame />} />
+        <Route
+          path='/game'
+          element={<DelbydelGame />}
+        />
       </Routes>
     </BrowserRouter>
   )

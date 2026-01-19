@@ -22,9 +22,13 @@ export const createSeededRng = (seed: string): RandomGenerator => {
   }
 }
 
-export const randomSeed = () => Math.random().toString(36).slice(2, 10).padEnd(8, '0').slice(0, 8)
+export const randomSeed = () =>
+  Math.random().toString(36).slice(2, 10).padEnd(8, '0').slice(0, 8)
 
-export const shuffleEntriesWithRng = (entries: GameEntry[], rng: RandomGenerator) => {
+export const shuffleEntriesWithRng = (
+  entries: GameEntry[],
+  rng: RandomGenerator,
+) => {
   const result = [...entries]
   for (let index = result.length - 1; index > 0; index -= 1) {
     const swapIndex = Math.floor(rng() * (index + 1))

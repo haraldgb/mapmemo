@@ -32,7 +32,9 @@ export const MapMemo = () => {
       if (typeof google?.maps?.importLibrary !== 'function') {
         return
       }
-      const { Map } = (await google.maps.importLibrary('maps')) as google.maps.MapsLibrary
+      const { Map } = (await google.maps.importLibrary(
+        'maps',
+      )) as google.maps.MapsLibrary
       if (!isMounted || !mapElementRef.current || mapInstanceRef.current) {
         return
       }
@@ -78,7 +80,9 @@ export const MapMemo = () => {
       let isActive = true
 
       const addPolygons = async () => {
-        const cleanup = await addGeoJsonPolygons(mapInstance, { url: DELBYDELER_GEOJSON_URL })
+        const cleanup = await addGeoJsonPolygons(mapInstance, {
+          url: DELBYDELER_GEOJSON_URL,
+        })
         if (!isActive) {
           cleanup?.()
           return
@@ -107,11 +111,16 @@ export const MapMemo = () => {
       hasFetchedRef.current = true
 
       const runTextSearch = async () => {
-        const { Place } = (await google.maps.importLibrary('places')) as google.maps.PlacesLibrary
+        const { Place } = (await google.maps.importLibrary(
+          'places',
+        )) as google.maps.PlacesLibrary
         const { AdvancedMarkerElement } = (await google.maps.importLibrary(
           'marker',
         )) as google.maps.MarkerLibrary
-        const locationBias = new google.maps.Circle({ center: OSLO_CENTER, radius: 5000 })
+        const locationBias = new google.maps.Circle({
+          center: OSLO_CENTER,
+          radius: 5000,
+        })
         const { places } = await Place.searchByText({
           textQuery: 'Bydeler i Oslo',
           fields: ['displayName', 'formattedAddress', 'location', 'types'],
@@ -155,7 +164,10 @@ export const MapMemo = () => {
             if (!place.location) {
               return
             }
-            const title = place.displayName ?? place.formattedAddress ?? 'Neighborhood in Oslo'
+            const title =
+              place.displayName ??
+              place.formattedAddress ??
+              'Neighborhood in Oslo'
             const marker = new AdvancedMarkerElement({
               map: showMarkersRef.current ? mapInstance : null,
               position: place.location,
@@ -186,20 +198,30 @@ export const MapMemo = () => {
   return (
     <div>
       <label
-        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '8px',
+        }}
       >
         <input
-          type="checkbox"
+          type='checkbox'
           checked={showPolygons}
           onChange={(event) => setShowPolygons(event.target.checked)}
         />
         Show polygons
       </label>
       <label
-        style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          marginBottom: '8px',
+        }}
       >
         <input
-          type="checkbox"
+          type='checkbox'
           defaultChecked={false}
           onChange={(event) => {
             showMarkersRef.current = event.target.checked
@@ -214,7 +236,10 @@ export const MapMemo = () => {
         />
         Show markers
       </label>
-      <div ref={mapElementRef} style={MAP_CONTAINER_STYLE} />
+      <div
+        ref={mapElementRef}
+        style={MAP_CONTAINER_STYLE}
+      />
     </div>
   )
 }

@@ -36,7 +36,8 @@ export default defineConfig([
       'no-restricted-syntax': [
         'warn',
         {
-          selector: 'CallExpression[callee.name=/^use[A-Z0-9]/] > ArrowFunctionExpression',
+          selector:
+            'CallExpression[callee.name=/^use[A-Z0-9]/] > ArrowFunctionExpression',
           message:
             'Avoid anonymous arrow functions as hook arguments; use a named function instead.',
         },

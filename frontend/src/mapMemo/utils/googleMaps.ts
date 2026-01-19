@@ -1,7 +1,9 @@
 let googleMapsScriptPromise: Promise<void> | null = null
 
 export const loadGoogleMapsScript = (apiKey: string) => {
-  const hasGoogleMaps = Boolean((window as Window & { google?: typeof google }).google?.maps?.Map)
+  const hasGoogleMaps = Boolean(
+    (window as Window & { google?: typeof google }).google?.maps?.Map,
+  )
   if (hasGoogleMaps) {
     return Promise.resolve()
   }
@@ -9,7 +11,9 @@ export const loadGoogleMapsScript = (apiKey: string) => {
     return googleMapsScriptPromise
   }
 
-  const existingScript = document.querySelector('script[data-google-maps="true"]')
+  const existingScript = document.querySelector(
+    'script[data-google-maps="true"]',
+  )
   if (existingScript) {
     googleMapsScriptPromise = new Promise<void>((resolve, reject) => {
       if ((window as Window & { google?: typeof google }).google?.maps?.Map) {
@@ -17,7 +21,8 @@ export const loadGoogleMapsScript = (apiKey: string) => {
         return
       }
       const onLoad = () => resolve()
-      const onError = () => reject(new Error('Failed to load Google Maps script'))
+      const onError = () =>
+        reject(new Error('Failed to load Google Maps script'))
       existingScript.addEventListener('load', onLoad, { once: true })
       existingScript.addEventListener('error', onError, { once: true })
     })

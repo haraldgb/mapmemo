@@ -21,7 +21,8 @@ const createSecretManagerClient = async () => {
   const projectNumber = process.env.GCP_PROJECT_NUMBER
   const serviceAccountEmail = process.env.GCP_SERVICE_ACCOUNT_EMAIL
   const workloadIdentityPoolId = process.env.GCP_WORKLOAD_IDENTITY_POOL_ID
-  const workloadIdentityPoolProviderId = process.env.GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID
+  const workloadIdentityPoolProviderId =
+    process.env.GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID
 
   if (
     !projectId ||
@@ -30,7 +31,9 @@ const createSecretManagerClient = async () => {
     !workloadIdentityPoolId ||
     !workloadIdentityPoolProviderId
   ) {
-    throw new Error('Missing GCP workload identity environment variables for production mode')
+    throw new Error(
+      'Missing GCP workload identity environment variables for production mode',
+    )
   }
 
   const authClient = ExternalAccountClient.fromJSON({
@@ -70,18 +73,22 @@ const loadApiKey = async () => {
 
   const googleMapsSecretName = process.env.GOOGLE_MAPS_API_KEY_SECRET
   if (!googleMapsSecretName) {
-    throw new Error('GOOGLE_MAPS_API_KEY_SECRET environment variable is not set')
+    throw new Error(
+      'GOOGLE_MAPS_API_KEY_SECRET environment variable is not set',
+    )
   }
 
   cachedKeyPromise = getSecretManagerClient()
     .then((client) =>
-      client.accessSecretVersion({ name: googleMapsSecretName }).then(([version]) => {
-        const payload = version.payload?.data?.toString()
-        if (!payload) {
-          throw new Error('Google Maps API key secret payload is empty')
-        }
-        return payload
-      }),
+      client
+        .accessSecretVersion({ name: googleMapsSecretName })
+        .then(([version]) => {
+          const payload = version.payload?.data?.toString()
+          if (!payload) {
+            throw new Error('Google Maps API key secret payload is empty')
+          }
+          return payload
+        }),
     )
     .catch((error) => {
       cachedKeyPromise = null
@@ -99,7 +106,10 @@ const sendJson = (res: ApiResponse, statusCode: number, body: unknown) => {
 
 // serverless vercel functions expect default exports, override eslint rule
 // eslint-disable-next-line import/no-default-export,
-export default async function handler(req: { method?: string }, res: ApiResponse) {
+export default async function handler(
+  req: { method?: string },
+  res: ApiResponse,
+) {
   if (req.method && req.method !== 'GET') {
     sendJson(res, 405, { error: 'Method not allowed' })
     return

@@ -7,7 +7,9 @@ import { SecretManagerServiceClient } from '@google-cloud/secret-manager'
  * @param googleMapsSecretName The name of the Google Maps API key secret in the Google Cloud Secret Manager.
  * @returns
  */
-export const googleMapsSecretPlugin = (googleMapsSecretName: string): Plugin => {
+export const googleMapsSecretPlugin = (
+  googleMapsSecretName: string,
+): Plugin => {
   let cachedKeyPromise: Promise<string> | null = null
 
   const loadApiKey = async () => {
@@ -15,7 +17,9 @@ export const googleMapsSecretPlugin = (googleMapsSecretName: string): Plugin => 
       return cachedKeyPromise
     }
     if (!googleMapsSecretName) {
-      throw new Error('Maps API key secret plugin parameter is empty / not set.')
+      throw new Error(
+        'Maps API key secret plugin parameter is empty / not set.',
+      )
     }
     const client = new SecretManagerServiceClient()
     cachedKeyPromise = client
@@ -55,7 +59,8 @@ export const googleMapsSecretPlugin = (googleMapsSecretName: string): Plugin => 
       res.setHeader('Content-Type', 'application/json')
       res.end(
         JSON.stringify({
-          error: error instanceof Error ? error.message : 'Failed to load API key',
+          error:
+            error instanceof Error ? error.message : 'Failed to load API key',
         }),
       )
     }
