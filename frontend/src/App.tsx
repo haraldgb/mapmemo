@@ -1,30 +1,57 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { AppFooter } from './components/AppFooter'
+import { AppHeader } from './components/AppHeader'
 import { DelbydelGame } from './game/DelbydelGame'
 import { Landing } from './landingPage/Landing'
 import { MapMemoPage } from './mapMemo/MapMemoPage'
 import { MapMemo } from './mapMemo/MapMemo'
 
+const AppLayout = () => {
+  const appVersion = 'N/A'
+  const location = useLocation()
+  const isGameRoute = location.pathname === '/game'
+
+  return (
+    <div className='flex min-h-screen flex-col bg-slate-50'>
+      <AppHeader />
+
+      <main
+        className={
+          // TODO: These styling configurations should live somewhere else, but ok for now.
+          isGameRoute
+            ? 'flex min-h-0 w-full flex-1 flex-col overflow-hidden'
+            : 'mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 py-8'
+        }
+      >
+        <Routes>
+          <Route
+            path='/'
+            element={<Landing />}
+          />
+          <Route
+            path='/mapmemo'
+            element={
+              <MapMemoPage>
+                <MapMemo />
+              </MapMemoPage>
+            }
+          />
+          <Route
+            path='/game'
+            element={<DelbydelGame />}
+          />
+        </Routes>
+      </main>
+
+      <AppFooter version={appVersion} />
+    </div>
+  )
+}
+
 export const App = () => {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route
-          path='/'
-          element={<Landing />}
-        />
-        <Route
-          path='/mapmemo'
-          element={
-            <MapMemoPage>
-              <MapMemo />
-            </MapMemoPage>
-          }
-        />
-        <Route
-          path='/game'
-          element={<DelbydelGame />}
-        />
-      </Routes>
+      <AppLayout />
     </BrowserRouter>
   )
 }

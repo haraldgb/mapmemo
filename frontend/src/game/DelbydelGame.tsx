@@ -363,31 +363,9 @@ export const DelbydelGame = () => {
         : `Klikk på delbydel: ${currentEntry?.id ?? ''}`
 
   return (
-    <section
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '12px',
-        height: '100vh',
-        width: '100vw',
-      }}
-    >
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr auto 1fr',
-          alignItems: 'center',
-          gap: '12px',
-        }}
-      >
-        <div
-          style={{
-            display: 'inline-flex',
-            gap: '8px',
-            justifySelf: 'center',
-            paddingTop: '4px',
-          }}
-        >
+    <section className='flex min-h-0 flex-1 flex-col gap-4'>
+      <div className='grid items-center gap-3 text-center md:grid-cols-[1fr_auto_1fr]'>
+        <div className='flex flex-wrap justify-center gap-2 pt-1'>
           {MODE_OPTIONS.map((mode) => {
             const isActive = mode.value === modeCount
             return (
@@ -395,39 +373,29 @@ export const DelbydelGame = () => {
                 key={mode.value}
                 type='button'
                 onClick={() => setModeCount(mode.value)}
-                style={{
-                  borderRadius: '999px',
-                  border: isActive ? '1px solid #6f2dbd' : '1px solid #d0d0d0',
-                  padding: '6px 12px',
-                  background: isActive ? '#6f2dbd' : '#ffffff',
-                  color: isActive ? '#ffffff' : '#3f3f3f',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
+                className={
+                  isActive
+                    ? 'rounded-full border border-purple-600 bg-purple-600 px-3 py-1.5 text-sm font-semibold text-white'
+                    : 'rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-slate-400'
+                }
               >
                 {mode.label}
               </button>
             )
           })}
         </div>
-        <div style={{ textAlign: 'center', fontSize: '22px', fontWeight: 600 }}>
+        <div className='text-xl font-semibold text-slate-900'>
           {promptText}
         </div>
-        <div
-          style={{
-            fontSize: '18px',
-            color: 'rgba(200, 200, 200, 0.7)',
-            justifySelf: 'center',
-          }}
-        >
-          <span style={{ color: '#2f9e44', fontWeight: 600 }}>
+        <div className='text-base font-medium text-slate-400 md:text-center'>
+          <span className='font-semibold text-emerald-600'>
             Riktig: {firstTryCorrectCount}
           </span>
-          <span style={{ margin: '0 6px' }}>-</span>
-          <span style={{ color: '#e03131', fontWeight: 600 }}>
+          <span className='mx-2'>-</span>
+          <span className='font-semibold text-rose-600'>
             Feil: {lateCorrectCount}
-          </span>{' '}
-          <span style={{ margin: '0 6px' }}>-</span>
+          </span>
+          <span className='mx-2'>-</span>
           {scorePercent}%
         </div>
       </div>
