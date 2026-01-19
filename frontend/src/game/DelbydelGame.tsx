@@ -14,7 +14,6 @@ import {
   FLASH_STYLE,
   HOVER_STYLE,
   LATE_STYLE,
-  MODE_OPTIONS,
   OSLO_CENTER,
   OUTLINE_STYLE,
   SUB_DISTRICT_KEY,
@@ -26,6 +25,7 @@ import {
   shuffleEntriesWithRng,
 } from './utils.ts'
 import type { GameEntry } from './types.ts'
+import { GameOverlay } from './GameOverlay.tsx'
 
 export const DelbydelGame = () => {
   const [urlQueryParams] = useSearchParams()
@@ -256,12 +256,12 @@ export const DelbydelGame = () => {
           mapId: '5da3993597ca412079e99b4c',
           center: OSLO_CENTER,
           zoom: 11,
-          mapTypeControl: true,
-          mapTypeControlOptions: {
-            style: google.maps.MapTypeControlStyle.DEFAULT,
-          },
+          mapTypeControl: false,
           fullscreenControl: true,
-          streetViewControl: true,
+          fullscreenControlOptions: {
+            position: google.maps.ControlPosition.RIGHT_BOTTOM,
+          },
+          streetViewControl: false,
         })
       } catch {
         return
@@ -377,45 +377,22 @@ export const DelbydelGame = () => {
   const mapStatusLabel = isMapInitialized ? 'Tegner kart...' : 'Henter kart...'
 
   return (
-    <section className='flex min-h-0 flex-1 flex-col gap-4'>
-      <div className='grid items-center gap-3 text-center md:grid-cols-[1fr_auto_1fr]'>
-        <div className='flex flex-wrap justify-center gap-2 pt-1'>
-          {MODE_OPTIONS.map((mode) => {
-            const isActive = mode.value === modeCount
-            return (
-              <button
-                key={mode.value}
-                type='button'
-                onClick={() => setModeCount(mode.value)}
-                className={
-                  isActive
-                    ? 'rounded-full border border-purple-600 bg-purple-600 px-3 py-1.5 text-sm font-semibold text-white'
-                    : 'rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-slate-400'
-                }
-              >
-                {mode.label}
-              </button>
-            )
-          })}
-        </div>
-        <div className='text-xl font-semibold text-slate-900'>{promptText}</div>
-        <div className='text-base font-medium text-slate-400 md:text-center'>
-          <span className='font-semibold text-emerald-600'>
-            Riktig: {firstTryCorrectCount}
-          </span>
-          <span className='mx-2'>-</span>
-          <span className='font-semibold text-rose-600'>
-            Feil: {lateCorrectCount}
-          </span>
-          <span className='mx-2'>-</span>
-          {scorePercent}%
-        </div>
-      </div>
+    <section className='flex min-h-0 flex-1'>
       <div
         className='relative flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white'
         aria-busy={!isMapInitialized}
         aria-live='polite'
       >
+        {isMapReady && (
+          <GameOverlay
+            modeCount={modeCount}
+            promptText={promptText}
+            firstTryCorrectCount={firstTryCorrectCount}
+            lateCorrectCount={lateCorrectCount}
+            scorePercent={scorePercent}
+            onModeChange={setModeCount}
+          />
+        )}
         <div
           ref={mapElementRef}
           className={`absolute inset-0 transition-opacity duration-300 ${isMapReady ? 'opacity-100' : 'opacity-0'}`}
