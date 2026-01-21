@@ -377,13 +377,13 @@ export const Game = () => {
   const mapStatusLabel = isMapInitialized ? 'Tegner kart...' : 'Henter kart...'
 
   return (
-    <section className='flex min-h-0 flex-1'>
+    <section className={s_section}>
       <div
-        className='relative flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white'
+        className={s_map_container}
         aria-busy={!isMapInitialized}
         aria-live='polite'
       >
-        {true && (
+        {isMapReady && (
           <GameUI
             modeCount={modeCount}
             promptText={promptText}
@@ -395,11 +395,11 @@ export const Game = () => {
         )}
         <div
           ref={mapElementRef}
-          className={`absolute inset-0 transition-opacity duration-300 ${isMapReady ? 'opacity-100' : 'opacity-0'}`}
+          className={sf_map_canvas(isMapReady)}
         />
         {!isMapReady && (
-          <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-white/80 text-sm font-medium text-slate-600'>
-            <div className='h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-sky-500' />
+          <div className={s_loading_overlay}>
+            <div className={s_loading_spinner} />
             {mapStatusLabel}
           </div>
         )}
@@ -407,3 +407,13 @@ export const Game = () => {
     </section>
   )
 }
+
+const s_section = 'flex min-h-0 flex-1'
+const s_map_container =
+  'relative flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white'
+const sf_map_canvas = (isReady: boolean) =>
+  `absolute inset-0 transition-opacity duration-300 ${isReady ? 'opacity-100' : 'opacity-0'}`
+const s_loading_overlay =
+  'absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-white/80 text-sm font-medium text-slate-600'
+const s_loading_spinner =
+  'h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-sky-500'

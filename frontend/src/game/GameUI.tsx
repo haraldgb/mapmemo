@@ -1,15 +1,5 @@
 import { MODE_OPTIONS } from './consts'
 
-const S_uiContainer =
-  'pointer-events-none absolute inset-x-4 top-4 z-10 grid items-center gap-3 rounded-2xl bg-transparent px-4 py-3 text-center md:grid-cols-[1fr_auto_1fr]'
-const S_modeButtons =
-  'pointer-events-auto flex flex-wrap justify-center gap-2 pt-1'
-const S_modeButton = (isActive: boolean) =>
-  `rounded-full border px-3 py-1.5 text-sm font-semibold ${isActive ? 'border-purple-600 bg-purple-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'}`
-const S_prompt = 'text-lg font-semibold text-slate-900'
-
-const S_scoreContainer = 'text-sm font-medium text-slate-500 md:text-center'
-
 type IProps = {
   modeCount: number
   promptText: string
@@ -31,8 +21,8 @@ export const GameUI = ({
   onModeChange,
 }: IProps) => {
   return (
-    <div className={S_uiContainer}>
-      <div className={S_modeButtons}>
+    <div className={s_ui_container}>
+      <div className={s_mode_buttons}>
         {MODE_OPTIONS.map((mode) => {
           const isActive = mode.value === modeCount
           return (
@@ -40,15 +30,15 @@ export const GameUI = ({
               key={mode.value}
               type='button'
               onClick={() => onModeChange(mode.value)}
-              className={S_modeButton(isActive)}
+              className={sf_mode_button(isActive)}
             >
               {mode.label}
             </button>
           )
         })}
       </div>
-      <div className={S_prompt}>{promptText}</div>
-      <div className={S_scoreContainer}>
+      <div className={s_prompt}>{promptText}</div>
+      <div className={s_score_container}>
         <span className='font-semibold text-emerald-600'>
           Riktig: {firstTryCorrectCount}
         </span>
@@ -62,3 +52,12 @@ export const GameUI = ({
     </div>
   )
 }
+
+const s_ui_container =
+  'pointer-events-none absolute inset-x-4 top-4 z-10 grid items-center gap-3 rounded-2xl bg-transparent px-4 py-3 text-center md:grid-cols-[1fr_auto_1fr]'
+const s_mode_buttons =
+  'pointer-events-auto flex flex-wrap justify-center gap-2 pt-1'
+const sf_mode_button = (isActive: boolean) =>
+  `rounded-full border px-3 py-1.5 text-sm font-semibold ${isActive ? 'border-purple-600 bg-purple-600 text-white' : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'}`
+const s_prompt = 'text-lg font-semibold text-slate-900'
+const s_score_container = 'text-sm font-medium text-slate-500 md:text-center'

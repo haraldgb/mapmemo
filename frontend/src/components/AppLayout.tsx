@@ -10,17 +10,10 @@ export const AppLayout = () => {
   const isGameRoute = location.pathname === '/game'
 
   return (
-    <div className='flex min-h-screen flex-col bg-slate-50'>
+    <div className={s_outer_container}>
       <AppHeader />
 
-      <main
-        className={
-          // TODO: These styling configurations should live somewhere else, but ok for now.
-          isGameRoute
-            ? 'flex min-h-0 w-full flex-1 flex-col overflow-hidden'
-            : 'mx-auto flex w-full max-w-6xl flex-1 flex-col px-6 py-8'
-        }
-      >
+      <main className={sf_body(isGameRoute)}>
         <Routes>
           <Route
             path='/'
@@ -37,3 +30,7 @@ export const AppLayout = () => {
     </div>
   )
 }
+
+const s_outer_container = 'flex min-h-screen flex-col bg-slate-50'
+const sf_body = (isGameRoute: boolean) =>
+  `${isGameRoute ? 'flex min-h-0 w-full flex-1 flex-col overflow-hidden' : 'mx-auto flex w-full max-w6xl flex-1 flex-col px-6 py-8'}`
