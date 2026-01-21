@@ -1,7 +1,7 @@
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { AppFooter } from './components/AppFooter'
 import { AppHeader } from './components/AppHeader'
-import { DelbydelGame } from './game/DelbydelGame'
+import { Game } from './game/Game'
 import { Landing } from './landingPage/Landing'
 
 const AppLayout = () => {
@@ -28,7 +28,7 @@ const AppLayout = () => {
           />
           <Route
             path='/game'
-            element={<DelbydelGame />}
+            element={<Game />}
           />
         </Routes>
       </main>

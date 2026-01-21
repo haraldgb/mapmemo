@@ -1,13 +1,13 @@
 /// <reference types="@types/google.maps" />
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { loadGoogleMapsScript } from '../utils/googleMaps'
-import { fetchGoogleMapsApiKey } from '../utils/googleMapsApiKey'
+import { loadGoogleMapsScript } from '../utils/googleMaps.ts'
+import { fetchGoogleMapsApiKey } from '../utils/googleMapsApiKey.ts'
 import {
   addGeoJsonPolygons,
   createPolygonLabelMarker,
   getFeatureLabel,
-} from '../utils/polygons'
+} from '../utils/polygons.ts'
 import {
   CORRECT_STYLE,
   DELBYDELER_GEOJSON_URL,
@@ -25,9 +25,9 @@ import {
   shuffleEntriesWithRng,
 } from './utils.ts'
 import type { GameEntry } from './types.ts'
-import { GameOverlay } from './GameOverlay.tsx'
+import { GameUI } from './GameUI.tsx'
 
-export const DelbydelGame = () => {
+export const Game = () => {
   const [urlQueryParams] = useSearchParams()
   const seedParam = urlQueryParams.get('seed') ?? ''
   const fallbackSeedRef = useRef<string>(randomSeed())
@@ -383,8 +383,8 @@ export const DelbydelGame = () => {
         aria-busy={!isMapInitialized}
         aria-live='polite'
       >
-        {isMapReady && (
-          <GameOverlay
+        {true && (
+          <GameUI
             modeCount={modeCount}
             promptText={promptText}
             firstTryCorrectCount={firstTryCorrectCount}
