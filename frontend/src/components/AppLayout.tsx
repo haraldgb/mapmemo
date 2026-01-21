@@ -1,10 +1,10 @@
-import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
-import { AppFooter } from './components/AppFooter'
-import { AppHeader } from './components/AppHeader'
-import { Game } from './game/Game'
-import { Landing } from './landingPage/Landing'
+import { Route, Routes, useLocation } from 'react-router-dom'
+import { AppFooter } from './AppFooter'
+import { AppHeader } from './AppHeader'
+import { Game } from '../game/Game'
+import { Landing } from '../landingPage/Landing'
 
-const AppLayout = () => {
+export const AppLayout = () => {
   const appVersion = 'N/A'
   const location = useLocation()
   const isGameRoute = location.pathname === '/game'
@@ -35,13 +35,5 @@ const AppLayout = () => {
 
       <AppFooter version={appVersion} />
     </div>
-  )
-}
-
-export const App = () => {
-  return (
-    <BrowserRouter>
-      <AppLayout />
-    </BrowserRouter>
   )
 }
