@@ -1,13 +1,25 @@
+import { useEffect } from 'react'
+import { useDispatch } from 'react-redux'
 import { Route, Routes, useLocation } from 'react-router-dom'
+import type { AppDispatch } from '../store'
 import { AppFooter } from './AppFooter'
 import { AppHeader } from './AppHeader'
 import { Game } from '../game/Game'
 import { Landing } from '../landingPage/Landing'
+import { mapmemoActions } from '../duck/reducer'
 
 export const AppLayout = () => {
+  const dispatch = useDispatch<AppDispatch>()
   const appVersion = 'N/A'
   const location = useLocation()
   const isGameRoute = location.pathname === '/game'
+
+  useEffect(
+    function initializeAppEffect() {
+      dispatch(mapmemoActions.initializeApp())
+    },
+    [dispatch],
+  )
 
   return (
     <div className={s_outer_container}>

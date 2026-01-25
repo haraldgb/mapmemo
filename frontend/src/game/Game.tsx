@@ -1,5 +1,6 @@
 /// <reference types="@types/google.maps" />
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 import { loadGoogleMapsScript } from '../utils/googleMaps.ts'
 import { fetchGoogleMapsApiKey } from '../utils/googleMapsApiKey.ts'
@@ -26,8 +27,12 @@ import {
 } from './utils.ts'
 import type { GameEntry } from './types.ts'
 import { GameUI } from './GameUI.tsx'
+import type { RootState } from '../store'
 
 export const Game = () => {
+  const modeCount = useSelector(
+    (state: RootState) => state.mapmemo.gameSettings.modeCount,
+  )
   const [urlQueryParams] = useSearchParams()
   const seedParam = urlQueryParams.get('seed') ?? ''
   const fallbackSeedRef = useRef<string>(randomSeed())
@@ -56,7 +61,6 @@ export const Game = () => {
 
   const [isMapInitialized, setIsMapInitialized] = useState(false)
   const [isMapReady, setIsMapReady] = useState(false)
-  const [modeCount, setModeCount] = useState(10)
   const [entries, setEntries] = useState<GameEntry[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [firstTryCorrectCount, setFirstTryCorrectCount] = useState(0)
@@ -70,6 +74,8 @@ export const Game = () => {
       ? 0
       : Math.round((firstTryCorrectCount / answeredCount) * 100)
   const isComplete = total > 0 && currentIndex >= total
+  const isGameActive =
+    entries.length > 0 && !isComplete && (currentIndex > 0 || answeredCount > 0)
 
   const getStyleForFeature = (feature: google.maps.Data.Feature) => {
     const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
@@ -385,12 +391,11 @@ export const Game = () => {
       >
         {isMapReady && (
           <GameUI
-            modeCount={modeCount}
             promptText={promptText}
             firstTryCorrectCount={firstTryCorrectCount}
             lateCorrectCount={lateCorrectCount}
             scorePercent={scorePercent}
-            onModeChange={setModeCount}
+            isGameActive={isGameActive}
           />
         )}
         <div
