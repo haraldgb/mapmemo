@@ -3,13 +3,11 @@ import type { GameSettings } from '../game/settings/settingsTypes'
 import { DEFAULT_GAME_SETTINGS } from '../game/consts'
 
 export interface MapmemoState {
-  message: string
   gameSettings: GameSettings
   isAppInitialized: boolean
 }
 
 export const initialMapmemoState: MapmemoState = {
-  message: 'Welcome to mapmemo!',
   gameSettings: DEFAULT_GAME_SETTINGS,
   isAppInitialized: false,
 }
@@ -18,9 +16,6 @@ const mapmemoSlice = createSlice({
   name: 'mapmemo',
   initialState: initialMapmemoState,
   reducers: {
-    setMessage(state, action: PayloadAction<string>) {
-      state.message = action.payload
-    },
     setGameSettings(state, action: PayloadAction<GameSettings>) {
       state.gameSettings = action.payload
     },
@@ -29,9 +24,6 @@ const mapmemoSlice = createSlice({
     },
     setAppInitialized(state, action: PayloadAction<boolean>) {
       state.isAppInitialized = action.payload
-    },
-    resetMessage(state) {
-      state.message = initialMapmemoState.message
     },
   },
 })
