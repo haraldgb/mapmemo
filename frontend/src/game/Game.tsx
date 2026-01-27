@@ -1,6 +1,6 @@
 /// <reference types="@types/google.maps" />
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 import { loadGoogleMapsScript } from '../utils/googleMaps.ts'
 import { fetchGoogleMapsApiKey } from '../utils/googleMapsApiKey.ts'
@@ -20,18 +20,26 @@ import {
   SUB_DISTRICT_KEY,
 } from './consts.ts'
 import {
+  areBydelOptionsEqual,
+  buildBydelOptions,
   createSeededRng,
+  getBydelId,
   isValidSeed,
   randomSeed,
   shuffleEntriesWithRng,
 } from './utils.ts'
 import type { GameEntry } from './types.ts'
 import { GameUI } from './GameUI.tsx'
-import type { RootState } from '../store'
+import type { RootState, AppDispatch } from '../store'
+import { mapmemoActions } from '../duck/reducer'
 
 export const Game = () => {
-  const modeCount = useSelector(
-    (state: RootState) => state.mapmemo.gameSettings.modeCount,
+  const dispatch = useDispatch<AppDispatch>()
+  const { modeCount, selectedBydels } = useSelector(
+    (state: RootState) => state.mapmemo.gameSettings,
+  )
+  const bydelOptions = useSelector(
+    (state: RootState) => state.mapmemo.bydelOptions,
   )
   const [urlQueryParams] = useSearchParams()
   const seedParam = urlQueryParams.get('seed') ?? ''
@@ -65,6 +73,20 @@ export const Game = () => {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [firstTryCorrectCount, setFirstTryCorrectCount] = useState(0)
   const [lateCorrectCount, setLateCorrectCount] = useState(0)
+
+  const selectedBydelSet = new Set(selectedBydels)
+
+  /**
+   * Determines if a feature belongs to a selected bydel.
+   * When no bydel is selected, all features are allowed.
+   */
+  const isFeatureAllowed = (feature: google.maps.Data.Feature) => {
+    if (selectedBydelSet.size === 0) {
+      return true
+    }
+    const bydelId = getBydelId(feature)
+    return bydelId ? selectedBydelSet.has(bydelId) : false
+  }
 
   const total = entries.length
   const currentEntry = entries[currentIndex] ?? null
@@ -110,6 +132,9 @@ export const Game = () => {
     feature: google.maps.Data.Feature,
     isHovering: boolean,
   ) => {
+    if (!isFeatureAllowed(feature)) {
+      return
+    }
     const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
     if (!id) {
       return
@@ -150,8 +175,15 @@ export const Game = () => {
   }
 
   const applyModeEntries = (sourceEntries: GameEntry[], count: number) => {
-    const maxCount = Math.min(count, sourceEntries.length)
-    const nextEntries = sourceEntries.slice(0, maxCount)
+    const filteredEntries =
+      selectedBydelSet.size === 0
+        ? sourceEntries
+        : sourceEntries.filter((entry) => selectedBydelSet.has(entry.bydelId))
+    const maxCount =
+      selectedBydelSet.size === 0
+        ? Math.min(count, filteredEntries.length)
+        : filteredEntries.length
+    const nextEntries = filteredEntries.slice(0, maxCount)
     entriesRef.current = nextEntries
     setEntries(nextEntries)
     resetGameState()
@@ -164,20 +196,39 @@ export const Game = () => {
   }
 
   const handlePolygonsLoaded = useEffectEvent(
-    function handlePolygonsLoadedEvent(features: google.maps.Data.Feature[]) {
+    function handlePolygonsLoadedEvent(payload: {
+      features: google.maps.Data.Feature[]
+      map: google.maps.Map
+    }) {
+      const { features, map } = payload
+      // TODO: This should not be done here, rather before loading the polygons.
+      const nextBydelOptions = buildBydelOptions(features)
       const rawEntries = features
         .map((feature) => {
+          const bydelId = getBydelId(feature) ?? ''
           const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
           if (!id) {
             throw new Error('No id found for maps data feature')
           }
-          return { id, feature }
+          return { id, feature, bydelId }
         })
         .filter((entry): entry is GameEntry => Boolean(entry))
       allEntriesRef.current = rawEntries
       const seededEntries = getSeededOrder(rawEntries)
       baseOrderRef.current = seededEntries
       applyModeEntries(seededEntries, modeCount)
+      if (selectedBydelSet.size > 0) {
+        features.forEach((feature) => {
+          // TODO: Options should be filtered before adding them as polygons to the map.
+          if (!isFeatureAllowed(feature)) {
+            map.data.remove(feature)
+          }
+        })
+      }
+      if (!areBydelOptionsEqual(bydelOptions, nextBydelOptions)) {
+        // TODO: Remove this once options are loaded seperately from the polygon features.
+        dispatch(mapmemoActions.setBydelOptions(nextBydelOptions))
+      }
     },
   )
 
@@ -188,6 +239,9 @@ export const Game = () => {
   }
 
   const handleFeatureClick = (feature: google.maps.Data.Feature) => {
+    if (!isFeatureAllowed(feature)) {
+      return
+    }
     const targetEntry = entriesRef.current[currentIndexRef.current]
     const isGameComplete = currentIndexRef.current >= entriesRef.current.length
     if (!targetEntry || isGameComplete) {
@@ -292,15 +346,16 @@ export const Game = () => {
       const mapInstance = mapInstanceRef.current
       let isActive = true
 
+      // TODO: refactor
       const addPolygons = async () => {
         const cleanup = await addGeoJsonPolygons(mapInstance, {
           url: DELBYDELER_GEOJSON_URL,
           style: getStyleForFeature,
-          onLoaded: ({ features }) => {
+          onLoaded: ({ features, map }) => {
             if (!isActive) {
               return
             }
-            handlePolygonsLoaded(features)
+            handlePolygonsLoaded({ features, map })
             if (isActive) {
               google.maps.event.addListenerOnce(
                 mapInstance,
@@ -357,7 +412,7 @@ export const Game = () => {
       baseOrderRef.current = seededEntries
       applyModeEntries(seededEntries, modeCount)
     },
-    [applyModeEntries, getSeededOrder, modeCount],
+    [applyModeEntries, getSeededOrder, modeCount, selectedBydels],
   )
 
   useEffect(function cleanupOnUnmount() {

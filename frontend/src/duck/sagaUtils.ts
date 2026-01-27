@@ -1,10 +1,20 @@
 import { MODE_OPTIONS } from '../game/consts'
 import type { GameSettings } from '../game/settings/settingsTypes'
 
-const STORAGE_KEY = 'mapmemo.gameSettings'
+const SETTINGS_STORAGE_KEY = 'mapmemo.gameSettings'
 const isValidModeCount = (value: unknown): value is number =>
   typeof value === 'number' &&
   MODE_OPTIONS.some((option) => option.value === value)
+
+const normalizeSelectedBydels = (value: unknown): string[] => {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return value
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+}
 
 const isValidSettings = (value: unknown): value is GameSettings => {
   if (!value || typeof value !== 'object') {
@@ -20,7 +30,7 @@ export const loadGameSettings = (): GameSettings | null => {
     return null
   }
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
+    const raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY)
     if (!raw) {
       return null
     }
@@ -28,7 +38,11 @@ export const loadGameSettings = (): GameSettings | null => {
     if (!isValidSettings(parsed)) {
       return null
     }
-    return parsed
+    const candidate = parsed as Partial<GameSettings>
+    return {
+      modeCount: candidate.modeCount ?? MODE_OPTIONS[0]?.value ?? 10,
+      selectedBydels: normalizeSelectedBydels(candidate.selectedBydels),
+    }
   } catch {
     return null
   }
@@ -40,7 +54,11 @@ export const saveGameSettings = (settings: GameSettings) => {
     return
   }
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    const payload = {
+      modeCount: settings.modeCount,
+      selectedBydels: settings.selectedBydels,
+    }
+    window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload))
   } catch {
     // Ignore storage failures (private mode, quota, etc.)
   }
