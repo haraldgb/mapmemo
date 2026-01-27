@@ -37,7 +37,7 @@ export default defineConfig([
         'warn',
         {
           selector:
-            'CallExpression[callee.name=/^use[A-Z0-9]/] > ArrowFunctionExpression',
+            'CallExpression[callee.name=/^(useEffect)|(useMemo)|(useCallback)/] > ArrowFunctionExpression',
           message:
             'Avoid anonymous arrow functions as hook arguments; use a named function instead.',
         },

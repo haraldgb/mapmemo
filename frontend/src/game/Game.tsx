@@ -1,13 +1,14 @@
 /// <reference types="@types/google.maps" />
 import { useEffect, useEffectEvent, useRef, useState } from 'react'
+import { useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
-import { loadGoogleMapsScript } from '../utils/googleMaps'
-import { fetchGoogleMapsApiKey } from '../utils/googleMapsApiKey'
+import { loadGoogleMapsScript } from '../utils/googleMaps.ts'
+import { fetchGoogleMapsApiKey } from '../utils/googleMapsApiKey.ts'
 import {
   addGeoJsonPolygons,
   createPolygonLabelMarker,
   getFeatureLabel,
-} from '../utils/polygons'
+} from '../utils/polygons.ts'
 import {
   CORRECT_STYLE,
   DELBYDELER_GEOJSON_URL,
@@ -25,9 +26,13 @@ import {
   shuffleEntriesWithRng,
 } from './utils.ts'
 import type { GameEntry } from './types.ts'
-import { GameOverlay } from './GameOverlay.tsx'
+import { GameUI } from './GameUI.tsx'
+import type { RootState } from '../store'
 
-export const DelbydelGame = () => {
+export const Game = () => {
+  const modeCount = useSelector(
+    (state: RootState) => state.mapmemo.gameSettings.modeCount,
+  )
   const [urlQueryParams] = useSearchParams()
   const seedParam = urlQueryParams.get('seed') ?? ''
   const fallbackSeedRef = useRef<string>(randomSeed())
@@ -56,7 +61,6 @@ export const DelbydelGame = () => {
 
   const [isMapInitialized, setIsMapInitialized] = useState(false)
   const [isMapReady, setIsMapReady] = useState(false)
-  const [modeCount, setModeCount] = useState(10)
   const [entries, setEntries] = useState<GameEntry[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [firstTryCorrectCount, setFirstTryCorrectCount] = useState(0)
@@ -70,6 +74,8 @@ export const DelbydelGame = () => {
       ? 0
       : Math.round((firstTryCorrectCount / answeredCount) * 100)
   const isComplete = total > 0 && currentIndex >= total
+  const isGameActive =
+    entries.length > 0 && !isComplete && (currentIndex > 0 || answeredCount > 0)
 
   const getStyleForFeature = (feature: google.maps.Data.Feature) => {
     const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
@@ -377,29 +383,28 @@ export const DelbydelGame = () => {
   const mapStatusLabel = isMapInitialized ? 'Tegner kart...' : 'Henter kart...'
 
   return (
-    <section className='flex min-h-0 flex-1'>
+    <section className={s_section}>
       <div
-        className='relative flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white'
+        className={s_map_container}
         aria-busy={!isMapInitialized}
         aria-live='polite'
       >
         {isMapReady && (
-          <GameOverlay
-            modeCount={modeCount}
+          <GameUI
             promptText={promptText}
             firstTryCorrectCount={firstTryCorrectCount}
             lateCorrectCount={lateCorrectCount}
             scorePercent={scorePercent}
-            onModeChange={setModeCount}
+            isGameActive={isGameActive}
           />
         )}
         <div
           ref={mapElementRef}
-          className={`absolute inset-0 transition-opacity duration-300 ${isMapReady ? 'opacity-100' : 'opacity-0'}`}
+          className={sf_map_canvas(isMapReady)}
         />
         {!isMapReady && (
-          <div className='absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-white/80 text-sm font-medium text-slate-600'>
-            <div className='h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-sky-500' />
+          <div className={s_loading_overlay}>
+            <div className={s_loading_spinner} />
             {mapStatusLabel}
           </div>
         )}
@@ -407,3 +412,13 @@ export const DelbydelGame = () => {
     </section>
   )
 }
+
+const s_section = 'flex min-h-0 flex-1'
+const s_map_container =
+  'relative flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white'
+const sf_map_canvas = (isReady: boolean) =>
+  `absolute inset-0 transition-opacity duration-300 ${isReady ? 'opacity-100' : 'opacity-0'}`
+const s_loading_overlay =
+  'absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-white/80 text-sm font-medium text-slate-600'
+const s_loading_spinner =
+  'h-8 w-8 animate-spin rounded-full border-2 border-slate-300 border-t-sky-500'

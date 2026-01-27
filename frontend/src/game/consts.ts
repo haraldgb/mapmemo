@@ -1,3 +1,5 @@
+import type { GameSettings } from './settings/settingsTypes'
+
 export const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
 
 export const DELBYDELER_GEOJSON_URL = '/Delbydeler_1854838652447253595.geojson'
@@ -45,3 +47,7 @@ export const MODE_OPTIONS = [
   { label: '25', value: 25 },
   { label: 'Alle (99)', value: 99 },
 ] as const
+
+export const DEFAULT_GAME_SETTINGS: GameSettings = {
+  modeCount: MODE_OPTIONS[0]?.value ?? 10,
+}

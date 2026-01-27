@@ -1,22 +1,29 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
+import type { GameSettings } from '../game/settings/settingsTypes'
+import { DEFAULT_GAME_SETTINGS } from '../game/consts'
 
 export interface MapmemoState {
-  message: string
+  gameSettings: GameSettings
+  isAppInitialized: boolean
 }
 
-const initialState: MapmemoState = {
-  message: 'Welcome to mapmemo!',
+export const initialMapmemoState: MapmemoState = {
+  gameSettings: DEFAULT_GAME_SETTINGS,
+  isAppInitialized: false,
 }
 
 const mapmemoSlice = createSlice({
   name: 'mapmemo',
-  initialState,
+  initialState: initialMapmemoState,
   reducers: {
-    setMessage(state, action: PayloadAction<string>) {
-      state.message = action.payload
+    setGameSettings(state, action: PayloadAction<GameSettings>) {
+      state.gameSettings = action.payload
     },
-    resetMessage(state) {
-      state.message = initialState.message
+    initializeApp(state) {
+      state.isAppInitialized = false
+    },
+    setAppInitialized(state, action: PayloadAction<boolean>) {
+      state.isAppInitialized = action.payload
     },
   },
 })
