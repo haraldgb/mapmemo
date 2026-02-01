@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
 import type { RefObject } from 'react'
-import type { BydelOption } from './settingsTypes'
+import type { AreaOption } from './settingsTypes'
 
 type IProps = {
   label: string
-  options: BydelOption[]
+  options: AreaOption[]
   selectedIds: string[]
-  onToggleSelection: (bydelId: string) => void
+  onToggleSelection: (areaId: string) => void
   outsideClickRef: RefObject<HTMLDivElement | null>
 }
 
-export const BydelDropdown = ({
+export const AreaDropdown = ({
   label,
   options,
   selectedIds,
@@ -61,7 +61,7 @@ export const BydelDropdown = ({
       {isOpen && (
         <div className={s_dropdown_menu}>
           {options.length === 0 && (
-            <div className={s_dropdown_empty}>Laster bydeler...</div>
+            <div className={s_dropdown_empty}>Loading areas...</div>
           )}
           {options.map((option) => {
             const isChecked = selectedIds.includes(option.id)

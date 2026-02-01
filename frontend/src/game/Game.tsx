@@ -17,13 +17,13 @@ import {
   LATE_STYLE,
   OSLO_CENTER,
   OUTLINE_STYLE,
-  SUB_DISTRICT_KEY,
+  SUB_AREA_KEY,
 } from './consts.ts'
 import {
-  areBydelOptionsEqual,
-  buildBydelOptions,
+  areAreaOptionsEqual,
+  buildAreaOptions,
   createSeededRng,
-  getBydelId,
+  getAreaId,
   isValidSeed,
   randomSeed,
   shuffleEntriesWithRng,
@@ -35,11 +35,11 @@ import { mapmemoActions } from '../duck/reducer'
 
 export const Game = () => {
   const dispatch = useDispatch<AppDispatch>()
-  const { modeCount, selectedBydels } = useSelector(
+  const { modeCount, selectedAreas } = useSelector(
     (state: RootState) => state.mapmemo.gameSettings,
   )
-  const bydelOptions = useSelector(
-    (state: RootState) => state.mapmemo.bydelOptions,
+  const areaOptions = useSelector(
+    (state: RootState) => state.mapmemo.areaOptions,
   )
   const [urlQueryParams] = useSearchParams()
   const seedParam = urlQueryParams.get('seed') ?? ''
@@ -74,18 +74,18 @@ export const Game = () => {
   const [firstTryCorrectCount, setFirstTryCorrectCount] = useState(0)
   const [lateCorrectCount, setLateCorrectCount] = useState(0)
 
-  const selectedBydelSet = new Set(selectedBydels)
+  const selectedAreaSet = new Set(selectedAreas)
 
   /**
-   * Determines if a feature belongs to a selected bydel.
-   * When no bydel is selected, all features are allowed.
+   * Determines if a feature belongs to a selected area.
+   * When no area is selected, all features are allowed.
    */
   const isFeatureAllowed = (feature: google.maps.Data.Feature) => {
-    if (selectedBydelSet.size === 0) {
+    if (selectedAreaSet.size === 0) {
       return true
     }
-    const bydelId = getBydelId(feature)
-    return bydelId ? selectedBydelSet.has(bydelId) : false
+    const areaId = getAreaId(feature)
+    return areaId ? selectedAreaSet.has(areaId) : false
   }
 
   const total = entries.length
@@ -100,7 +100,7 @@ export const Game = () => {
     entries.length > 0 && !isComplete && (currentIndex > 0 || answeredCount > 0)
 
   const getStyleForFeature = (feature: google.maps.Data.Feature) => {
-    const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
+    const id = getFeatureLabel(feature, SUB_AREA_KEY)
     if (!id) {
       return OUTLINE_STYLE
     }
@@ -135,7 +135,7 @@ export const Game = () => {
     if (!isFeatureAllowed(feature)) {
       return
     }
-    const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
+    const id = getFeatureLabel(feature, SUB_AREA_KEY)
     if (!id) {
       return
     }
@@ -176,11 +176,11 @@ export const Game = () => {
 
   const applyModeEntries = (sourceEntries: GameEntry[], count: number) => {
     const filteredEntries =
-      selectedBydelSet.size === 0
+      selectedAreaSet.size === 0
         ? sourceEntries
-        : sourceEntries.filter((entry) => selectedBydelSet.has(entry.bydelId))
+        : sourceEntries.filter((entry) => selectedAreaSet.has(entry.areaId))
     const maxCount =
-      selectedBydelSet.size === 0
+      selectedAreaSet.size === 0
         ? Math.min(count, filteredEntries.length)
         : filteredEntries.length
     const nextEntries = filteredEntries.slice(0, maxCount)
@@ -202,22 +202,22 @@ export const Game = () => {
     }) {
       const { features, map } = payload
       // TODO: This should not be done here, rather before loading the polygons.
-      const nextBydelOptions = buildBydelOptions(features)
+      const nextAreaOptions = buildAreaOptions(features)
       const rawEntries = features
         .map((feature) => {
-          const bydelId = getBydelId(feature) ?? ''
-          const id = getFeatureLabel(feature, SUB_DISTRICT_KEY)
+          const areaId = getAreaId(feature) ?? ''
+          const id = getFeatureLabel(feature, SUB_AREA_KEY)
           if (!id) {
             throw new Error('No id found for maps data feature')
           }
-          return { id, feature, bydelId }
+          return { id, feature, areaId }
         })
         .filter((entry): entry is GameEntry => Boolean(entry))
       allEntriesRef.current = rawEntries
       const seededEntries = getSeededOrder(rawEntries)
       baseOrderRef.current = seededEntries
       applyModeEntries(seededEntries, modeCount)
-      if (selectedBydelSet.size > 0) {
+      if (selectedAreaSet.size > 0) {
         features.forEach((feature) => {
           // TODO: Options should be filtered before adding them as polygons to the map.
           if (!isFeatureAllowed(feature)) {
@@ -225,9 +225,9 @@ export const Game = () => {
           }
         })
       }
-      if (!areBydelOptionsEqual(bydelOptions, nextBydelOptions)) {
+      if (!areAreaOptionsEqual(areaOptions, nextAreaOptions)) {
         // TODO: Remove this once options are loaded seperately from the polygon features.
-        dispatch(mapmemoActions.setBydelOptions(nextBydelOptions))
+        dispatch(mapmemoActions.setAreaOptions(nextAreaOptions))
       }
     },
   )
@@ -247,7 +247,7 @@ export const Game = () => {
     if (!targetEntry || isGameComplete) {
       return
     }
-    const clickedId = getFeatureLabel(feature, SUB_DISTRICT_KEY)
+    const clickedId = getFeatureLabel(feature, SUB_AREA_KEY)
     if (!clickedId) {
       return
     }
@@ -412,7 +412,7 @@ export const Game = () => {
       baseOrderRef.current = seededEntries
       applyModeEntries(seededEntries, modeCount)
     },
-    [applyModeEntries, getSeededOrder, modeCount, selectedBydels],
+    [applyModeEntries, getSeededOrder, modeCount, selectedAreas],
   )
 
   useEffect(function cleanupOnUnmount() {
@@ -430,10 +430,10 @@ export const Game = () => {
 
   const promptText =
     total === 0
-      ? 'Loading delbydeler...'
+      ? 'Loading areas...'
       : isComplete
-        ? 'All delbydeler completed!'
-        : `Klikk på delbydel: ${currentEntry?.id ?? ''}`
+        ? 'All areas covered!'
+        : `Click area: ${currentEntry?.id ?? ''}`
 
   const mapStatusLabel = isMapInitialized ? 'Tegner kart...' : 'Henter kart...'
 

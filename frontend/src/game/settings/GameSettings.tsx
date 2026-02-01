@@ -5,7 +5,7 @@ import { mapmemoActions } from '../../duck/reducer'
 import { MODE_OPTIONS } from '../consts'
 import { ConfirmResetPopup } from '../../components/ConfirmResetPopup'
 import type { GameSettings as GameSettingsModel } from './settingsTypes'
-import { BydelDropdown } from './BydelDropdown'
+import { AreaDropdown } from './AreaDropdown'
 
 interface IProps {
   isGameActive: boolean
@@ -19,26 +19,26 @@ export const GameSettings = ({ isGameActive, onClose }: IProps) => {
   )
   const [draftSettings, setDraftSettings] =
     useState<GameSettingsModel>(currentSettings)
-  const bydelOptions = useSelector(
-    (state: RootState) => state.mapmemo.bydelOptions,
+  const areaOptions = useSelector(
+    (state: RootState) => state.mapmemo.areaOptions,
   )
   const containerRef = useRef<HTMLDivElement | null>(null)
-  const selectedBydelCount = draftSettings.selectedBydels.length
-  const isBydelFilterActive = selectedBydelCount > 0
-  const bydelButtonLabel =
-    selectedBydelCount === 0 ? 'Alle bydeler' : `${selectedBydelCount} valgt`
+  const selectedAreaCount = draftSettings.selectedAreas.length
+  const isAreaFilterActive = selectedAreaCount > 0
+  const areaButtonLabel =
+    selectedAreaCount === 0 ? 'All areas' : `${selectedAreaCount} selected`
 
-  const toggleBydelSelection = (bydelId: string) => {
+  const toggleAreaSelection = (areaId: string) => {
     setDraftSettings((prev) => {
-      const nextSelected = new Set(prev.selectedBydels)
-      if (nextSelected.has(bydelId)) {
-        nextSelected.delete(bydelId)
+      const nextSelected = new Set(prev.selectedAreas)
+      if (nextSelected.has(areaId)) {
+        nextSelected.delete(areaId)
       } else {
-        nextSelected.add(bydelId)
+        nextSelected.add(areaId)
       }
       return {
         ...prev,
-        selectedBydels: Array.from(nextSelected),
+        selectedAreas: Array.from(nextSelected),
       }
     })
   }
@@ -85,21 +85,21 @@ export const GameSettings = ({ isGameActive, onClose }: IProps) => {
       <div className={s_title}>Game settings</div>
       <div className={s_section}>
         <div className={s_label}>Mode</div>
-        <div className={sf_option_group(isBydelFilterActive)}>
+        <div className={sf_option_group(isAreaFilterActive)}>
           {MODE_OPTIONS.map((mode) => {
             const isSelected = draftSettings.modeCount === mode.value
             return (
               <button
                 key={mode.value}
                 type='button'
-                disabled={isBydelFilterActive}
+                disabled={isAreaFilterActive}
                 onClick={() =>
                   setDraftSettings((prev) => ({
                     ...prev,
                     modeCount: mode.value,
                   }))
                 }
-                className={sf_option_button(isSelected, isBydelFilterActive)}
+                className={sf_option_button(isSelected, isAreaFilterActive)}
               >
                 {mode.label}
               </button>
@@ -108,12 +108,12 @@ export const GameSettings = ({ isGameActive, onClose }: IProps) => {
         </div>
       </div>
       <div className={s_section}>
-        <div className={s_label}>Bydel</div>
-        <BydelDropdown
-          label={bydelButtonLabel}
-          options={bydelOptions}
-          selectedIds={draftSettings.selectedBydels}
-          onToggleSelection={toggleBydelSelection}
+        <div className={s_label}>Area</div>
+        <AreaDropdown
+          label={areaButtonLabel}
+          options={areaOptions}
+          selectedIds={draftSettings.selectedAreas}
+          onToggleSelection={toggleAreaSelection}
           outsideClickRef={containerRef}
         />
       </div>

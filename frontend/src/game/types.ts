@@ -1,7 +1,7 @@
 export type GameEntry = {
   id: string
   feature: google.maps.Data.Feature
-  bydelId: string
+  areaId: string
 }
 
 export type RandomGenerator = () => number

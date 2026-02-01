@@ -6,7 +6,7 @@ const isValidModeCount = (value: unknown): value is number =>
   typeof value === 'number' &&
   MODE_OPTIONS.some((option) => option.value === value)
 
-const normalizeSelectedBydels = (value: unknown): string[] => {
+const normalizeSelectedAreas = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
     return []
   }
@@ -41,7 +41,7 @@ export const loadGameSettings = (): GameSettings | null => {
     const candidate = parsed as Partial<GameSettings>
     return {
       modeCount: candidate.modeCount ?? MODE_OPTIONS[0]?.value ?? 10,
-      selectedBydels: normalizeSelectedBydels(candidate.selectedBydels),
+      selectedAreas: normalizeSelectedAreas(candidate.selectedAreas),
     }
   } catch {
     return null
@@ -56,7 +56,7 @@ export const saveGameSettings = (settings: GameSettings) => {
   try {
     const payload = {
       modeCount: settings.modeCount,
-      selectedBydels: settings.selectedBydels,
+      selectedAreas: settings.selectedAreas,
     }
     window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload))
   } catch {

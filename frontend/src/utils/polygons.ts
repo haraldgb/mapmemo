@@ -1,4 +1,4 @@
-import { SUB_DISTRICT_KEY } from '../game/consts'
+import { SUB_AREA_KEY } from '../game/consts'
 
 type PolygonStyle = {
   strokeColor: string
@@ -28,7 +28,7 @@ const hashStringToColor = (value: string): string => {
 const getPolygonStylingFunction = (
   feature: google.maps.Data.Feature,
 ): PolygonStyle => {
-  const rawId = feature.getProperty(SUB_DISTRICT_KEY)
+  const rawId = feature.getProperty(SUB_AREA_KEY)
   if (typeof rawId !== 'string' || rawId.trim() === '') {
     return DEFAULT_POLYGON_STYLE
   }
@@ -133,7 +133,7 @@ export const createPolygonLabelMarker = (
   feature: google.maps.Data.Feature,
   AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement,
 ): google.maps.marker.AdvancedMarkerElement => {
-  const label = getFeatureLabel(feature, SUB_DISTRICT_KEY)
+  const label = getFeatureLabel(feature, SUB_AREA_KEY)
 
   const geometry = feature.getGeometry()
   if (!geometry) {

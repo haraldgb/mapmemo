@@ -1,9 +1,9 @@
 export type GameSettings = {
   modeCount: number
-  selectedBydels: string[]
+  selectedAreas: string[]
 }
 
-export type BydelOption = {
+export type AreaOption = {
   id: string
   name: string
 }
