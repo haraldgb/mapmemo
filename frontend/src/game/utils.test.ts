@@ -9,6 +9,7 @@ import type { GameEntry } from './types'
 const makeEntry = (id: string): GameEntry => ({
   id,
   feature: {} as google.maps.Data.Feature,
+  areaId: '0',
 })
 
 describe('game utils', () => {
