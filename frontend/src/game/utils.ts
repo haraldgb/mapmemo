@@ -1,6 +1,13 @@
 import type { GameEntry, RandomGenerator } from './types'
 import type { AreaOption } from './settings/settingsTypes'
-import { AREA_KEY, AREA_NAME_KEY } from './consts'
+import {
+  AREA_KEY,
+  AREA_NAME_KEY,
+  ID_KEY,
+  MUNICIPALITY_KEY,
+  SUB_AREA_KEY,
+  SUB_AREA_NAME_KEY,
+} from './consts'
 
 export const isValidSeed = (seed: string) => seed.length === 8
 
@@ -62,23 +69,43 @@ export const getAreaName = (
   return trimmed.length > 0 ? trimmed : null
 }
 
-// TODO: unnecessary use of Map, no?
-export const buildAreaOptions = (
-  features: google.maps.Data.Feature[],
+export type OsloGeoJson = {
+  features: {
+    properties: {
+      [ID_KEY]: string
+      [MUNICIPALITY_KEY]: string
+      [AREA_KEY]: string
+      [AREA_NAME_KEY]: string
+      [SUB_AREA_KEY]: string
+      [SUB_AREA_NAME_KEY]: string
+    }
+  }[]
+}
+
+export const buildAreaOptionsFromGeoJson = (
+  geojson: OsloGeoJson,
 ): AreaOption[] => {
-  const areaMap = new Map<string, string>()
-  features.forEach((feature) => {
-    const areaId = getAreaId(feature)
-    if (!areaId) {
-      return
-    }
-    const areaName = getAreaName(feature) ?? areaId
-    if (!areaMap.has(areaId)) {
-      areaMap.set(areaId, areaName)
-    }
-  })
-  return Array.from(areaMap.entries())
-    .map(([id, name]) => ({ id, name }))
+  const areaSet = geojson.features.reduce(
+    (acc, curr) => {
+      if (!acc[curr.properties[AREA_KEY]]) {
+        acc[curr.properties[AREA_KEY]] = {
+          id: curr.properties[AREA_KEY],
+          name: curr.properties[AREA_NAME_KEY],
+          count: 1,
+        }
+      } else {
+        acc[curr.properties[AREA_KEY]].count += 1
+      }
+      return acc
+    },
+    {} as Record<string, { id: string; name: string; count: number }>,
+  )
+  return Object.values(areaSet)
+    .map((area) => ({
+      id: area.id,
+      name: area.name,
+      count: area.count,
+    }))
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 

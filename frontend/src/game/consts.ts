@@ -4,9 +4,11 @@ export const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
 
 export const DELBYDELER_GEOJSON_URL = '/Delbydeler_1854838652447253595.geojson'
 
-// Key for the sub area label property in the GeoJSON data for Oslo.
+// properties names of Oslo GeoJSON.
+export const ID_KEY = 'FID'
+export const MUNICIPALITY_KEY = 'kommunenum'
 export const SUB_AREA_KEY = 'DELBYDELSN'
-// Keys for the area properties in the GeoJSON data for Oslo.
+export const SUB_AREA_NAME_KEY = 'DELBYDELSNAVN'
 export const AREA_KEY = 'BYDEL'
 export const AREA_NAME_KEY = 'BYDELSNAVN'
 

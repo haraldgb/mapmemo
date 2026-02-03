@@ -1,10 +1,7 @@
 import { useMapsLibrary } from '@vis.gl/react-google-maps'
 import { useEffect, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import type { AppDispatch, RootState } from '../../store'
-import { mapmemoActions } from '../../duck/reducer'
 import { DELBYDELER_GEOJSON_URL } from '../consts'
-import { areAreaOptionsEqual, buildAreaOptions, getAreaId } from '../utils'
+import { getAreaId } from '../utils'
 
 type GeoJsonObject = {
   type: string
@@ -82,11 +79,7 @@ type Props = {
 }
 
 export const useFeaturesInPlay = ({ gameState }: Props) => {
-  const dispatch = useDispatch<AppDispatch>()
   const mapsLibrary = useMapsLibrary('maps')
-  const areaOptions = useSelector(
-    (state: RootState) => state.mapmemo.areaOptions,
-  )
   const [allFeatures, setAllFeatures] = useState<google.maps.Data.Feature[]>([])
 
   useEffect(
@@ -129,19 +122,6 @@ export const useFeaturesInPlay = ({ gameState }: Props) => {
       }
     },
     [mapsLibrary],
-  )
-
-  useEffect(
-    function updateAreaOptionsEffect() {
-      if (allFeatures.length === 0) {
-        return
-      }
-      const nextAreaOptions = buildAreaOptions(allFeatures)
-      if (!areAreaOptionsEqual(areaOptions, nextAreaOptions)) {
-        dispatch(mapmemoActions.setAreaOptions(nextAreaOptions))
-      }
-    },
-    [allFeatures, areaOptions, dispatch],
   )
 
   if (gameState.selectedAreas.length === 0) {

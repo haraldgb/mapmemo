@@ -2,14 +2,28 @@ import { all, call, put, takeLatest } from 'redux-saga/effects'
 import { mapmemoActions } from './reducer'
 import type { GameSettings } from '../game/settings/settingsTypes'
 import { loadGameSettings, saveGameSettings } from './sagaUtils'
+import { DELBYDELER_GEOJSON_URL } from '../game/consts'
+import { buildAreaOptionsFromGeoJson, type OsloGeoJson } from '../game/utils'
+
+function* loadAreaOptionsFromOsloGeoJson() {
+  const response: Response = yield call(fetch, DELBYDELER_GEOJSON_URL)
+  if (!response.ok) {
+    throw new Error('Failed to load Oslo GeoJSON, response: ' + response.text)
+  }
+  // TODO: Disallow casting as soon as more geojson data is added.
+  const geojson = (yield call([response, response.json])) as OsloGeoJson
+  const areaOptions = buildAreaOptionsFromGeoJson(geojson)
+  yield put(mapmemoActions.setAreaOptions(areaOptions))
+}
 
 function* handleInitializeApp() {
   try {
     const storedSettings: GameSettings | null = yield call(loadGameSettings)
     if (storedSettings) {
+      // reducer has default values if none are found.
       yield put(mapmemoActions.setGameSettings(storedSettings))
     }
-    // reducer has default values if none are found.
+    yield call(loadAreaOptionsFromOsloGeoJson)
   } finally {
     yield put(mapmemoActions.setAppInitialized(true))
   }
