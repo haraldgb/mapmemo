@@ -6,3 +6,8 @@ export type GameEntry = {
 }
 
 export type RandomGenerator = () => number
+
+export type MapContext = {
+  map: google.maps.Map
+  AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement
+} | null

@@ -5,12 +5,10 @@ import { GMap } from '../components/GMap'
 import { GameHUD } from './GameHUD.tsx'
 import { useFeaturesInPlay } from './hooks/useFeaturesInPlay.ts'
 import { useGameState } from './useGameState'
+import { useGameStyling } from './hooks/useGameStyling'
+import { useFeatureLabels } from './hooks/useFeatureLabels'
 import { GameSettingsButton } from './settings/GameSettingsButton.tsx'
-
-type MapContext = {
-  map: google.maps.Map
-  AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement
-} | null
+import type { MapContext } from './types.ts'
 
 export const Game = () => {
   const { modeCount, selectedAreas } = useSelector(
@@ -21,7 +19,9 @@ export const Game = () => {
   })
   const [isGMapReady, setIsGMapReady] = useState(false)
   const [mapContext, setMapContext] = useState<MapContext>(null)
-  const gameState = useGameState({ features: featuresInPlay, mapContext })
+  const gameState = useGameState({ features: featuresInPlay })
+  const gameStyling = useGameStyling({ gameState, mapContext })
+  useFeatureLabels({ gameState, mapContext, features: featuresInPlay })
 
   const handleMapReady = (payload: MapContext) => {
     setMapContext(payload)
@@ -33,8 +33,8 @@ export const Game = () => {
       <GMap
         spinUntilReady
         features={featuresInPlay}
-        onFeatureClick={gameState.onFeatureClick}
-        onFeatureHover={gameState.onFeatureHover}
+        onFeatureClick={gameState.registerFeatureClick}
+        onFeatureHover={gameStyling.registerFeatureHover}
         onMapReady={(payload) => handleMapReady(payload)}
       >
         {isGMapReady && (
