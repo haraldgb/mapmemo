@@ -2,6 +2,8 @@ import { APIProvider } from '@vis.gl/react-google-maps'
 import { useEffect, useState, type ReactNode } from 'react'
 import { fetchGoogleMapsApiKey } from '../utils/googleMapsApiKey'
 import { Spinner } from './Spinner'
+import { useLocation } from 'react-router-dom'
+import { pathUsesMaps } from '../utils/allowedPaths'
 
 type GoogleMapsProviderProps = {
   children: ReactNode
@@ -9,6 +11,7 @@ type GoogleMapsProviderProps = {
 
 export const GoogleMapsProvider = ({ children }: GoogleMapsProviderProps) => {
   const [apiKey, setApiKey] = useState<string | null>(null)
+  const location = useLocation()
 
   useEffect(function fetchAPIKey() {
     let isMounted = true
@@ -34,12 +37,15 @@ export const GoogleMapsProvider = ({ children }: GoogleMapsProviderProps) => {
   }, [])
 
   if (!apiKey) {
-    return (
-      <div className={s_loading}>
-        <Spinner />
-        Loading map...
-      </div>
-    )
+    if (pathUsesMaps(location.pathname)) {
+      return (
+        <div className={s_loading}>
+          <Spinner />
+          Loading map...
+        </div>
+      )
+    }
+    return <>{children}</>
   }
 
   return (

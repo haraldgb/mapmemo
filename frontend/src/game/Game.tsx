@@ -41,7 +41,7 @@ export const Game = () => {
           <>
             <GameHUD gameState={gameState} />
             <GameUI
-              isGameActive={true}
+              isGameActive={gameState.isGameActive}
               resetGameState={gameState.resetGameState}
             />
           </>

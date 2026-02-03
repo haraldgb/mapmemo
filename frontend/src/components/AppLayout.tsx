@@ -7,6 +7,7 @@ import { AppHeader } from './AppHeader'
 import { Game } from '../game/Game'
 import { Landing } from '../landingPage/Landing'
 import { mapmemoActions } from '../duck/reducer'
+import { ALLOWED_PATHS } from '../utils/allowedPaths'
 
 export const AppLayout = () => {
   const dispatch = useDispatch<AppDispatch>()
@@ -28,11 +29,11 @@ export const AppLayout = () => {
       <main className={sf_body(isGameRoute)}>
         <Routes>
           <Route
-            path='/'
+            path={ALLOWED_PATHS.landing}
             element={<Landing />}
           />
           <Route
-            path='/game'
+            path={ALLOWED_PATHS.game}
             element={<Game />}
           />
         </Routes>
