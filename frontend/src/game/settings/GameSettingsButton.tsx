@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
+import { SettingsCogIcon } from '../../components/icons/SettingsCogIcon'
 import { GameSettings } from './GameSettings'
 
 interface IProps {
   isGameActive: boolean
+  resetGameState: () => void
 }
 
-export const GameSettingsButton = ({ isGameActive }: IProps) => {
+export const GameSettingsButton = ({
+  isGameActive,
+  resetGameState,
+}: IProps) => {
   const [isOpen, setIsOpen] = useState(true)
   const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -39,13 +44,15 @@ export const GameSettingsButton = ({ isGameActive }: IProps) => {
         type='button'
         className={s_settings_button}
         onClick={() => setIsOpen((open) => !open)}
+        aria-label='Game settings'
       >
-        Settings
+        <SettingsCogIcon className={s_settings_icon} />
       </button>
       {isOpen && (
         <GameSettings
           isGameActive={isGameActive}
           onClose={() => setIsOpen(false)}
+          resetGameState={resetGameState}
         />
       )}
     </div>
@@ -54,4 +61,5 @@ export const GameSettingsButton = ({ isGameActive }: IProps) => {
 
 const s_container = 'relative inline-flex pointer-events-auto'
 const s_settings_button =
-  'rounded-full border border-slate-300 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-400 hover:bg-slate-50'
+  'inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800'
+const s_settings_icon = 'h-5 w-5'

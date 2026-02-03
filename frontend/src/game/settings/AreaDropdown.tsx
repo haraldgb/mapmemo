@@ -76,7 +76,9 @@ export const AreaDropdown = ({
                   onChange={() => onToggleSelection(option.id)}
                   className={s_checkbox}
                 />
-                <span>{option.name}</span>
+                <span>
+                  {option.name} ({option.count})
+                </span>
               </label>
             )
           })}
