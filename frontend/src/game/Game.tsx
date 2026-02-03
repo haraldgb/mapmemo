@@ -7,7 +7,7 @@ import { useFeaturesInPlay } from './hooks/useFeaturesInPlay.ts'
 import { useGameState } from './useGameState'
 import { useGameStyling } from './hooks/useGameStyling'
 import { useFeatureLabels } from './hooks/useFeatureLabels'
-import { GameSettingsButton } from './settings/GameSettingsButton.tsx'
+import { GameUI } from './GameUI.tsx'
 import type { MapContext } from './types.ts'
 
 export const Game = () => {
@@ -40,12 +40,10 @@ export const Game = () => {
         {isGMapReady && (
           <>
             <GameHUD gameState={gameState} />
-            <div className={s_settings_overlay}>
-              <GameSettingsButton
-                isGameActive={true}
-                resetGameState={gameState.resetGameState}
-              />
-            </div>
+            <GameUI
+              isGameActive={true}
+              resetGameState={gameState.resetGameState}
+            />
           </>
         )}
       </GMap>
@@ -54,5 +52,3 @@ export const Game = () => {
 }
 
 const s_section = 'flex min-h-0 flex-1'
-const s_settings_overlay =
-  'pointer-events-auto absolute right-4 top-4 z-20 flex items-center gap-2'
