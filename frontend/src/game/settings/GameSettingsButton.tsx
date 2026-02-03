@@ -4,9 +4,13 @@ import { GameSettings } from './GameSettings'
 
 interface IProps {
   isGameActive: boolean
+  resetGameState: () => void
 }
 
-export const GameSettingsButton = ({ isGameActive }: IProps) => {
+export const GameSettingsButton = ({
+  isGameActive,
+  resetGameState,
+}: IProps) => {
   const [isOpen, setIsOpen] = useState(true)
   const containerRef = useRef<HTMLDivElement | null>(null)
 
@@ -48,6 +52,7 @@ export const GameSettingsButton = ({ isGameActive }: IProps) => {
         <GameSettings
           isGameActive={isGameActive}
           onClose={() => setIsOpen(false)}
+          resetGameState={resetGameState}
         />
       )}
     </div>

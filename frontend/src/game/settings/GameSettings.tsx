@@ -10,9 +10,14 @@ import { AreaDropdown } from './AreaDropdown'
 interface IProps {
   isGameActive: boolean
   onClose: () => void
+  resetGameState: () => void
 }
 
-export const GameSettings = ({ isGameActive, onClose }: IProps) => {
+export const GameSettings = ({
+  isGameActive,
+  onClose,
+  resetGameState,
+}: IProps) => {
   const dispatch = useDispatch<AppDispatch>()
   const currentSettings = useSelector(
     (state: RootState) => state.mapmemo.gameSettings,
@@ -62,6 +67,7 @@ export const GameSettings = ({ isGameActive, onClose }: IProps) => {
   const handleConfirmApply = () => {
     setIsConfirming(false)
     applySettings()
+    resetGameState()
   }
 
   const handleConfirmReset = (confirm: boolean) => {

@@ -41,7 +41,10 @@ export const Game = () => {
           <>
             <GameHUD gameState={gameState} />
             <div className={s_settings_overlay}>
-              <GameSettingsButton isGameActive={true} />
+              <GameSettingsButton
+                isGameActive={true}
+                resetGameState={gameState.resetGameState}
+              />
             </div>
           </>
         )}
