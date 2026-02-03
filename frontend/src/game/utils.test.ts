@@ -18,6 +18,7 @@ import {
 
 const makeEntry = (id: string): GameEntry => ({
   id,
+  label: '',
   feature: {} as google.maps.Data.Feature,
   areaId: '0',
 })
@@ -66,12 +67,13 @@ describe('game utils', () => {
 
   test('buildAreaOptionsFromGeoJson reads feature collection', () => {
     const makeFeature = (
-      featureId: string,
+      featureId: number,
       areaId: string,
       areaName: string,
       subAreaId: string,
       subAreaName: string,
     ) => ({
+      id: featureId,
       properties: {
         [ID_KEY]: featureId,
         [MUNICIPALITY_KEY]: '0301',
@@ -84,9 +86,9 @@ describe('game utils', () => {
 
     const geojson: OsloGeoJson = {
       features: [
-        makeFeature('1', '2', 'Zed', '201', 'Zed West'),
-        makeFeature('2', '1', 'Alpha', '101', 'Alpha North'),
-        makeFeature('3', '2', 'Zed', '202', 'Zed East'),
+        makeFeature(1, '2', 'Zed', '201', 'Zed West'),
+        makeFeature(2, '1', 'Alpha', '101', 'Alpha North'),
+        makeFeature(3, '2', 'Zed', '202', 'Zed East'),
       ],
     }
 
@@ -100,8 +102,9 @@ describe('game utils', () => {
     const geojson: OsloGeoJson = {
       features: [
         {
+          id: 99,
           properties: {
-            [ID_KEY]: '99',
+            [ID_KEY]: 99,
             [MUNICIPALITY_KEY]: '0301',
             [AREA_KEY]: '99',
             [AREA_NAME_KEY]: 'Gamma',

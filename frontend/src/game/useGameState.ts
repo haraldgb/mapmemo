@@ -5,30 +5,23 @@ import {
   FLASH_STYLE,
   HOVER_STYLE,
   OUTLINE_STYLE,
-  SUB_AREA_KEY,
+  ID_KEY,
+  SUB_AREA_NAME_KEY,
 } from './consts'
-import { createPolygonLabelMarker, getFeatureLabel } from '../utils/polygons'
+import { createPolygonLabelMarker, getFeatureProperty } from '../utils/polygons'
 import { createSeededRng, getAreaId, shuffleEntriesWithRng } from './utils'
 import type { GameEntry } from './types'
 import { useSeedFromUrl } from './hooks/utilHooks'
 
-// TODO: In general this file has to many refs, and styling
 type MapContext = {
   map: google.maps.Map
   AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement
 } | null
 
-type UseGameStateProps = {
-  features: google.maps.Data.Feature[]
-  mapContext: MapContext
-}
-
 export type GameState = {
   promptText: string
   correctCount: number
   incorrectCount: number
-  // correctlyGuessedIds: string[]
-  // incorrectlyGuessedIds: string[]
   scorePercent: number
   isGameActive: boolean
   onFeatureClick: (feature: google.maps.Data.Feature) => void
@@ -39,10 +32,12 @@ export type GameState = {
   resetGameState: () => void
 }
 
-export const useGameState = ({
-  features,
-  mapContext,
-}: UseGameStateProps): GameState => {
+type Props = {
+  features: google.maps.Data.Feature[]
+  mapContext: MapContext
+}
+
+export const useGameState = ({ features, mapContext }: Props): GameState => {
   const rngSeed = useSeedFromUrl()
 
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -54,9 +49,10 @@ export const useGameState = ({
   const createSeededEntries = () => {
     const rawEntries = features
       .map((feature) => {
-        const id = getFeatureLabel(feature, SUB_AREA_KEY)
+        const id = getFeatureProperty(feature, ID_KEY)
+        const label = getFeatureProperty(feature, SUB_AREA_NAME_KEY)
         const areaId = getAreaId(feature) ?? ''
-        return { id, feature, areaId }
+        return { id, label, feature, areaId }
       })
       .filter((entry): entry is GameEntry => Boolean(entry))
     const rng = createSeededRng(rngSeed)
@@ -69,7 +65,6 @@ export const useGameState = ({
     answeredCount === 0 ? 0 : Math.round((correctCount / answeredCount) * 100)
   const total = entries.length
   const currentEntry = entries[currentIndex] ?? null
-  // const answeredCount = correctAttemptCount + incorrectAttemptCount
   const isComplete = total > 0 && currentIndex >= total
   const isGameActive =
     entries.length > 0 && !isComplete && (currentIndex > 0 || answeredCount > 0)
@@ -92,19 +87,9 @@ export const useGameState = ({
 
   // ------------------------------------------------------------ //
 
-  // const [entries, setEntries] = useState<GameEntry[]>([])
-  // const {
-  //   currentIndex,
-  //   isPrevIncorrect: isPrevAttemptIncorrect,
-  //   correctCount: correctAttemptCount,
-  //   incorrectCount: incorrectAttemptCount,
-  //   correctlyGuessedIds,
-  //   incorrectlyGuessedIds,
-  // } = gameProgress
-
   // TODO: STYLING DOES NOT BELONG HERE------------------- //
   const getStyleForFeature = (feature: google.maps.Data.Feature) => {
-    const id = getFeatureLabel(feature, SUB_AREA_KEY)
+    const id = getFeatureProperty(feature, ID_KEY)
     if (!id) {
       return OUTLINE_STYLE
     }
@@ -135,7 +120,7 @@ export const useGameState = ({
     feature: google.maps.Data.Feature,
     isHovering: boolean,
   ) => {
-    const id = getFeatureLabel(feature, SUB_AREA_KEY)
+    const id = getFeatureProperty(feature, ID_KEY)
     if (!id) {
       return
     }
@@ -198,7 +183,7 @@ export const useGameState = ({
     if (!targetEntry || isGameComplete) {
       return
     }
-    const clickedId = getFeatureLabel(feature, SUB_AREA_KEY)
+    const clickedId = getFeatureProperty(feature, ID_KEY)
     if (!clickedId) {
       return
     }
@@ -259,7 +244,7 @@ export const useGameState = ({
       ? 'Loading areas...'
       : isComplete
         ? 'All areas covered!'
-        : `Click area: ${currentEntry?.id ?? ''}`
+        : `Click area: ${currentEntry?.label ?? ''}`
 
   return {
     promptText,

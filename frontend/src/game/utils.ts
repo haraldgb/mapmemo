@@ -71,8 +71,9 @@ export const getAreaName = (
 
 export type OsloGeoJson = {
   features: {
+    id: number
     properties: {
-      [ID_KEY]: string
+      [ID_KEY]: number
       [MUNICIPALITY_KEY]: string
       [AREA_KEY]: string
       [AREA_NAME_KEY]: string
