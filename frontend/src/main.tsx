@@ -10,6 +10,7 @@ import { ErrorFallbackAntd } from './components/ErrorFallbackAntd.tsx'
 import { BrowserRouter } from 'react-router-dom'
 import { AppLayout } from './components/AppLayout.tsx'
 import { GoogleMapsProvider } from './components/GoogleMapsProvider.tsx'
+import { Analytics } from '@vercel/analytics/react'
 
 const rootElement = document.getElementById('root')
 createRoot(rootElement!).render(
@@ -19,6 +20,7 @@ createRoot(rootElement!).render(
         <BrowserRouter>
           <GoogleMapsProvider>
             <AppLayout />
+            <Analytics />
           </GoogleMapsProvider>
         </BrowserRouter>
       </ErrorBoundary>
