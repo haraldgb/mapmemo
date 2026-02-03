@@ -1,14 +1,16 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import type { GameSettings } from '../game/settings/settingsTypes'
+import type { AreaOption, GameSettings } from '../game/settings/settingsTypes'
 import { DEFAULT_GAME_SETTINGS } from '../game/consts'
 
 export interface MapmemoState {
   gameSettings: GameSettings
+  areaOptions: AreaOption[]
   isAppInitialized: boolean
 }
 
 export const initialMapmemoState: MapmemoState = {
   gameSettings: DEFAULT_GAME_SETTINGS,
+  areaOptions: [],
   isAppInitialized: false,
 }
 
@@ -18,6 +20,9 @@ const mapmemoSlice = createSlice({
   reducers: {
     setGameSettings(state, action: PayloadAction<GameSettings>) {
       state.gameSettings = action.payload
+    },
+    setAreaOptions(state, action: PayloadAction<AreaOption[]>) {
+      state.areaOptions = action.payload
     },
     initializeApp(state) {
       state.isAppInitialized = false

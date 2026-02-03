@@ -1,4 +1,8 @@
-import { SUB_DISTRICT_KEY } from '../game/consts'
+import {
+  ID_KEY,
+  SUB_AREA_NAME_KEY,
+  type OsloGeoJsonPropertyKey,
+} from '../game/consts'
 
 type PolygonStyle = {
   strokeColor: string
@@ -28,7 +32,7 @@ const hashStringToColor = (value: string): string => {
 const getPolygonStylingFunction = (
   feature: google.maps.Data.Feature,
 ): PolygonStyle => {
-  const rawId = feature.getProperty(SUB_DISTRICT_KEY)
+  const rawId = feature.getProperty(ID_KEY)
   if (typeof rawId !== 'string' || rawId.trim() === '') {
     return DEFAULT_POLYGON_STYLE
   }
@@ -44,21 +48,24 @@ const getPolygonStylingFunction = (
 
 type LatLng = google.maps.LatLng
 
-export const getFeatureLabel = (
+export const getFeatureProperty = (
   feature: google.maps.Data.Feature,
-  labelProperty: string,
+  propertyName: OsloGeoJsonPropertyKey,
 ): string => {
-  const rawLabel = feature.getProperty(labelProperty)
-  if (typeof rawLabel !== 'string') {
-    throw new Error(`${labelProperty} property is not a string`)
+  if (propertyName === ID_KEY) {
+    return String(feature.getProperty(propertyName))
+  }
+  const rawProperty = feature.getProperty(propertyName)
+  if (typeof rawProperty !== 'string') {
+    throw new Error(`${propertyName} property is not a string`)
   }
 
-  const label = rawLabel.trim()
-  if (label.length === 0) {
-    throw new Error(`${labelProperty} property is an empty string`)
+  const property = rawProperty.trim()
+  if (property.length === 0) {
+    throw new Error(`${propertyName} property is an empty string`)
   }
 
-  return label
+  return property
 }
 
 /**
@@ -133,7 +140,7 @@ export const createPolygonLabelMarker = (
   feature: google.maps.Data.Feature,
   AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement,
 ): google.maps.marker.AdvancedMarkerElement => {
-  const label = getFeatureLabel(feature, SUB_DISTRICT_KEY)
+  const label = getFeatureProperty(feature, SUB_AREA_NAME_KEY)
 
   const geometry = feature.getGeometry()
   if (!geometry) {

@@ -58,6 +58,12 @@ export default defineConfig([
     },
   },
   {
+    files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    languageOptions: {
+      globals: globals.jest,
+    },
+  },
+  {
     files: ['vite.config.ts'],
     rules: {
       'import/no-default-export': 'off',

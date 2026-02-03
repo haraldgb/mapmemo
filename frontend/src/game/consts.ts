@@ -4,8 +4,20 @@ export const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
 
 export const DELBYDELER_GEOJSON_URL = '/Delbydeler_1854838652447253595.geojson'
 
-// Key for the sub-district label property in the GeoJSON data for Oslo.
-export const SUB_DISTRICT_KEY = 'DELBYDELSN'
+// properties names of Oslo GeoJSON.
+export const ID_KEY = 'FID'
+export const MUNICIPALITY_KEY = 'kommunenum'
+export const SUB_AREA_KEY = 'DELBYDEL'
+export const SUB_AREA_NAME_KEY = 'DELBYDELSN'
+export const AREA_KEY = 'BYDEL'
+export const AREA_NAME_KEY = 'BYDELSNAVN'
+export type OsloGeoJsonPropertyKey =
+  | typeof ID_KEY
+  | typeof MUNICIPALITY_KEY
+  | typeof SUB_AREA_KEY
+  | typeof SUB_AREA_NAME_KEY
+  | typeof AREA_KEY
+  | typeof AREA_NAME_KEY
 
 export const OUTLINE_STYLE: google.maps.Data.StyleOptions = {
   strokeColor: '#6f2dbd',
@@ -50,4 +62,5 @@ export const MODE_OPTIONS = [
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
   modeCount: MODE_OPTIONS[0]?.value ?? 10,
+  selectedAreas: [],
 }
