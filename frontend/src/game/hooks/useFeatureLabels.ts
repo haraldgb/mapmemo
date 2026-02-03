@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { INITIAL_PREV_GUESS, type GameState } from '../useGameState'
+import { INITIAL_PREV_GUESS, type GameState } from './useGameState'
 import type { MapContext } from '../types'
 import {
   createPolygonLabelMarker,

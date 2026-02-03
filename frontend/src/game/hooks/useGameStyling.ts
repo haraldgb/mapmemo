@@ -8,7 +8,7 @@ import {
   ID_KEY,
 } from '../consts'
 import { getFeatureProperty } from '../../utils/polygons'
-import type { GameState } from '../useGameState'
+import type { GameState } from './useGameState'
 import type { MapContext } from '../types'
 
 type Props = {

@@ -6,6 +6,7 @@ import { DELBYDELER_GEOJSON_URL } from '../game/consts'
 import { buildAreaOptionsFromGeoJson, type OsloGeoJson } from '../game/utils'
 
 function* loadAreaOptionsFromOsloGeoJson() {
+  // TODO: move Oslo specific stuff to their own file / areas of files.
   const response: Response = yield call(fetch, DELBYDELER_GEOJSON_URL)
   if (!response.ok) {
     throw new Error('Failed to load Oslo GeoJSON, response: ' + response.text)

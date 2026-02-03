@@ -1,9 +1,9 @@
 import { useRef, useState, type MutableRefObject } from 'react'
-import { ID_KEY, SUB_AREA_NAME_KEY } from './consts'
-import { getFeatureProperty } from '../utils/polygons'
-import { createSeededRng, getAreaId, shuffleEntriesWithRng } from './utils'
-import type { GameEntry } from './types'
-import { useSeedFromUrl } from './hooks/utilHooks'
+import { ID_KEY, SUB_AREA_NAME_KEY } from '../consts'
+import { getFeatureProperty } from '../../utils/polygons'
+import { createSeededRng, getAreaId, shuffleEntriesWithRng } from '../utils'
+import type { GameEntry } from '../types'
+import { useSeedFromUrl } from './utilHooks'
 
 type PrevGuess = {
   id: string

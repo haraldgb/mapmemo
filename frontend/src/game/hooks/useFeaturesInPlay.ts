@@ -105,7 +105,7 @@ export const useFeaturesInPlay = ({ gameState }: Props) => {
         if (getGeoJsonType(geojson) === 'EPSG:3857') {
           geojson = convertGeoJsonToLatLng(geojson)
         }
-        // TODO: is this the correct way to do it with new 3rd party library?
+
         const dataLayer = new google.maps.Data()
         const loadedFeatures = dataLayer.addGeoJson(geojson)
         if (!isActive) {

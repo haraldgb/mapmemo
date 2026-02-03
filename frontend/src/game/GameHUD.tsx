@@ -1,4 +1,4 @@
-import type { GameState } from './useGameState'
+import type { GameState } from './hooks/useGameState'
 
 type GameHUDProps = {
   gameState: GameState
