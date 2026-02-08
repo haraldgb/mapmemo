@@ -2,7 +2,7 @@ import type { GameSettings } from './settings/settingsTypes'
 
 export const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
 
-export const DELBYDELER_GEOJSON_URL = '/Delbydeler_1854838652447253595.geojson'
+export const DELBYDELER_GEOJSON_URL = '/api/oslo-neighboorhoods'
 
 // properties names of Oslo GeoJSON.
 export const ID_KEY = 'FID'
