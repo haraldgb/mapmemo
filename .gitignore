@@ -2,6 +2,7 @@
 tanker.txt
 .secrets
 .env
+osm/
 
 # Editor directories and files
 .vscode/*

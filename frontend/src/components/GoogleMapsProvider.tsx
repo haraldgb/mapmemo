@@ -12,25 +12,27 @@ export const GoogleMapsProvider = ({ children }: GoogleMapsProviderProps) => {
 
   useEffect(function fetchAPIKey() {
     let isMounted = true
-    fetchGoogleMapsApiKey()
-      .then((key) => {
-        if (isMounted) {
-          setApiKey(key)
-        }
-      })
-      .catch((err: unknown) => {
-        if (!isMounted) {
-          return
-        }
-        if (err instanceof Error) {
-          throw err
-        } else {
-          throw new Error('Failed to load Google Maps API key')
-        }
-      })
-    return () => {
-      isMounted = false
-    }
+    fetch('/api/health', { method: 'GET', credentials: 'include' }).then(() => {
+      fetchGoogleMapsApiKey()
+        .then((key) => {
+          if (isMounted) {
+            setApiKey(key)
+          }
+        })
+        .catch((err: unknown) => {
+          if (!isMounted) {
+            return
+          }
+          if (err instanceof Error) {
+            throw err
+          } else {
+            throw new Error('Failed to load Google Maps API key')
+          }
+        })
+      return () => {
+        isMounted = false
+      }
+    })
   }, [])
 
   if (!apiKey) {
