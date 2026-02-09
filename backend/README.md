@@ -19,7 +19,13 @@ Configuration:
 
 -   Google Maps API key: `GoogleMaps__ApiKey`
 -   Session config: `Session__CookieName`, `Session__Ttl` (defaults in `appsettings.json`)
--   Future Postgres: `ConnectionStrings__Postgres`
+-   Postgres: `ConnectionStrings__Postgres`
+
+Database setup (local):
+
+-   Schema: `backend/db/schema.sql`
+-   Create DB (once): `createdb -U postgres(or other user) mapmemo`
+-   Apply schema: `psql -U postgres(or other user) -d mapmemo -f backend/db/schema.sql`
 
 Session notes:
 
