@@ -1,9 +1,6 @@
 import { MODE_OPTIONS } from '../game/consts'
 import type { GameSettings } from '../game/settings/settingsTypes'
-import {
-  loadFromLocalStorage,
-  saveToLocalStorage,
-} from '../utils/localStorage'
+import { loadFromLocalStorage, saveToLocalStorage } from '../utils/localStorage'
 
 const SETTINGS_STORAGE_KEY = 'mapmemo.gameSettings'
 const isValidModeCount = (value: unknown): value is number =>
