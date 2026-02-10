@@ -15,6 +15,26 @@ type GeoJsonObject = {
   [key: string]: unknown
 }
 
+export const fetchWithSessionRetry = async (
+  input: RequestInfo,
+  init: RequestInit,
+) => {
+  const response = await fetch(input, { ...init, credentials: 'include' })
+  if (response.status !== 401) {
+    return response
+  }
+
+  const healthResponse = await fetch('/api/health', {
+    method: 'GET',
+    credentials: 'include',
+  })
+  if (!healthResponse.ok) {
+    return response
+  }
+
+  return fetch(input, { ...init, credentials: 'include' })
+}
+
 const getGeoJsonType = (geojson: GeoJsonObject): 'EPSG:3857' | 'unknown' => {
   const crsName = geojson.crs?.properties?.name ?? ''
   return crsName.toUpperCase().includes('EPSG:3857') ? 'EPSG:3857' : 'unknown'
@@ -95,7 +115,7 @@ export const useFeaturesInPlay = ({ gameState }: Props) => {
           return
         }
 
-        const response = await fetch(DELBYDELER_GEOJSON_URL, {
+        const response = await fetchWithSessionRetry(DELBYDELER_GEOJSON_URL, {
           signal: controller.signal,
         })
         if (!response.ok) {
@@ -114,7 +134,12 @@ export const useFeaturesInPlay = ({ gameState }: Props) => {
         setAllFeatures(loadedFeatures)
       }
 
-      void loadGeoJson()
+      void loadGeoJson().catch((error) => {
+        if (error?.name === 'AbortError' && controller.signal.aborted) {
+          return
+        }
+        throw error
+      })
 
       return () => {
         isActive = false

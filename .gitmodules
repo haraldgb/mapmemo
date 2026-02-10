@@ -1,0 +1,3 @@
+[submodule "backend/db/data"]
+	path = backend/db/data
+	url = https://github.com/haraldgb/mapmemo-data.git
