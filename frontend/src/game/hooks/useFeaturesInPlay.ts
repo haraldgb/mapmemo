@@ -15,7 +15,10 @@ type GeoJsonObject = {
   [key: string]: unknown
 }
 
-const fetchWithSessionRetry = async (input: RequestInfo, init: RequestInit) => {
+export const fetchWithSessionRetry = async (
+  input: RequestInfo,
+  init: RequestInit,
+) => {
   const response = await fetch(input, { ...init, credentials: 'include' })
   if (response.status !== 401) {
     return response
