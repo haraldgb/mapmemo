@@ -1,39 +1,6 @@
 import { MODE_OPTIONS } from '../game/consts'
 import type { GameSettings } from '../game/settings/settingsTypes'
 
-const loadFromStorage = <T>(
-  key: string,
-  isValid: (value: unknown) => value is T,
-): T | null => {
-  if (typeof window === 'undefined') {
-    return null
-  }
-  try {
-    const raw = window.localStorage.getItem(key)
-    if (!raw) {
-      return null
-    }
-    const parsed: unknown = JSON.parse(raw)
-    if (!isValid(parsed)) {
-      return null
-    }
-    return parsed
-  } catch {
-    return null
-  }
-}
-
-const saveToStorage = (key: string, value: unknown): void => {
-  if (typeof window === 'undefined') {
-    return
-  }
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value))
-  } catch {
-    // Ignore storage failures (private mode, quota, etc.)
-  }
-}
-
 const SETTINGS_STORAGE_KEY = 'mapmemo.gameSettings'
 const isValidModeCount = (value: unknown): value is number =>
   typeof value === 'number' &&
@@ -57,20 +24,42 @@ const isValidSettings = (value: unknown): value is GameSettings => {
   return isValidModeCount(candidate.modeCount)
 }
 
+// TODO: move into generic utility that takes isValidCheck, storage key
 export const loadGameSettings = (): GameSettings | null => {
-  const parsed = loadFromStorage(SETTINGS_STORAGE_KEY, isValidSettings)
-  if (!parsed) {
+  if (typeof window === 'undefined') {
     return null
   }
-  return {
-    modeCount: parsed.modeCount ?? MODE_OPTIONS[0]?.value ?? 10,
-    selectedAreas: normalizeSelectedAreas(parsed.selectedAreas),
+  try {
+    const raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY)
+    if (!raw) {
+      return null
+    }
+    const parsed = JSON.parse(raw)
+    if (!isValidSettings(parsed)) {
+      return null
+    }
+    const candidate = parsed as Partial<GameSettings>
+    return {
+      modeCount: candidate.modeCount ?? MODE_OPTIONS[0]?.value ?? 10,
+      selectedAreas: normalizeSelectedAreas(candidate.selectedAreas),
+    }
+  } catch {
+    return null
   }
 }
 
-export const saveGameSettings = (settings: GameSettings): void => {
-  saveToStorage(SETTINGS_STORAGE_KEY, {
-    modeCount: settings.modeCount,
-    selectedAreas: settings.selectedAreas,
-  })
+// TODO: same as todo for loadGameSettings
+export const saveGameSettings = (settings: GameSettings) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+  try {
+    const payload = {
+      modeCount: settings.modeCount,
+      selectedAreas: settings.selectedAreas,
+    }
+    window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload))
+  } catch {
+    // Ignore storage failures (private mode, quota, etc.)
+  }
 }
