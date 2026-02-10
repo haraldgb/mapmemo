@@ -39,3 +39,29 @@ jobs:
       - name: Test
         working-directory: frontend
         run: pnpm test
+
+  backend-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore backend dependencies
+        working-directory: backend
+        run: dotnet restore MapMemo.Api.Tests/MapMemo.Api.Tests.csproj
+
+      - name: Format check (API)
+        working-directory: backend
+        run: dotnet format MapMemo.Api/MapMemo.Api.csproj --verify-no-changes
+
+      - name: Format check (Tests)
+        working-directory: backend
+        run: dotnet format MapMemo.Api.Tests/MapMemo.Api.Tests.csproj --verify-no-changes
+
+      - name: Run backend tests
+        working-directory: backend
+        run: dotnet test MapMemo.Api.Tests/MapMemo.Api.Tests.csproj --no-restore
