@@ -134,7 +134,12 @@ export const useFeaturesInPlay = ({ gameState }: Props) => {
         setAllFeatures(loadedFeatures)
       }
 
-      void loadGeoJson()
+      void loadGeoJson().catch((error) => {
+        if (error?.name === 'AbortError' && controller.signal.aborted) {
+          return
+        }
+        throw error
+      })
 
       return () => {
         isActive = false

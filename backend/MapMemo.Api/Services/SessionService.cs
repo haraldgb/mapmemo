@@ -46,6 +46,7 @@ public sealed class SessionService : ISessionService {
     public bool HasValidSession(HttpContext context) {
         if (!context.Request.Cookies.TryGetValue(_options.CookieName, out var existingId) ||
             string.IsNullOrWhiteSpace(existingId)) {
+            // keep until cookies stop misbehaving
             Console.WriteLine("No session id found in cookies");
             return false;
         }
