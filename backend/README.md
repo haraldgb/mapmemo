@@ -27,6 +27,10 @@ Database setup (local):
 -   Create DB (once): `createdb -U postgres(or other user) mapmemo`
 -   Apply schema: `psql -U postgres(or other user) -d mapmemo -f backend/db/schema.sql`
 
+DB population:
+
+-   The database population process is proprietary. If you are interested, contact the repository owner.
+
 Session notes:
 
 -   Session id is issued as an HttpOnly cookie (`mapmemo_session_id` by default).
