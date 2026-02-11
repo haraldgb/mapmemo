@@ -61,18 +61,17 @@ export const GMap = ({
       if (!map || !markerLibrary?.AdvancedMarkerElement) {
         return
       }
-      // TODO: assumes that tiles are added. What if none are?
-      const listener = google.maps.event.addListenerOnce(
-        map,
-        'tilesloaded',
-        () => {
-          setIsMapReady(true)
-          onMapReady({
-            map,
-            AdvancedMarkerElement: markerLibrary.AdvancedMarkerElement,
-          })
-        },
-      )
+      // Wait for tiles to finish loading when the map has a tile layer,
+      // otherwise fall back to 'idle' which fires after initial render.
+      const hasTiles = Boolean(map.getMapTypeId())
+      const event = hasTiles ? 'tilesloaded' : 'idle'
+      const listener = google.maps.event.addListenerOnce(map, event, () => {
+        setIsMapReady(true)
+        onMapReady({
+          map,
+          AdvancedMarkerElement: markerLibrary.AdvancedMarkerElement,
+        })
+      })
       return () => {
         listener.remove()
       }
