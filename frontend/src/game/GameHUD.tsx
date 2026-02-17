@@ -4,12 +4,10 @@ import type { GameState } from './hooks/useGameState'
 
 type GameHUDProps = {
   gameState: GameState
+  formattedTime: string
 }
 
-/**
- * Game overlay that displays the game prompt and score
- */
-export const GameHUD = ({ gameState }: GameHUDProps) => {
+export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
   const {
     promptText,
     correctCount: correctAttemptCount,
@@ -35,12 +33,15 @@ export const GameHUD = ({ gameState }: GameHUDProps) => {
         {scorePercent}%<span className='mx-2'>-</span>
         <span className={s_seed}>Seed: {seed}</span>
       </div>
+      <div className={s_timer}>{formattedTime}</div>
     </div>
   )
 }
 
 const s_ui_container =
-  'pointer-events-none absolute inset-x-4 top-4 z-10 grid items-center gap-3 rounded-2xl bg-transparent px-4 py-3 text-center md:grid-cols-[1fr_auto_1fr]'
+  'pointer-events-none absolute inset-x-4 top-4 z-10 grid items-center gap-3 rounded-2xl bg-transparent px-4 py-3 text-center md:grid-cols-[1fr_auto_1fr] md:pr-16'
 const s_prompt = 'text-lg font-semibold text-slate-900'
 const s_score_container = 'text-sm font-medium text-slate-500 md:text-center'
 const s_seed = 'font-mono tracking-wide text-slate-400'
+const s_timer =
+  'text-lg font-semibold tabular-nums text-slate-700 md:text-right'
