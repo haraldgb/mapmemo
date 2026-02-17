@@ -6,6 +6,9 @@ import { MODE_OPTIONS } from '../consts'
 import { ConfirmResetPopup } from '../../components/ConfirmResetPopup'
 import type { GameSettings as GameSettingsModel } from './settingsTypes'
 import { AreaDropdown } from './AreaDropdown'
+import { isValidSeed, randomSeed } from '../utils'
+
+const PRESET_SEEDS = ['dickbutt', 'kumquats', 'oslobest'] as const
 
 interface IProps {
   isGameActive: boolean
@@ -32,6 +35,17 @@ export const GameSettings = ({
   const isAreaFilterActive = selectedAreaCount > 0
   const areaButtonLabel =
     selectedAreaCount === 0 ? 'All areas' : `${selectedAreaCount} selected`
+
+  const isSeedValid = isValidSeed(draftSettings.seed)
+
+  const handleSeedChange = (value: string) => {
+    const filtered = value.replace(/[^a-z0-9]/gi, '').toLowerCase()
+    setDraftSettings((prev) => ({ ...prev, seed: filtered }))
+  }
+
+  const handleRandomizeSeed = () => {
+    setDraftSettings((prev) => ({ ...prev, seed: randomSeed() }))
+  }
 
   const toggleAreaSelection = (areaId: string) => {
     setDraftSettings((prev) => {
@@ -114,6 +128,39 @@ export const GameSettings = ({
         </div>
       </div>
       <div className={s_section}>
+        <div className={s_label}>Seed</div>
+        <div className={s_seed_row}>
+          <input
+            type='text'
+            value={draftSettings.seed}
+            onChange={(e) => handleSeedChange(e.target.value)}
+            maxLength={8}
+            className={sf_seed_input(isSeedValid)}
+          />
+          <button
+            type='button'
+            onClick={handleRandomizeSeed}
+            className={s_secondary_button}
+          >
+            Randomize
+          </button>
+        </div>
+        <div className={s_preset_row}>
+          {PRESET_SEEDS.map((preset) => (
+            <button
+              key={preset}
+              type='button'
+              onClick={() =>
+                setDraftSettings((prev) => ({ ...prev, seed: preset }))
+              }
+              className={sf_preset_button(draftSettings.seed === preset)}
+            >
+              {preset}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className={s_section}>
         <div className={s_label}>Area</div>
         <AreaDropdown
           label={areaButtonLabel}
@@ -140,7 +187,8 @@ export const GameSettings = ({
         <button
           type='button'
           onClick={handleApplyClick}
-          className={s_primary_button}
+          disabled={!isSeedValid}
+          className={sf_primary_button(isSeedValid)}
         >
           Apply
         </button>
@@ -162,8 +210,26 @@ const sf_option_button = (isSelected: boolean, isDisabled: boolean) =>
       ? 'border-purple-600 bg-purple-600 text-white'
       : 'border-slate-300 bg-white text-slate-700'
   } ${isDisabled ? 'cursor-not-allowed' : 'hover:border-slate-400'}`
+const s_seed_row = 'mt-2 flex items-center gap-2'
+const s_preset_row = 'mt-1.5 flex flex-wrap gap-1.5'
+const sf_preset_button = (isActive: boolean) =>
+  `rounded-full border px-2.5 py-0.5 font-mono text-xs ${
+    isActive
+      ? 'border-purple-600 bg-purple-50 text-purple-700'
+      : 'border-slate-200 text-slate-500 hover:border-slate-400'
+  }`
+const sf_seed_input = (isValid: boolean) =>
+  `w-full rounded-md border px-3 py-1.5 font-mono text-sm tracking-widest ${
+    isValid
+      ? 'border-slate-300 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500'
+      : 'border-amber-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500'
+  }`
 const s_actions = 'mt-4 flex items-center justify-end gap-2'
-const s_primary_button =
-  'rounded-md bg-purple-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-purple-700'
+const sf_primary_button = (isEnabled: boolean) =>
+  `rounded-md px-3 py-1.5 text-sm font-semibold text-white ${
+    isEnabled
+      ? 'bg-purple-600 hover:bg-purple-700'
+      : 'cursor-not-allowed bg-purple-300'
+  }`
 const s_secondary_button =
   'rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-slate-400 hover:bg-slate-50'

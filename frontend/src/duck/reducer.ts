@@ -1,7 +1,13 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import type { AreaOption, GameSettings } from '../game/settings/settingsTypes'
-import { DEFAULT_GAME_SETTINGS } from '../game/consts'
+import { MODE_OPTIONS } from '../game/consts'
+import { randomSeed } from '../game/utils'
 
+export const DEFAULT_GAME_SETTINGS: GameSettings = {
+  modeCount: MODE_OPTIONS[0]?.value ?? 10,
+  selectedAreas: [],
+  seed: randomSeed(),
+}
 export interface MapmemoState {
   gameSettings: GameSettings
   areaOptions: AreaOption[]
