@@ -8,6 +8,8 @@ import type { GameSettings as GameSettingsModel } from './settingsTypes'
 import { AreaDropdown } from './AreaDropdown'
 import { isValidSeed, randomSeed } from '../utils'
 
+const PRESET_SEEDS = ['dickbutt', 'kumquats', 'oslobest'] as const
+
 interface IProps {
   isGameActive: boolean
   onClose: () => void
@@ -143,6 +145,20 @@ export const GameSettings = ({
             Randomize
           </button>
         </div>
+        <div className={s_preset_row}>
+          {PRESET_SEEDS.map((preset) => (
+            <button
+              key={preset}
+              type='button'
+              onClick={() =>
+                setDraftSettings((prev) => ({ ...prev, seed: preset }))
+              }
+              className={sf_preset_button(draftSettings.seed === preset)}
+            >
+              {preset}
+            </button>
+          ))}
+        </div>
       </div>
       <div className={s_section}>
         <div className={s_label}>Area</div>
@@ -195,6 +211,13 @@ const sf_option_button = (isSelected: boolean, isDisabled: boolean) =>
       : 'border-slate-300 bg-white text-slate-700'
   } ${isDisabled ? 'cursor-not-allowed' : 'hover:border-slate-400'}`
 const s_seed_row = 'mt-2 flex items-center gap-2'
+const s_preset_row = 'mt-1.5 flex flex-wrap gap-1.5'
+const sf_preset_button = (isActive: boolean) =>
+  `rounded-full border px-2.5 py-0.5 font-mono text-xs ${
+    isActive
+      ? 'border-purple-600 bg-purple-50 text-purple-700'
+      : 'border-slate-200 text-slate-500 hover:border-slate-400'
+  }`
 const sf_seed_input = (isValid: boolean) =>
   `w-full rounded-md border px-3 py-1.5 font-mono text-sm tracking-widest ${
     isValid
