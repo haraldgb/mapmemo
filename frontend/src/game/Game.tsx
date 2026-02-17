@@ -7,6 +7,7 @@ import { useFeaturesInPlay } from './hooks/useFeaturesInPlay.ts'
 import { useGameState } from './hooks/useGameState.ts'
 import { useGameStyling } from './hooks/useGameStyling'
 import { useFeatureLabels } from './hooks/useFeatureLabels'
+import { useGameTimer } from './hooks/useGameTimer.ts'
 import { GameUI } from './GameUI.tsx'
 import type { MapContext } from './types.ts'
 
@@ -23,9 +24,20 @@ export const Game = () => {
   const gameStyling = useGameStyling({ gameState, mapContext })
   useFeatureLabels({ gameState, mapContext, features: featuresInPlay })
 
+  const isTimerRunning =
+    featuresInPlay.length > 0 && isGMapReady && !gameState.isComplete
+  const { formattedTime, resetTimer } = useGameTimer({
+    isRunning: isTimerRunning,
+  })
+
   const handleMapReady = (payload: MapContext) => {
     setMapContext(payload)
     setIsGMapReady(true)
+  }
+
+  const handleResetGameState = () => {
+    gameState.resetGameState()
+    resetTimer()
   }
 
   return (
@@ -39,10 +51,13 @@ export const Game = () => {
       >
         {isGMapReady && (
           <>
-            <GameHUD gameState={gameState} />
+            <GameHUD
+              gameState={gameState}
+              formattedTime={formattedTime}
+            />
             <GameUI
               isGameActive={true}
-              resetGameState={gameState.resetGameState}
+              resetGameState={handleResetGameState}
             />
           </>
         )}
