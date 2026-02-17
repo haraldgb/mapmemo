@@ -82,10 +82,10 @@ const getPointsCenter = (points: LatLng[]): google.maps.LatLngLiteral => {
   }
 }
 
-const createPolygonLabelElement = (label: string) => {
+const createPolygonLabelElement = (label: string, color = '#3f3f3f') => {
   const element = document.createElement('div')
   element.textContent = label
-  element.style.color = '#3f3f3f'
+  element.style.color = color
   element.style.fontSize = '14px'
   element.style.fontWeight = '500'
   element.style.whiteSpace = 'nowrap'
@@ -97,6 +97,7 @@ export const createPolygonLabelMarker = (
   map: google.maps.Map,
   feature: google.maps.Data.Feature,
   AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement,
+  color?: string,
 ): google.maps.marker.AdvancedMarkerElement => {
   const label = getFeatureProperty(feature, SUB_AREA_NAME_KEY)
 
@@ -109,7 +110,7 @@ export const createPolygonLabelMarker = (
   return new AdvancedMarkerElement({
     position: center,
     map,
-    content: createPolygonLabelElement(label),
+    content: createPolygonLabelElement(label, color),
     title: label,
   })
 }
