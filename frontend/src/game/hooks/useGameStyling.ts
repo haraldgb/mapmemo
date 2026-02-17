@@ -72,7 +72,7 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
       mapRef.current = mapContext?.map ?? null
       refreshStyles()
     },
-    [mapContext],
+    [mapContext, refreshStyles],
   )
 
   useEffect(
@@ -110,11 +110,7 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
         refreshStyles()
       }, 650)
     },
-    [
-      gameState.prevGuess.id,
-      gameState.prevGuess.isCorrect,
-      gameState.prevGuess.consecutiveIncorrectGuesses,
-    ],
+    [gameState.prevGuess, refreshStyles],
   )
 
   useEffect(function cleanupOnUnmount() {
