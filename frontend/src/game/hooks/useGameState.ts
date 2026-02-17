@@ -1,9 +1,10 @@
 import { useRef, useState, type MutableRefObject } from 'react'
+import { useSelector } from 'react-redux'
 import { ID_KEY, SUB_AREA_NAME_KEY } from '../consts'
 import { getFeatureProperty } from '../../utils/polygons'
 import { createSeededRng, getAreaId, shuffleEntriesWithRng } from '../utils'
 import type { GameEntry } from '../types'
-import { useSeedFromUrl } from './utilHooks'
+import type { RootState } from '../../store'
 
 type PrevGuess = {
   id: string
@@ -36,7 +37,9 @@ type Props = {
 }
 
 export const useGameState = ({ features }: Props): GameState => {
-  const rngSeed = useSeedFromUrl()
+  const rngSeed = useSelector(
+    (state: RootState) => state.mapmemo.gameSettings.seed,
+  )
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)

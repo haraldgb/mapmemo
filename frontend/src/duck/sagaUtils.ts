@@ -1,5 +1,6 @@
 import { MODE_OPTIONS } from '../game/consts'
 import type { GameSettings } from '../game/settings/settingsTypes'
+import { isValidSeed, randomSeed } from '../game/utils'
 
 const SETTINGS_STORAGE_KEY = 'mapmemo.gameSettings'
 const isValidModeCount = (value: unknown): value is number =>
@@ -39,9 +40,14 @@ export const loadGameSettings = (): GameSettings | null => {
       return null
     }
     const candidate = parsed as Partial<GameSettings>
+    const seedValue =
+      typeof candidate.seed === 'string' && isValidSeed(candidate.seed)
+        ? candidate.seed
+        : randomSeed()
     return {
       modeCount: candidate.modeCount ?? MODE_OPTIONS[0]?.value ?? 10,
       selectedAreas: normalizeSelectedAreas(candidate.selectedAreas),
+      seed: seedValue,
     }
   } catch {
     return null
@@ -57,6 +63,7 @@ export const saveGameSettings = (settings: GameSettings) => {
     const payload = {
       modeCount: settings.modeCount,
       selectedAreas: settings.selectedAreas,
+      seed: settings.seed,
     }
     window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload))
   } catch {

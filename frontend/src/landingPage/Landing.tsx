@@ -11,7 +11,7 @@ export const Landing = () => {
         mode to test your knowledge of the layout of Oslo.
       </p>
       <LinkButton
-        to='/game?seed=dickbutt'
+        to='/game'
         label='Try the Game'
       />
     </section>
