@@ -25,6 +25,7 @@ export type GameState = {
   incorrectCount: number
   scorePercent: number
   isGameActive: boolean
+  isComplete: boolean
   registerFeatureClick: (feature: google.maps.Data.Feature) => void
   resetGameState: () => void
   prevGuess: PrevGuess
@@ -146,6 +147,7 @@ export const useGameState = ({ features }: Props): GameState => {
     incorrectCount,
     scorePercent,
     isGameActive,
+    isComplete,
     registerFeatureClick: handleFeatureClick,
     resetGameState,
     prevGuess,
