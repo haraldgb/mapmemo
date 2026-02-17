@@ -59,7 +59,7 @@ export const useFeatureLabels = ({
         labelMarkersRef.current.set(id, marker)
       }
     },
-    [features, gameState.prevGuess.id, gameState.prevGuess.isCorrect],
+    [features, gameState.prevGuess],
   )
 
   useEffect(
