@@ -10,4 +10,4 @@ A geography memorization game. Users learn city neighborhoods and road layouts b
 
 ## Workflow
 
-- Push is authorized after landing (see `AGENTS.md` for the landing workflow).
+- Push is authorized after landing.
