@@ -25,19 +25,52 @@ export const useFeatureLabels = ({
   const labelMarkersRef = useRef(
     new Map<string, google.maps.marker.AdvancedMarkerElement>(),
   )
+  const wrongClickMarkerRef =
+    useRef<google.maps.marker.AdvancedMarkerElement | null>(null)
 
   const clearMarkers = () => {
     labelMarkersRef.current.forEach((marker) => {
       marker.map = null
     })
     labelMarkersRef.current.clear()
+    clearWrongClickMarker()
   }
+
+  const clearWrongClickMarker = () => {
+    if (wrongClickMarkerRef.current) {
+      wrongClickMarkerRef.current.map = null
+      wrongClickMarkerRef.current = null
+    }
+  }
+
+  useEffect(
+    function syncWrongClickLabel() {
+      const { isCorrect, clickedFeature } = gameState.prevGuess
+      clearWrongClickMarker()
+
+      if (isCorrect || !clickedFeature) {
+        return
+      }
+      const map = mapRef.current
+      const MarkerConstructor = markerConstructorRef.current
+      if (!map || !MarkerConstructor) {
+        return
+      }
+      const marker = createPolygonLabelMarker(
+        map,
+        clickedFeature,
+        MarkerConstructor,
+        '#dc2626',
+      )
+      wrongClickMarkerRef.current = marker
+    },
+    [gameState.prevGuess],
+  )
 
   useEffect(
     function syncLabels() {
       const { id, isCorrect } = gameState.prevGuess
       if (!isCorrect || !id) {
-        // sync is only needed on a correct guess
         return
       }
       const map = mapRef.current
@@ -64,12 +97,7 @@ export const useFeatureLabels = ({
 
   useEffect(
     function resetLabels() {
-      if (
-        gameState.prevGuess === INITIAL_PREV_GUESS
-        // gameState.correctCount === 0 &&
-        // gameState.incorrectCount === 0 &&
-        // isInitialPrevGuess(gameState.prevGuess)
-      ) {
+      if (gameState.prevGuess === INITIAL_PREV_GUESS) {
         clearMarkers()
       }
     },

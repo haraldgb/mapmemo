@@ -9,11 +9,13 @@ type PrevGuess = {
   id: string
   isCorrect: boolean
   consecutiveIncorrectGuesses: number
+  clickedFeature: google.maps.Data.Feature | null
 }
 export const INITIAL_PREV_GUESS: PrevGuess = {
   id: '',
   isCorrect: true,
   consecutiveIncorrectGuesses: 0,
+  clickedFeature: null,
 }
 
 export type GameState = {
@@ -105,6 +107,7 @@ export const useGameState = ({ features }: Props): GameState => {
         id: targetEntry.id,
         isCorrect: false,
         consecutiveIncorrectGuesses: prevGuess.consecutiveIncorrectGuesses + 1,
+        clickedFeature: feature,
       })
       return
     }
@@ -120,6 +123,7 @@ export const useGameState = ({ features }: Props): GameState => {
       id: clickedId,
       isCorrect: true,
       consecutiveIncorrectGuesses: 0,
+      clickedFeature: null,
     })
 
     setCurrentIndex(currentIndex + 1)
