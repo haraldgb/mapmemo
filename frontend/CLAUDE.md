@@ -201,6 +201,10 @@ Use these as examples of "how we do things here":
 - **`game/Game.tsx`** — hook composition, minimal component body
 - **`game/settings/GameSettings.tsx`** — form state, Tailwind `s_`/`sf_` pattern
 
+## Issue Tracking
+
+This project uses **bd** (beads) for lightweight, git-native issue tracking. Issues live in `.beads/issues.jsonl`. See `AGENTS.md` for the `bd` CLI reference and session completion workflow.
+
 ## Known Tech Debt
 
 - Oslo-specific logic hardcoded in sagas (TODO: generalize for other cities)
