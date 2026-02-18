@@ -4,7 +4,7 @@ import { ID_KEY, SUB_AREA_NAME_KEY } from '../consts'
 import { getFeatureProperty } from '../../utils/polygons'
 import { createSeededRng, getAreaId, shuffleEntriesWithRng } from '../utils'
 import type { GameEntry } from '../types'
-import type { GameMode } from '../settings/settingsTypes'
+import type { GameDifficulty, GameMode } from '../settings/settingsTypes'
 import type { RootState } from '../../store'
 
 type PrevGuess = {
@@ -22,6 +22,8 @@ export const INITIAL_PREV_GUESS: PrevGuess = {
 
 export type GameState = {
   mode: GameMode
+  difficulty: GameDifficulty
+  areaLabels: string[]
   promptText: string
   correctCount: number
   incorrectCount: number
@@ -42,9 +44,11 @@ type Props = {
 }
 
 export const useGameState = ({ features }: Props): GameState => {
-  const { seed: rngSeed, mode } = useSelector(
-    (state: RootState) => state.mapmemo.gameSettings,
-  )
+  const {
+    seed: rngSeed,
+    mode,
+    difficulty,
+  } = useSelector((state: RootState) => state.mapmemo.gameSettings)
 
   const [currentIndex, setCurrentIndex] = useState(0)
   const [correctCount, setCorrectCount] = useState(0)
@@ -66,6 +70,7 @@ export const useGameState = ({ features }: Props): GameState => {
     return seededEntries
   }
   const entries = createSeededEntries()
+  const areaLabels = entries.map((entry) => entry.label)
 
   const scorePercent =
     answeredCount === 0 ? 0 : Math.round((correctCount / answeredCount) * 100)
@@ -187,6 +192,8 @@ export const useGameState = ({ features }: Props): GameState => {
 
   return {
     mode,
+    difficulty,
+    areaLabels,
     promptText,
     correctCount,
     incorrectCount,

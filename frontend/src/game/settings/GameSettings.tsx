@@ -2,7 +2,12 @@ import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
 import { mapmemoActions } from '../../duck/reducer'
-import { AREA_COUNT_OPTIONS, MODE_OPTIONS, SEED_LENGTH } from '../consts'
+import {
+  AREA_COUNT_OPTIONS,
+  DIFFICULTY_OPTIONS,
+  MODE_OPTIONS,
+  SEED_LENGTH,
+} from '../consts'
 import { ConfirmResetPopup } from '../../components/ConfirmResetPopup'
 import type { GameSettings as GameSettingsModel } from './settingsTypes'
 import { AreaDropdown } from './AreaDropdown'
@@ -120,6 +125,33 @@ export const GameSettings = ({
                   }))
                 }
                 className={sf_option_button(isSelected, false)}
+              >
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+      <div className={s_section}>
+        <div className={s_label}>Difficulty</div>
+        <div className={sf_option_group(draftSettings.mode !== 'name')}>
+          {DIFFICULTY_OPTIONS.map((option) => {
+            const isSelected = draftSettings.difficulty === option.value
+            return (
+              <button
+                key={option.value}
+                type='button'
+                disabled={draftSettings.mode !== 'name'}
+                onClick={() =>
+                  setDraftSettings((prev) => ({
+                    ...prev,
+                    difficulty: option.value,
+                  }))
+                }
+                className={sf_option_button(
+                  isSelected,
+                  draftSettings.mode !== 'name',
+                )}
               >
                 {option.label}
               </button>
