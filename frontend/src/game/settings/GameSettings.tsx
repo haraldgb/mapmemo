@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
 import { mapmemoActions } from '../../duck/reducer'
-import { AREA_COUNT_OPTIONS, SEED_LENGTH } from '../consts'
+import { AREA_COUNT_OPTIONS, MODE_OPTIONS, SEED_LENGTH } from '../consts'
 import { ConfirmResetPopup } from '../../components/ConfirmResetPopup'
 import type { GameSettings as GameSettingsModel } from './settingsTypes'
 import { AreaDropdown } from './AreaDropdown'
@@ -104,6 +104,29 @@ export const GameSettings = ({
       className={s_container}
     >
       <div className={s_title}>Game settings</div>
+      <div className={s_section}>
+        <div className={s_label}>Mode</div>
+        <div className={sf_option_group(false)}>
+          {MODE_OPTIONS.map((option) => {
+            const isSelected = draftSettings.mode === option.value
+            return (
+              <button
+                key={option.value}
+                type='button'
+                onClick={() =>
+                  setDraftSettings((prev) => ({
+                    ...prev,
+                    mode: option.value,
+                  }))
+                }
+                className={sf_option_button(isSelected, false)}
+              >
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
       <div className={s_section}>
         <div className={s_label}>Area count</div>
         <div className={sf_option_group(isAreaFilterActive)}>
