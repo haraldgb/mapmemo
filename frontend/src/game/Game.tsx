@@ -11,7 +11,7 @@ import { GameUI } from './GameUI.tsx'
 import type { MapContext } from './types.ts'
 
 export const Game = () => {
-  const { areaCount, selectedAreas } = useSelector(
+  const { areaCount, selectedAreas, mode } = useSelector(
     (state: RootState) => state.mapmemo.gameSettings,
   )
   const featuresInPlay = useFeaturesInPlay({
@@ -36,7 +36,9 @@ export const Game = () => {
       <GMap
         spinUntilReady
         features={featuresInPlay}
-        onFeatureClick={gameState.registerFeatureClick}
+        onFeatureClick={
+          mode === 'click' ? gameState.registerFeatureClick : undefined
+        }
         onFeatureHover={gameStyling.registerFeatureHover}
         onMapReady={(payload) => handleMapReady(payload)}
       >

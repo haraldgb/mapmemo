@@ -56,6 +56,21 @@ export const FLASH_STYLE: google.maps.Data.StyleOptions = {
   fillOpacity: 0.55,
 }
 
+export const TARGET_STYLE: google.maps.Data.StyleOptions = {
+  ...OUTLINE_STYLE,
+  strokeColor: '#3b82f6',
+  strokeWeight: 2.5,
+  fillColor: '#3b82f6',
+  fillOpacity: 0.2,
+}
+
+export const INCORRECT_FLASH_STYLE: google.maps.Data.StyleOptions = {
+  ...OUTLINE_STYLE,
+  strokeColor: '#ef4444',
+  fillColor: '#ef4444',
+  fillOpacity: 0.4,
+}
+
 export const MODE_OPTIONS = [
   { label: 'Click', value: 'click' },
   { label: 'Name', value: 'name' },
