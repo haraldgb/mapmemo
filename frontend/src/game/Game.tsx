@@ -4,10 +4,9 @@ import type { RootState } from '../store'
 import { GMap } from '../components/GMap'
 import { GameHUD } from './GameHUD.tsx'
 import { useFeaturesInPlay } from './hooks/useFeaturesInPlay.ts'
-import { useGameState } from './hooks/useGameState.ts'
+import { useGame } from './hooks/useGame.ts'
 import { useGameStyling } from './hooks/useGameStyling'
 import { useFeatureLabels } from './hooks/useFeatureLabels'
-import { useGameTimer } from './hooks/useGameTimer.ts'
 import { GameUI } from './GameUI.tsx'
 import type { MapContext } from './types.ts'
 
@@ -20,24 +19,16 @@ export const Game = () => {
   })
   const [isGMapReady, setIsGMapReady] = useState(false)
   const [mapContext, setMapContext] = useState<MapContext>(null)
-  const gameState = useGameState({ features: featuresInPlay })
+  const gameState = useGame({
+    features: featuresInPlay,
+    isMapReady: isGMapReady,
+  })
   const gameStyling = useGameStyling({ gameState, mapContext })
   useFeatureLabels({ gameState, mapContext, features: featuresInPlay })
-
-  const isTimerRunning =
-    featuresInPlay.length > 0 && isGMapReady && !gameState.isComplete
-  const { formattedTime, resetTimer } = useGameTimer({
-    isRunning: isTimerRunning,
-  })
 
   const handleMapReady = (payload: MapContext) => {
     setMapContext(payload)
     setIsGMapReady(true)
-  }
-
-  const handleResetGameState = () => {
-    gameState.resetGameState()
-    resetTimer()
   }
 
   return (
@@ -53,11 +44,11 @@ export const Game = () => {
           <>
             <GameHUD
               gameState={gameState}
-              formattedTime={formattedTime}
+              formattedTime={gameState.formattedTime}
             />
             <GameUI
               isGameActive={true}
-              resetGameState={handleResetGameState}
+              resetGameState={gameState.resetGame}
             />
           </>
         )}
