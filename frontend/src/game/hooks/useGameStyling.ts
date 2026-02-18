@@ -6,7 +6,8 @@ import {
   HOVER_STYLE,
   INCORRECT_FLASH_STYLE,
   OUTLINE_STYLE,
-  TARGET_STYLE,
+  TARGET_STYLE_DIM,
+  TARGET_STYLE_BRIGHT,
   ID_KEY,
 } from '../consts'
 import { getFeatureProperty } from '../../utils/polygons'
@@ -24,6 +25,9 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
   const flashIdRef = useRef<string | null>(null)
   const flashIsIncorrect = useRef(false)
   const flashTimeoutRef = useRef<number | null>(null)
+  // Toggles between dim/bright for the target area pulse animation.
+  const targetPulseBright = useRef(false)
+  const pulseIntervalRef = useRef<number | null>(null)
 
   const getStyleForFeature = (feature: google.maps.Data.Feature) => {
     const id = getFeatureProperty(feature, ID_KEY)
@@ -39,7 +43,7 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
       !gameState.correctlyGuessedIdsRef.current.has(id) &&
       !gameState.lateGuessedIdsRef.current.has(id)
     ) {
-      return TARGET_STYLE
+      return targetPulseBright.current ? TARGET_STYLE_BRIGHT : TARGET_STYLE_DIM
     }
     if (gameState.correctlyGuessedIdsRef.current.has(id)) {
       return CORRECT_STYLE
@@ -127,10 +131,36 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
     [gameState.prevGuess, refreshStyles],
   )
 
+  useEffect(
+    function pulseTargetArea() {
+      if (gameState.mode !== 'name' || gameState.isComplete || !gameState.currentEntry) {
+        if (pulseIntervalRef.current) {
+          window.clearInterval(pulseIntervalRef.current)
+          pulseIntervalRef.current = null
+        }
+        return
+      }
+      pulseIntervalRef.current = window.setInterval(() => {
+        targetPulseBright.current = !targetPulseBright.current
+        refreshStyles()
+      }, 800)
+      return () => {
+        if (pulseIntervalRef.current) {
+          window.clearInterval(pulseIntervalRef.current)
+          pulseIntervalRef.current = null
+        }
+      }
+    },
+    [gameState.mode, gameState.isComplete, gameState.currentEntry, refreshStyles],
+  )
+
   useEffect(function cleanupOnUnmount() {
     return () => {
       if (flashTimeoutRef.current) {
         window.clearTimeout(flashTimeoutRef.current)
+      }
+      if (pulseIntervalRef.current) {
+        window.clearInterval(pulseIntervalRef.current)
       }
     }
   }, [])
