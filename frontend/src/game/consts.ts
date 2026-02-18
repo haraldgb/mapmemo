@@ -56,6 +56,11 @@ export const FLASH_STYLE: google.maps.Data.StyleOptions = {
   fillOpacity: 0.55,
 }
 
+export const MODE_OPTIONS = [
+  { label: 'Click', value: 'click' },
+  { label: 'Name', value: 'name' },
+] as const
+
 export const AREA_COUNT_OPTIONS = [
   { label: '10', value: 10 },
   { label: '25', value: 25 },

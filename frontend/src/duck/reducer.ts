@@ -4,6 +4,7 @@ import { AREA_COUNT_OPTIONS } from '../game/consts'
 import { randomSeed } from '../game/utils'
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
+  mode: 'click',
   areaCount: AREA_COUNT_OPTIONS[0]?.value ?? 10,
   selectedAreas: [],
   seed: randomSeed(),

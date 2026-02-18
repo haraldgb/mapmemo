@@ -1,4 +1,7 @@
+export type GameMode = 'click' | 'name'
+
 export type GameSettings = {
+  mode: GameMode
   areaCount: number
   selectedAreas: string[]
   seed: string
