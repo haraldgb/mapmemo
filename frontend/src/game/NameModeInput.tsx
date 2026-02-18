@@ -193,8 +193,12 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
                   setPreviewValue('')
                 }}
                 className={sf_dropdown_item(index === highlightedIndex)}
+                title={
+                  index === 0 ? 'Press Tab to submit first suggestion' : ''
+                }
               >
-                {label}
+                <span>{label}</span>
+                {index === 0 && <span className={s_tab_hint}>&#x21E5;</span>}
               </li>
             ))}
           </ul>
@@ -215,8 +219,9 @@ const sf_name_input = (isCorrectState: boolean) =>
 const s_dropdown =
   'absolute left-0 right-0 z-20 mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg'
 const sf_dropdown_item = (isHighlighted: boolean) =>
-  `cursor-pointer px-4 py-2 text-left text-sm ${
+  `flex cursor-pointer items-center justify-between px-4 py-2 text-left text-sm ${
     isHighlighted
       ? 'bg-blue-50 text-blue-700'
       : 'text-slate-700 hover:bg-slate-50'
   }`
+const s_tab_hint = 'text-base text-slate-400'
