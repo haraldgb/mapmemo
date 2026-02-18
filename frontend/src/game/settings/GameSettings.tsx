@@ -2,7 +2,14 @@ import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
 import { mapmemoActions } from '../../duck/reducer'
-import { MODE_OPTIONS, SEED_LENGTH } from '../consts'
+import {
+  AREA_COUNT_OPTIONS,
+  DIFFICULTY_DESCRIPTIONS,
+  DIFFICULTY_OPTIONS,
+  MODE_DESCRIPTIONS,
+  MODE_OPTIONS,
+  SEED_LENGTH,
+} from '../consts'
 import { ConfirmResetPopup } from '../../components/ConfirmResetPopup'
 import type { GameSettings as GameSettingsModel } from './settingsTypes'
 import { AreaDropdown } from './AreaDropdown'
@@ -106,9 +113,61 @@ export const GameSettings = ({
       <div className={s_title}>Game settings</div>
       <div className={s_section}>
         <div className={s_label}>Mode</div>
+        <div className={sf_option_group(false)}>
+          {MODE_OPTIONS.map((option) => {
+            const isSelected = draftSettings.mode === option.value
+            return (
+              <button
+                key={option.value}
+                type='button'
+                title={MODE_DESCRIPTIONS[option.value]}
+                onClick={() =>
+                  setDraftSettings((prev) => ({
+                    ...prev,
+                    mode: option.value,
+                  }))
+                }
+                className={sf_option_button(isSelected, false)}
+              >
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+      <div className={s_section}>
+        <div className={s_label}>Difficulty</div>
+        <div className={sf_option_group(draftSettings.mode !== 'name')}>
+          {DIFFICULTY_OPTIONS.map((option) => {
+            const isSelected = draftSettings.difficulty === option.value
+            return (
+              <button
+                key={option.value}
+                type='button'
+                title={DIFFICULTY_DESCRIPTIONS[option.value]}
+                disabled={draftSettings.mode !== 'name'}
+                onClick={() =>
+                  setDraftSettings((prev) => ({
+                    ...prev,
+                    difficulty: option.value,
+                  }))
+                }
+                className={sf_option_button(
+                  isSelected,
+                  draftSettings.mode !== 'name',
+                )}
+              >
+                {option.label}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+      <div className={s_section}>
+        <div className={s_label}>Area count</div>
         <div className={sf_option_group(isAreaFilterActive)}>
-          {MODE_OPTIONS.map((mode) => {
-            const isSelected = draftSettings.modeCount === mode.value
+          {AREA_COUNT_OPTIONS.map((mode) => {
+            const isSelected = draftSettings.areaCount === mode.value
             return (
               <button
                 key={mode.value}
@@ -117,7 +176,7 @@ export const GameSettings = ({
                 onClick={() =>
                   setDraftSettings((prev) => ({
                     ...prev,
-                    modeCount: mode.value,
+                    areaCount: mode.value,
                   }))
                 }
                 className={sf_option_button(isSelected, isAreaFilterActive)}

@@ -1,4 +1,4 @@
-import { LinkButton } from '../components/LinkButton'
+import { GameModeCarousel } from './GameModeCarousel'
 
 export const Landing = () => {
   return (
@@ -10,10 +10,7 @@ export const Landing = () => {
         MapMemo helps you train your mental map of your city. Jump into the game
         mode to test your knowledge of the layout of Oslo.
       </p>
-      <LinkButton
-        to='/game'
-        label='Try the Game'
-      />
+      <GameModeCarousel />
     </section>
   )
 }

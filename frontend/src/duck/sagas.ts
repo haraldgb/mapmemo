@@ -3,7 +3,11 @@ import { mapmemoActions } from './reducer'
 import type { GameSettings } from '../game/settings/settingsTypes'
 import { loadGameSettings, saveGameSettings } from './sagaUtils'
 import { DELBYDELER_GEOJSON_URL } from '../game/consts'
-import { buildAreaOptionsFromGeoJson, type OsloGeoJson } from '../game/utils'
+import {
+  buildAllSubAreaNames,
+  buildAreaOptionsFromGeoJson,
+  type OsloGeoJson,
+} from '../game/utils'
 
 function* loadAreaOptionsFromOsloGeoJson() {
   // TODO: move Oslo specific stuff to their own file / areas of files.
@@ -14,7 +18,9 @@ function* loadAreaOptionsFromOsloGeoJson() {
   // TODO: Disallow casting as soon as more geojson data is added.
   const geojson = (yield call([response, response.json])) as OsloGeoJson
   const areaOptions = buildAreaOptionsFromGeoJson(geojson)
+  const allSubAreaNames = buildAllSubAreaNames(geojson)
   yield put(mapmemoActions.setAreaOptions(areaOptions))
+  yield put(mapmemoActions.setAllSubAreaNames(allSubAreaNames))
 }
 
 function* handleInitializeApp() {

@@ -1,5 +1,10 @@
+export type GameMode = 'click' | 'name'
+export type GameDifficulty = 'beginner' | 'easy' | 'medium' | 'hard'
+
 export type GameSettings = {
-  modeCount: number
+  mode: GameMode
+  difficulty: GameDifficulty
+  areaCount: number
   selectedAreas: string[]
   seed: string
 }

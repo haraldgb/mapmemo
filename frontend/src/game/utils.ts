@@ -117,6 +117,17 @@ export const buildAreaOptionsFromGeoJson = (
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
+export const buildAllSubAreaNames = (geojson: OsloGeoJson): string[] => {
+  const names = new Set<string>()
+  for (const feature of geojson.features) {
+    const name = feature.properties[SUB_AREA_NAME_KEY]?.trim()
+    if (name) {
+      names.add(name)
+    }
+  }
+  return [...names].sort((a, b) => a.localeCompare(b))
+}
+
 export const areAreaOptionsEqual = (
   left: AreaOption[],
   right: AreaOption[],
