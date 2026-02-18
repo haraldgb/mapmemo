@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 export type GameTimer = {
-  elapsedSeconds: number
+  elapsedMs: number
   formattedTime: string
   resetTimer: () => void
 }
@@ -10,11 +10,13 @@ type Props = {
   isRunning: boolean
 }
 
+const TICK_INTERVAL_MS = 100
+
 export const useGameTimer = ({ isRunning }: Props): GameTimer => {
   // useRef needed to track start time across renders without triggering
   // re-renders. Only the interval tick updates displayed state.
   const startTimeRef = useRef<number | null>(null)
-  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const [elapsedMs, setElapsedMs] = useState(0)
 
   useEffect(
     function trackElapsedTime() {
@@ -27,11 +29,9 @@ export const useGameTimer = ({ isRunning }: Props): GameTimer => {
       }
 
       const interval = setInterval(() => {
-        const elapsed = Math.floor(
-          (Date.now() - (startTimeRef.current ?? Date.now())) / 1000,
-        )
-        setElapsedSeconds(elapsed)
-      }, 1000)
+        const elapsed = Date.now() - (startTimeRef.current ?? Date.now())
+        setElapsedMs(elapsed)
+      }, TICK_INTERVAL_MS)
 
       return () => clearInterval(interval)
     },
@@ -40,18 +40,20 @@ export const useGameTimer = ({ isRunning }: Props): GameTimer => {
 
   const resetTimer = () => {
     startTimeRef.current = null
-    setElapsedSeconds(0)
+    setElapsedMs(0)
   }
 
   return {
-    elapsedSeconds,
-    formattedTime: formatTime(elapsedSeconds),
+    elapsedMs,
+    formattedTime: formatTime(elapsedMs),
     resetTimer,
   }
 }
 
-const formatTime = (totalSeconds: number): string => {
+const formatTime = (totalMs: number): string => {
+  const totalSeconds = Math.floor(totalMs / 1000)
   const mins = Math.floor(totalSeconds / 60)
   const secs = totalSeconds % 60
-  return `${mins}:${secs.toString().padStart(2, '0')}`
+  const tenths = Math.floor((totalMs % 1000) / 100)
+  return `${mins}:${secs.toString().padStart(2, '0')}.${tenths}`
 }
