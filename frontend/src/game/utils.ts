@@ -5,11 +5,14 @@ import {
   AREA_NAME_KEY,
   ID_KEY,
   MUNICIPALITY_KEY,
+  SEED_LENGTH,
+  SEED_REGEX,
   SUB_AREA_KEY,
   SUB_AREA_NAME_KEY,
 } from './consts'
 
-export const isValidSeed = (seed: string) => seed.length === 8
+export const isValidSeed = (seed: string): boolean =>
+  seed.length === SEED_LENGTH && SEED_REGEX.test(seed)
 
 const hashSeed = (seed: string) => {
   let hash = 2166136261
@@ -31,8 +34,12 @@ export const createSeededRng = (seed: string): RandomGenerator => {
   }
 }
 
-export const randomSeed = () =>
-  Math.random().toString(36).slice(2, 10).padEnd(8, '0').slice(0, 8)
+export const randomSeed = (): string =>
+  Math.random()
+    .toString(36)
+    .slice(2, 2 + SEED_LENGTH)
+    .padEnd(SEED_LENGTH, '0')
+    .slice(0, SEED_LENGTH)
 
 export const shuffleEntriesWithRng = (
   entries: GameEntry[],
