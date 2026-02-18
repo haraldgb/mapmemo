@@ -76,6 +76,11 @@ export const MODE_OPTIONS = [
   { label: 'Name', value: 'name' },
 ] as const
 
+export const DIFFICULTY_OPTIONS = [
+  { label: 'Easy', value: 'easy' },
+  { label: 'Hard', value: 'hard' },
+] as const
+
 export const AREA_COUNT_OPTIONS = [
   { label: '10', value: 10 },
   { label: '25', value: 25 },

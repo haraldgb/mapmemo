@@ -11,6 +11,8 @@ type GameHUDProps = {
 export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
   const {
     mode,
+    difficulty,
+    areaLabels,
     promptText,
     correctCount: correctAttemptCount,
     incorrectCount: incorrectAttemptCount,
@@ -23,6 +25,7 @@ export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
     (state: RootState) => state.mapmemo.gameSettings.seed,
   )
   const [nameInput, setNameInput] = useState('')
+  const showAutocomplete = mode === 'name' && difficulty === 'easy'
 
   const handleNameSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -52,8 +55,20 @@ export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
             onChange={(e) => setNameInput(e.target.value)}
             placeholder='Type area name...'
             autoFocus
+            autoComplete='off'
+            list={showAutocomplete ? 'area-name-options' : undefined}
             className={sf_name_input(prevGuess.isCorrect)}
           />
+          {showAutocomplete && (
+            <datalist id='area-name-options'>
+              {areaLabels.map((label) => (
+                <option
+                  key={label}
+                  value={label}
+                />
+              ))}
+            </datalist>
+          )}
         </form>
       ) : (
         <div className={s_prompt}>{promptText}</div>
