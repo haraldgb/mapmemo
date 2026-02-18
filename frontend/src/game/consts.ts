@@ -97,9 +97,9 @@ export const DIFFICULTY_OPTIONS = [
 ] as const
 
 export const DIFFICULTY_DESCRIPTIONS: Record<string, string> = {
-  beginner: 'All suggestions shown immediately',
-  easy: 'Suggestions from the areas in play',
-  medium: 'Suggestions from all city areas',
+  beginner: 'Suggests only areas in play. Shows before first input',
+  easy: 'Suggests only areas in play. Shows after first input.',
+  medium: 'Suggests all areas, not only those in play.',
   hard: 'No suggestions',
 }
 
