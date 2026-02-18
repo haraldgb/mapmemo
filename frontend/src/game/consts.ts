@@ -91,6 +91,7 @@ export const MODE_DESCRIPTIONS: Record<string, string> = {
 
 export const DIFFICULTY_OPTIONS = [
   { label: 'Easy', value: 'easy' },
+  { label: 'Medium', value: 'medium' },
   { label: 'Hard', value: 'hard' },
 ] as const
 
