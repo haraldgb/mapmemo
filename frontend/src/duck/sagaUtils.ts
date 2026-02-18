@@ -1,11 +1,11 @@
-import { MODE_OPTIONS } from '../game/consts'
+import { AREA_COUNT_OPTIONS } from '../game/consts'
 import type { GameSettings } from '../game/settings/settingsTypes'
 import { isValidSeed, randomSeed } from '../game/utils'
 
 const SETTINGS_STORAGE_KEY = 'mapmemo.gameSettings'
-const isValidModeCount = (value: unknown): value is number =>
+const isValidAreaCount = (value: unknown): value is number =>
   typeof value === 'number' &&
-  MODE_OPTIONS.some((option) => option.value === value)
+  AREA_COUNT_OPTIONS.some((option) => option.value === value)
 
 const normalizeSelectedAreas = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
@@ -22,7 +22,7 @@ const isValidSettings = (value: unknown): value is GameSettings => {
     return false
   }
   const candidate = value as Partial<GameSettings>
-  return isValidModeCount(candidate.modeCount)
+  return isValidAreaCount(candidate.areaCount)
 }
 
 // TODO: move into generic utility that takes isValidCheck, storage key
@@ -45,7 +45,7 @@ export const loadGameSettings = (): GameSettings | null => {
         ? candidate.seed
         : randomSeed()
     return {
-      modeCount: candidate.modeCount ?? MODE_OPTIONS[0]?.value ?? 10,
+      areaCount: candidate.areaCount ?? AREA_COUNT_OPTIONS[0]?.value ?? 10,
       selectedAreas: normalizeSelectedAreas(candidate.selectedAreas),
       seed: seedValue,
     }
@@ -61,7 +61,7 @@ export const saveGameSettings = (settings: GameSettings) => {
   }
   try {
     const payload = {
-      modeCount: settings.modeCount,
+      areaCount: settings.areaCount,
       selectedAreas: settings.selectedAreas,
       seed: settings.seed,
     }
