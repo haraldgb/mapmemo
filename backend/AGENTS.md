@@ -12,27 +12,21 @@ bd close <id>         # Complete work
 bd sync               # Sync with git
 ```
 
-## Cross-Project Dependencies (Backend)
+## Cross-Project Dependencies (Frontend ↔ Backend)
 
-The backend has its own beads instance at `../backend/.beads/` with prefix `backend-`.
+The frontend has its own beads instance at `../frontend/.beads/`. Issues use the `frontend-` prefix.
 
-**Looking up backend beads:**
-```bash
-cd ../backend && bd list          # list all backend issues
-cd ../backend && bd search "query" # search by text
-cd ../backend && bd show <id>     # view details
-```
+**When a backend issue unblocks a frontend issue:**
+1. The backend issue description will reference the frontend issue (e.g., `unblocks: frontend-qcw`)
+2. After completing the backend work, update the frontend issue status:
+   ```bash
+   cd ../frontend && bd update <frontend-id> --status open
+   ```
+   This moves it from `blocked` to `open` so frontend agents pick it up via `bd ready`.
 
-**Blocking a frontend issue on a backend issue:**
-```bash
-# 1. Set the frontend issue to blocked status
-bd update <frontend-id> --status blocked
-
-# 2. Add a note referencing the backend bead
-bd comments <frontend-id> --add "blocked-by: backend-<id>"
-```
-
-The backend agent will run `bd update <frontend-id> --status open` from this directory when the backend work is done.
+**When creating backend issues that have frontend dependencies:**
+- Add `unblocks: frontend-<id>` in the description
+- The frontend issue should be set to `blocked` status with a note like `blocked-by: backend-<id>`
 
 ## Session Completion
 
