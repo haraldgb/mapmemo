@@ -95,6 +95,12 @@ export const DIFFICULTY_OPTIONS = [
   { label: 'Hard', value: 'hard' },
 ] as const
 
+export const DIFFICULTY_DESCRIPTIONS: Record<string, string> = {
+  easy: 'Suggestions from the areas in play',
+  medium: 'Suggestions from all city areas',
+  hard: 'No suggestions',
+}
+
 export const AREA_COUNT_OPTIONS = [
   { label: '10', value: 10 },
   { label: '25', value: 25 },
