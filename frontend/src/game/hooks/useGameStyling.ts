@@ -4,7 +4,9 @@ import {
   LATE_STYLE,
   FLASH_STYLE,
   HOVER_STYLE,
+  INCORRECT_FLASH_STYLE,
   OUTLINE_STYLE,
+  TARGET_STYLE,
   ID_KEY,
 } from '../consts'
 import { getFeatureProperty } from '../../utils/polygons'
@@ -20,6 +22,7 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
   const mapRef = useRef<google.maps.Map | null>(null)
   const hoveredIdRef = useRef<string | null>(null)
   const flashIdRef = useRef<string | null>(null)
+  const flashIsIncorrect = useRef(false)
   const flashTimeoutRef = useRef<number | null>(null)
 
   const getStyleForFeature = (feature: google.maps.Data.Feature) => {
@@ -28,7 +31,15 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
       return OUTLINE_STYLE
     }
     if (flashIdRef.current === id) {
-      return FLASH_STYLE
+      return flashIsIncorrect.current ? INCORRECT_FLASH_STYLE : FLASH_STYLE
+    }
+    if (
+      gameState.mode === 'name' &&
+      gameState.currentEntry?.id === id &&
+      !gameState.correctlyGuessedIdsRef.current.has(id) &&
+      !gameState.lateGuessedIdsRef.current.has(id)
+    ) {
+      return TARGET_STYLE
     }
     if (gameState.correctlyGuessedIdsRef.current.has(id)) {
       return CORRECT_STYLE
@@ -84,6 +95,7 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
           flashTimeoutRef.current = null
         }
         flashIdRef.current = null
+        flashIsIncorrect.current = false
         hoveredIdRef.current = null
         refreshStyles()
         return
@@ -94,6 +106,7 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
           flashTimeoutRef.current = null
         }
         flashIdRef.current = null
+        flashIsIncorrect.current = false
         refreshStyles()
         return
       }
@@ -101,6 +114,7 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
         return
       }
       flashIdRef.current = id
+      flashIsIncorrect.current = true
       refreshStyles()
       if (flashTimeoutRef.current) {
         window.clearTimeout(flashTimeoutRef.current)

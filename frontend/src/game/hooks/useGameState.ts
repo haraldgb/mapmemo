@@ -4,6 +4,7 @@ import { ID_KEY, SUB_AREA_NAME_KEY } from '../consts'
 import { getFeatureProperty } from '../../utils/polygons'
 import { createSeededRng, getAreaId, shuffleEntriesWithRng } from '../utils'
 import type { GameEntry } from '../types'
+import type { GameMode } from '../settings/settingsTypes'
 import type { RootState } from '../../store'
 
 type PrevGuess = {
@@ -20,13 +21,16 @@ export const INITIAL_PREV_GUESS: PrevGuess = {
 }
 
 export type GameState = {
+  mode: GameMode
   promptText: string
   correctCount: number
   incorrectCount: number
   scorePercent: number
   isGameActive: boolean
   isComplete: boolean
+  currentEntry: GameEntry | null
   registerFeatureClick: (feature: google.maps.Data.Feature) => void
+  registerNameGuess: (name: string) => void
   resetGameState: () => void
   prevGuess: PrevGuess
   correctlyGuessedIdsRef: MutableRefObject<Set<string>>
@@ -38,8 +42,8 @@ type Props = {
 }
 
 export const useGameState = ({ features }: Props): GameState => {
-  const rngSeed = useSelector(
-    (state: RootState) => state.mapmemo.gameSettings.seed,
+  const { seed: rngSeed, mode } = useSelector(
+    (state: RootState) => state.mapmemo.gameSettings,
   )
 
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -134,21 +138,64 @@ export const useGameState = ({ features }: Props): GameState => {
     return
   }
 
+  const handleNameGuess = (name: string) => {
+    const targetEntry = entries[currentIndex]
+    if (!targetEntry || currentIndex >= entries.length) {
+      return
+    }
+
+    const isCorrect =
+      name.trim().toLowerCase() === targetEntry.label.trim().toLowerCase()
+
+    if (!isCorrect) {
+      if (prevGuess.isCorrect) {
+        setIncorrectCount((prev) => prev + 1)
+      }
+      setPrevGuess({
+        id: targetEntry.id,
+        isCorrect: false,
+        consecutiveIncorrectGuesses: prevGuess.consecutiveIncorrectGuesses + 1,
+        clickedFeature: null,
+      })
+      return
+    }
+
+    if (prevGuess.isCorrect) {
+      setCorrectCount((prev) => prev + 1)
+      correctlyGuessedIdsRef.current.add(targetEntry.id)
+    } else {
+      lateGuessedIdsRef.current.add(targetEntry.id)
+    }
+    answeredIdsRef.current.add(targetEntry.id)
+    setPrevGuess({
+      id: targetEntry.id,
+      isCorrect: true,
+      consecutiveIncorrectGuesses: 0,
+      clickedFeature: null,
+    })
+    setCurrentIndex(currentIndex + 1)
+  }
+
   const promptText =
     total === 0
       ? 'Loading areas...'
       : isComplete
         ? 'All areas covered!'
-        : `Click area: ${currentEntry?.label ?? ''}`
+        : mode === 'name'
+          ? 'Type the highlighted area name'
+          : `Click area: ${currentEntry?.label ?? ''}`
 
   return {
+    mode,
     promptText,
     correctCount,
     incorrectCount,
     scorePercent,
     isGameActive,
     isComplete,
+    currentEntry,
     registerFeatureClick: handleFeatureClick,
+    registerNameGuess: handleNameGuess,
     resetGameState,
     prevGuess,
     correctlyGuessedIdsRef,
