@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { MODE_DESCRIPTIONS } from '../game/consts'
 
 type GameModeSlide = {
   mode: string
   label: string
+  description: string
   // TODO: replace with actual screenshot paths once captured
   imageSrc: string
   imageAlt: string
@@ -13,6 +15,7 @@ const SLIDES: GameModeSlide[] = [
   {
     mode: 'click',
     label: 'Click Mode',
+    description: MODE_DESCRIPTIONS['click'] ?? '',
     // TODO: screenshot of click mode, default settings, 12 areas in
     imageSrc: '/screenshots/click-mode.png',
     imageAlt: 'Click mode gameplay showing map with highlighted areas',
@@ -20,6 +23,7 @@ const SLIDES: GameModeSlide[] = [
   {
     mode: 'name',
     label: 'Name Mode',
+    description: MODE_DESCRIPTIONS['name'] ?? '',
     // TODO: screenshot of name mode, default settings, 12 areas in
     imageSrc: '/screenshots/name-mode.png',
     imageAlt: 'Name mode gameplay with text input and highlighted target area',
@@ -62,7 +66,10 @@ export const GameModeCarousel = () => {
             alt={slide.imageAlt}
             className={s_image}
           />
-          <div className={s_slide_label}>{slide.label}</div>
+          <div className={s_slide_footer}>
+            <div className={s_slide_label}>{slide.label}</div>
+            <div className={s_slide_description}>{slide.description}</div>
+          </div>
         </Link>
         <button
           type='button'
@@ -95,8 +102,9 @@ const s_arrow_button =
 const s_slide_link =
   'block overflow-hidden rounded-xl border border-slate-200 shadow-sm transition hover:shadow-md'
 const s_image = 'h-48 w-80 object-cover sm:h-56 sm:w-96'
-const s_slide_label =
-  'bg-slate-50 px-4 py-2 text-center text-sm font-semibold text-slate-700'
+const s_slide_footer = 'bg-slate-50 px-4 py-2 text-center'
+const s_slide_label = 'text-sm font-semibold text-slate-700'
+const s_slide_description = 'mt-0.5 text-xs text-slate-500'
 const s_dots = 'flex gap-2'
 const sf_dot = (isActive: boolean) =>
   `h-2 w-2 rounded-full transition ${
