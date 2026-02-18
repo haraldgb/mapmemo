@@ -47,7 +47,8 @@ export const Game = () => {
               formattedTime={gameState.formattedTime}
             />
             <GameUI
-              isGameActive={true}
+              isGameActive={gameState.isGameActive}
+              isComplete={gameState.isComplete}
               resetGameState={gameState.resetGame}
             />
           </>
