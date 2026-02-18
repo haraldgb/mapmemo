@@ -65,6 +65,14 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Tab') {
+      e.preventDefault()
+      if (shouldShowDropdown) {
+        handleSelect(filteredSuggestions[0])
+      }
+      return
+    }
+
     if (!shouldShowDropdown) return
 
     if (e.key === 'ArrowDown') {
@@ -90,6 +98,20 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
       setPreviewValue('')
     }
   }
+
+  useEffect(
+    function captureTabToFocusInput() {
+      const handleDocumentKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Tab' && document.activeElement !== inputRef.current) {
+          e.preventDefault()
+          inputRef.current?.focus()
+        }
+      }
+      document.addEventListener('keydown', handleDocumentKeyDown)
+      return () => document.removeEventListener('keydown', handleDocumentKeyDown)
+    },
+    [],
+  )
 
   useEffect(
     function closeDropdownOnClickOutside() {
