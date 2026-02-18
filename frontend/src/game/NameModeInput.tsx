@@ -48,7 +48,9 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
 
   const handleSelect = (label: string) => {
     registerNameGuess(label)
-    if (label.trim().toLowerCase() === currentEntry?.label.trim().toLowerCase()) {
+    if (
+      label.trim().toLowerCase() === currentEntry?.label.trim().toLowerCase()
+    ) {
       setTypedValue('')
       setPreviewValue('')
     } else {
@@ -63,7 +65,9 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const value = highlightedIndex >= 0 ? previewValue : typedValue
-    if (!value.trim()) return
+    if (!value.trim()) {
+      return
+    }
     handleSelect(value)
   }
 
@@ -83,7 +87,9 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
       return
     }
 
-    if (!shouldShowDropdown) return
+    if (!shouldShowDropdown) {
+      return
+    }
 
     if (e.key === 'ArrowDown') {
       e.preventDefault()
@@ -109,37 +115,31 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
     }
   }
 
-  useEffect(
-    function captureTabToFocusInput() {
-      const handleDocumentKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'Tab' && document.activeElement !== inputRef.current) {
-          e.preventDefault()
-          inputRef.current?.focus()
-        }
+  useEffect(function captureTabToFocusInput() {
+    const handleDocumentKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab' && document.activeElement !== inputRef.current) {
+        e.preventDefault()
+        inputRef.current?.focus()
       }
-      document.addEventListener('keydown', handleDocumentKeyDown)
-      return () => document.removeEventListener('keydown', handleDocumentKeyDown)
-    },
-    [],
-  )
+    }
+    document.addEventListener('keydown', handleDocumentKeyDown)
+    return () => document.removeEventListener('keydown', handleDocumentKeyDown)
+  }, [])
 
-  useEffect(
-    function closeDropdownOnClickOutside() {
-      const handleClickOutside = (e: MouseEvent) => {
-        if (
-          containerRef.current &&
-          !containerRef.current.contains(e.target as Node)
-        ) {
-          setIsOpen(false)
-          setHighlightedIndex(-1)
-          setPreviewValue('')
-        }
+  useEffect(function closeDropdownOnClickOutside() {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(e.target as Node)
+      ) {
+        setIsOpen(false)
+        setHighlightedIndex(-1)
+        setPreviewValue('')
       }
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
-    },
-    [],
-  )
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <form
@@ -157,7 +157,9 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => {
-            if (typedValue.length > 0) setIsOpen(true)
+            if (typedValue.length > 0) {
+              setIsOpen(true)
+            }
           }}
           placeholder='Type area name...'
           autoFocus
@@ -202,5 +204,7 @@ const s_dropdown =
   'absolute left-0 right-0 z-20 mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg'
 const sf_dropdown_item = (isHighlighted: boolean) =>
   `cursor-pointer px-4 py-2 text-left text-sm ${
-    isHighlighted ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'
+    isHighlighted
+      ? 'bg-blue-50 text-blue-700'
+      : 'text-slate-700 hover:bg-slate-50'
   }`

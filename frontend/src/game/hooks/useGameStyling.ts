@@ -133,7 +133,11 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
 
   useEffect(
     function pulseTargetArea() {
-      if (gameState.mode !== 'name' || gameState.isComplete || !gameState.currentEntry) {
+      if (
+        gameState.mode !== 'name' ||
+        gameState.isComplete ||
+        !gameState.currentEntry
+      ) {
         if (pulseIntervalRef.current) {
           window.clearInterval(pulseIntervalRef.current)
           pulseIntervalRef.current = null
@@ -151,7 +155,12 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
         }
       }
     },
-    [gameState.mode, gameState.isComplete, gameState.currentEntry, refreshStyles],
+    [
+      gameState.mode,
+      gameState.isComplete,
+      gameState.currentEntry,
+      refreshStyles,
+    ],
   )
 
   useEffect(function cleanupOnUnmount() {
