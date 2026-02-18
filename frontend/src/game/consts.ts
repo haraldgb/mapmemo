@@ -90,12 +90,14 @@ export const MODE_DESCRIPTIONS: Record<string, string> = {
 }
 
 export const DIFFICULTY_OPTIONS = [
+  { label: 'Beginner', value: 'beginner' },
   { label: 'Easy', value: 'easy' },
   { label: 'Medium', value: 'medium' },
   { label: 'Hard', value: 'hard' },
 ] as const
 
 export const DIFFICULTY_DESCRIPTIONS: Record<string, string> = {
+  beginner: 'All suggestions shown immediately',
   easy: 'Suggestions from the areas in play',
   medium: 'Suggestions from all city areas',
   hard: 'No suggestions',
