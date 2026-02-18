@@ -43,5 +43,4 @@ const s_ui_container =
 const s_prompt = 'text-lg font-semibold text-slate-900'
 const s_score_container = 'text-sm font-medium text-slate-500 md:text-center'
 const s_seed = 'font-mono tracking-wide text-slate-400'
-const s_timer =
-  'text-lg font-semibold tabular-nums text-slate-700 md:text-right'
+const s_timer = 'text-lg font-semibold tabular-nums text-slate-700'
