@@ -1,5 +1,5 @@
 export type GameMode = 'click' | 'name'
-export type GameDifficulty = 'easy' | 'medium' | 'hard'
+export type GameDifficulty = 'beginner' | 'easy' | 'medium' | 'hard'
 
 export type GameSettings = {
   mode: GameMode
