@@ -35,6 +35,7 @@ export type GameState = {
   registerNameGuess: (name: string) => void
   resetGameState: () => void
   prevGuess: PrevGuess
+  completedAreaLabels: Set<string>
   correctlyGuessedIdsRef: MutableRefObject<Set<string>>
   lateGuessedIdsRef: MutableRefObject<Set<string>>
 }
@@ -71,6 +72,9 @@ export const useGameState = ({ features }: Props): GameState => {
   }
   const entries = createSeededEntries()
   const areaLabels = entries.map((entry) => entry.label)
+  const completedAreaLabels = new Set(
+    entries.slice(0, currentIndex).map((entry) => entry.label),
+  )
 
   const scorePercent =
     answeredCount === 0 ? 0 : Math.round((correctCount / answeredCount) * 100)
@@ -205,6 +209,7 @@ export const useGameState = ({ features }: Props): GameState => {
     registerNameGuess: handleNameGuess,
     resetGameState,
     prevGuess,
+    completedAreaLabels,
     correctlyGuessedIdsRef,
     lateGuessedIdsRef,
   }
