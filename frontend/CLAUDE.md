@@ -126,14 +126,7 @@ useEffect(() => {
 }, [userId])
 ```
 
-- **Avoid `useRef`** unless it's clearly the best option (DOM measurement, imperative API handles, preserving values across renders without triggering re-renders). When using `useRef`, include a 2–4 line comment above it justifying why it was the right choice:
-
-```tsx
-// useRef is necessary here because we need to track the previous
-// scroll position across renders without triggering a re-render.
-// useState would cause an infinite render loop in this effect.
-const prevScrollY = useRef(0)
-```
+- **Avoid `useRef`** unless it's clearly the best option (DOM measurement, imperative API handles, preserving values across renders without triggering re-renders). 
 
 ## Error Handling
 
