@@ -15,4 +15,4 @@ osm/
 *.njsproj
 *.sln
 *.sw?
-**settings.local.json
+**/settings.local.json
