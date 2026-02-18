@@ -1,5 +1,5 @@
 export type GameSettings = {
-  modeCount: number
+  areaCount: number
   selectedAreas: string[]
   seed: string
 }
