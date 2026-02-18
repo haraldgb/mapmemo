@@ -5,6 +5,7 @@ import { mapmemoActions } from '../../duck/reducer'
 import {
   AREA_COUNT_OPTIONS,
   DIFFICULTY_OPTIONS,
+  MODE_DESCRIPTIONS,
   MODE_OPTIONS,
   SEED_LENGTH,
 } from '../consts'
@@ -118,6 +119,7 @@ export const GameSettings = ({
               <button
                 key={option.value}
                 type='button'
+                title={MODE_DESCRIPTIONS[option.value]}
                 onClick={() =>
                   setDraftSettings((prev) => ({
                     ...prev,

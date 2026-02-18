@@ -76,6 +76,11 @@ export const MODE_OPTIONS = [
   { label: 'Name', value: 'name' },
 ] as const
 
+export const MODE_DESCRIPTIONS: Record<string, string> = {
+  click: 'Find and click the named area on the map.',
+  name: 'Type the name of the highlighted area.',
+}
+
 export const DIFFICULTY_OPTIONS = [
   { label: 'Easy', value: 'easy' },
   { label: 'Hard', value: 'hard' },
