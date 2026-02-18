@@ -1,11 +1,23 @@
-import { AREA_COUNT_OPTIONS, MODE_OPTIONS } from '../game/consts'
-import type { GameMode, GameSettings } from '../game/settings/settingsTypes'
+import {
+  AREA_COUNT_OPTIONS,
+  DIFFICULTY_OPTIONS,
+  MODE_OPTIONS,
+} from '../game/consts'
+import type {
+  GameDifficulty,
+  GameMode,
+  GameSettings,
+} from '../game/settings/settingsTypes'
 import { isValidSeed, randomSeed } from '../game/utils'
 
 const SETTINGS_STORAGE_KEY = 'mapmemo.gameSettings'
 const isValidMode = (value: unknown): value is GameMode =>
   typeof value === 'string' &&
   MODE_OPTIONS.some((option) => option.value === value)
+
+const isValidDifficulty = (value: unknown): value is GameDifficulty =>
+  typeof value === 'string' &&
+  DIFFICULTY_OPTIONS.some((option) => option.value === value)
 
 const isValidAreaCount = (value: unknown): value is number =>
   typeof value === 'number' &&
@@ -26,7 +38,11 @@ const isValidSettings = (value: unknown): value is GameSettings => {
     return false
   }
   const candidate = value as Partial<GameSettings>
-  return isValidAreaCount(candidate.areaCount) && isValidMode(candidate.mode)
+  return (
+    isValidAreaCount(candidate.areaCount) &&
+    isValidMode(candidate.mode) &&
+    isValidDifficulty(candidate.difficulty)
+  )
 }
 
 // TODO: move into generic utility that takes isValidCheck, storage key
@@ -50,6 +66,7 @@ export const loadGameSettings = (): GameSettings | null => {
         : randomSeed()
     return {
       mode: candidate.mode ?? 'click',
+      difficulty: candidate.difficulty ?? 'easy',
       areaCount: candidate.areaCount ?? AREA_COUNT_OPTIONS[0]?.value ?? 10,
       selectedAreas: normalizeSelectedAreas(candidate.selectedAreas),
       seed: seedValue,
@@ -67,6 +84,7 @@ export const saveGameSettings = (settings: GameSettings) => {
   try {
     const payload = {
       mode: settings.mode,
+      difficulty: settings.difficulty,
       areaCount: settings.areaCount,
       selectedAreas: settings.selectedAreas,
       seed: settings.seed,
