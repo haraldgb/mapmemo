@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
 import { mapmemoActions } from '../../duck/reducer'
-import { MODE_OPTIONS } from '../consts'
+import { MODE_OPTIONS, SEED_LENGTH } from '../consts'
 import { ConfirmResetPopup } from '../../components/ConfirmResetPopup'
 import type { GameSettings as GameSettingsModel } from './settingsTypes'
 import { AreaDropdown } from './AreaDropdown'
@@ -134,7 +134,7 @@ export const GameSettings = ({
             type='text'
             value={draftSettings.seed}
             onChange={(e) => handleSeedChange(e.target.value)}
-            maxLength={8}
+            maxLength={SEED_LENGTH}
             className={sf_seed_input(isSeedValid)}
           />
           <button

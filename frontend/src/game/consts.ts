@@ -1,3 +1,7 @@
+export const SEED_LENGTH = 8
+// lowercase alphanumeric
+export const SEED_REGEX = /^[a-z0-9]+$/
+
 export const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
 
 export const DELBYDELER_GEOJSON_URL = '/api/oslo-neighboorhoods'

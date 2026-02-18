@@ -24,16 +24,34 @@ const makeEntry = (id: string): GameEntry => ({
 })
 
 describe('game utils', () => {
-  test('isValidSeed checks length', () => {
-    expect(isValidSeed('abcdefgh')).toBe(true)
-    expect(isValidSeed('short')).toBe(false)
-    expect(isValidSeed('toolonggg')).toBe(false)
+  describe('isValidSeed', () => {
+    test('accepts valid alphanumeric seed', () => {
+      expect(isValidSeed('abcdefgh')).toBe(true)
+      expect(isValidSeed('a1b2c3d4')).toBe(true)
+      expect(isValidSeed('00000000')).toBe(true)
+    })
+
+    test('rejects wrong length', () => {
+      expect(isValidSeed('short')).toBe(false)
+      expect(isValidSeed('toolonggg')).toBe(false)
+      expect(isValidSeed('')).toBe(false)
+    })
+
+    test('rejects non-alphanumeric  and uppercase characters', () => {
+      expect(isValidSeed('abcd-fgh')).toBe(false)
+      expect(isValidSeed('abcd efg')).toBe(false)
+      expect(isValidSeed('ABCDEFGH')).toBe(false)
+      expect(isValidSeed('Abcdefgh')).toBe(false)
+      expect(isValidSeed('abcd!@#$')).toBe(false)
+    })
   })
 
-  test('randomSeed returns 8-character base36 string', () => {
+  test('randomSeed returns valid seed', () => {
     const seed = randomSeed()
+
+    const alphanumericLowercaseRegex = /^[a-z0-9]+$/
     expect(seed).toHaveLength(8)
-    expect(seed).toMatch(/^[a-z0-9]{8}$/)
+    expect(alphanumericLowercaseRegex.test(seed)).toBe(true)
     expect(isValidSeed(seed)).toBe(true)
   })
 
