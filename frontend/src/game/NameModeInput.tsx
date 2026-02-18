@@ -19,23 +19,28 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const dropdownRef = useRef<HTMLUListElement>(null)
 
   const displayValue = highlightedIndex >= 0 ? previewValue : typedValue
 
   const hasAutocomplete = difficulty !== 'hard'
+  const sortedAreaLabels = [...areaLabels].sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: 'base' }),
+  )
   const suggestionPool =
-    difficulty === 'easy'
-      ? [...areaLabels].sort((a, b) =>
-          a.localeCompare(b, undefined, { sensitivity: 'base' }),
-        )
+    difficulty === 'beginner' || difficulty === 'easy'
+      ? sortedAreaLabels
       : allSubAreaNames
 
-  const filteredSuggestions =
-    hasAutocomplete && typedValue.length > 0
-      ? suggestionPool.filter((label) =>
-          label.toLowerCase().includes(typedValue.toLowerCase()),
-        )
-      : []
+  const filteredSuggestions = hasAutocomplete
+    ? difficulty === 'beginner' && typedValue.length === 0
+      ? suggestionPool
+      : typedValue.length > 0
+        ? suggestionPool.filter((label) =>
+            label.toLowerCase().includes(typedValue.toLowerCase()),
+          )
+        : []
+    : []
 
   const shouldShowDropdown = isOpen && filteredSuggestions.length > 0
 
@@ -43,23 +48,30 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
     setHighlightedIndex(newIndex)
     if (newIndex >= 0 && newIndex < filteredSuggestions.length) {
       setPreviewValue(filteredSuggestions[newIndex])
+      const item = dropdownRef.current?.children[newIndex] as
+        | HTMLElement
+        | undefined
+      item?.scrollIntoView({ block: 'nearest' })
     }
   }
 
   const handleSelect = (label: string) => {
     registerNameGuess(label)
-    if (
+    const isCorrect =
       label.trim().toLowerCase() === currentEntry?.label.trim().toLowerCase()
-    ) {
+    if (isCorrect) {
       setTypedValue('')
       setPreviewValue('')
     } else {
       setTypedValue(label)
       setPreviewValue('')
     }
-    setIsOpen(false)
+    setIsOpen(isCorrect && difficulty === 'beginner')
     setHighlightedIndex(-1)
     inputRef.current?.focus()
+    if (!isCorrect) {
+      requestAnimationFrame(() => inputRef.current?.select())
+    }
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -115,11 +127,23 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
     }
   }
 
-  useEffect(function captureTabToFocusInput() {
+  useEffect(function captureKeysToFocusInput() {
     const handleDocumentKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Tab' && document.activeElement !== inputRef.current) {
+      if (document.activeElement === inputRef.current) {
+        return
+      }
+      if (e.key === 'Tab') {
         e.preventDefault()
         inputRef.current?.focus()
+        return
+      }
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault()
+        inputRef.current?.focus()
+        setTypedValue((prev) => prev + e.key)
+        setIsOpen(true)
+        setHighlightedIndex(-1)
+        setPreviewValue('')
       }
     }
     document.addEventListener('keydown', handleDocumentKeyDown)
@@ -157,7 +181,7 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => {
-            if (typedValue.length > 0) {
+            if (typedValue.length > 0 || difficulty === 'beginner') {
               setIsOpen(true)
             }
           }}
@@ -167,7 +191,10 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
           className={sf_name_input(prevGuess.isCorrect)}
         />
         {shouldShowDropdown && (
-          <ul className={s_dropdown}>
+          <ul
+            ref={dropdownRef}
+            className={s_dropdown}
+          >
             {filteredSuggestions.map((label, index) => (
               <li
                 key={label}
@@ -195,7 +222,7 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
 const s_name_form = 'pointer-events-auto md:text-center'
 const s_autocomplete_container = 'relative inline-block w-full max-w-xs'
 const sf_name_input = (isCorrectState: boolean) =>
-  `w-full rounded-full border-2 bg-white px-4 py-2 text-center text-lg font-semibold shadow-md outline-none ${
+  `w-full rounded-full border-2 bg-white px-4 py-2 text-left text-lg font-semibold shadow-md outline-none ${
     isCorrectState
       ? 'border-slate-300 focus:border-blue-500'
       : 'border-red-400 focus:border-red-500'
