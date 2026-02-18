@@ -39,7 +39,7 @@ export const useGameTimer = ({ isRunning }: Props): GameTimer => {
   )
 
   const resetTimer = () => {
-    startTimeRef.current = null
+    startTimeRef.current = Date.now()
     setElapsedMs(0)
   }
 
