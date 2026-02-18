@@ -76,6 +76,7 @@ export const GameSettings = ({
       return
     }
     applySettings()
+    resetGameState()
   }
 
   const handleConfirmApply = () => {
