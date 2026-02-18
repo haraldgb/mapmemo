@@ -3,7 +3,9 @@ import { useSelector } from 'react-redux'
 import { ID_KEY, SUB_AREA_NAME_KEY } from '../consts'
 import { getFeatureProperty } from '../../utils/polygons'
 import { createSeededRng, getAreaId, shuffleEntriesWithRng } from '../utils'
-import type { GameEntry } from '../types'
+import { useClickModeGuess } from './useClickModeGuess'
+import { useNameModeGuess } from './useNameModeGuess'
+import type { GameEntry, GuessOutcome } from '../types'
 import type { GameDifficulty, GameMode } from '../settings/settingsTypes'
 import type { RootState } from '../../store'
 
@@ -84,106 +86,69 @@ export const useGameState = ({ features }: Props): GameState => {
   const isGameActive =
     entries.length > 0 && !isComplete && (currentIndex > 0 || answeredCount > 0)
 
-  // refs used in styling callbacks for gmap.
+  // Refs used in styling callbacks for gmap.
   const correctlyGuessedIdsRef = useRef<Set<string>>(new Set())
   const lateGuessedIdsRef = useRef<Set<string>>(new Set())
   const answeredIdsRef = useRef<Set<string>>(new Set())
 
   // ------------------------------------------------------------ //
 
-  const resetGameState = () => {
-    correctlyGuessedIdsRef.current = new Set()
-    answeredIdsRef.current = new Set()
-    setCurrentIndex(0)
-    setCorrectCount(0)
-    setIncorrectCount(0)
-    correctlyGuessedIdsRef.current = new Set()
-    lateGuessedIdsRef.current = new Set()
-    setPrevGuess(INITIAL_PREV_GUESS)
-  }
-
-  const handleFeatureClick = (feature: google.maps.Data.Feature) => {
-    const targetEntry = entries[currentIndex]
-    const isGameComplete = currentIndex >= entries.length
-    if (!targetEntry || isGameComplete) {
-      return
-    }
-    const clickedId = getFeatureProperty(feature, ID_KEY)
-    if (!clickedId) {
-      return
-    }
-    if (answeredIdsRef.current.has(clickedId)) {
-      return
-    }
-
-    if (clickedId !== targetEntry.id) {
-      if (prevGuess.isCorrect) {
-        setIncorrectCount((prev) => prev + 1)
-      }
-      setPrevGuess({
-        id: targetEntry.id,
-        isCorrect: false,
-        consecutiveIncorrectGuesses: prevGuess.consecutiveIncorrectGuesses + 1,
-        clickedFeature: feature,
-      })
-      return
-    }
-
-    if (prevGuess.isCorrect) {
-      setCorrectCount((prev) => prev + 1)
-      correctlyGuessedIdsRef.current.add(clickedId)
-    } else {
-      lateGuessedIdsRef.current.add(clickedId)
-    }
-    answeredIdsRef.current.add(clickedId)
-    setPrevGuess({
-      id: clickedId,
-      isCorrect: true,
-      consecutiveIncorrectGuesses: 0,
-      clickedFeature: null,
-    })
-
-    setCurrentIndex(currentIndex + 1)
-    return
-  }
-
-  const handleNameGuess = (name: string) => {
-    const targetEntry = entries[currentIndex]
-    if (!targetEntry || currentIndex >= entries.length) {
-      return
-    }
-
-    const isCorrect =
-      name.trim().toLowerCase() === targetEntry.label.trim().toLowerCase()
-
+  const processGuessResult = ({
+    isCorrect,
+    entryId,
+    clickedFeature,
+  }: GuessOutcome) => {
     if (!isCorrect) {
       if (prevGuess.isCorrect) {
         setIncorrectCount((prev) => prev + 1)
       }
       setPrevGuess({
-        id: targetEntry.id,
+        id: entryId,
         isCorrect: false,
         consecutiveIncorrectGuesses: prevGuess.consecutiveIncorrectGuesses + 1,
-        clickedFeature: null,
+        clickedFeature,
       })
       return
     }
 
     if (prevGuess.isCorrect) {
       setCorrectCount((prev) => prev + 1)
-      correctlyGuessedIdsRef.current.add(targetEntry.id)
+      correctlyGuessedIdsRef.current.add(entryId)
     } else {
-      lateGuessedIdsRef.current.add(targetEntry.id)
+      lateGuessedIdsRef.current.add(entryId)
     }
-    answeredIdsRef.current.add(targetEntry.id)
+    answeredIdsRef.current.add(entryId)
     setPrevGuess({
-      id: targetEntry.id,
+      id: entryId,
       isCorrect: true,
       consecutiveIncorrectGuesses: 0,
       clickedFeature: null,
     })
     setCurrentIndex(currentIndex + 1)
   }
+
+  const resetGameState = () => {
+    correctlyGuessedIdsRef.current = new Set()
+    answeredIdsRef.current = new Set()
+    lateGuessedIdsRef.current = new Set()
+    setCurrentIndex(0)
+    setCorrectCount(0)
+    setIncorrectCount(0)
+    setPrevGuess(INITIAL_PREV_GUESS)
+  }
+
+  const registerFeatureClick = useClickModeGuess({
+    entries,
+    currentIndex,
+    answeredIdsRef,
+    onGuess: processGuessResult,
+  })
+
+  const registerNameGuess = useNameModeGuess({
+    entries,
+    currentIndex,
+    onGuess: processGuessResult,
+  })
 
   const promptText =
     total === 0
@@ -205,8 +170,8 @@ export const useGameState = ({ features }: Props): GameState => {
     isGameActive,
     isComplete,
     currentEntry,
-    registerFeatureClick: handleFeatureClick,
-    registerNameGuess: handleNameGuess,
+    registerFeatureClick,
+    registerNameGuess,
     resetGameState,
     prevGuess,
     completedAreaLabels,
