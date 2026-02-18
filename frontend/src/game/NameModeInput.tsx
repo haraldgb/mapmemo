@@ -1,46 +1,29 @@
 import { useEffect, useRef, useState } from 'react'
-import { useSelector } from 'react-redux'
-import type { RootState } from '../store'
 import type { GameState } from './hooks/useGameState'
+import { useInputSuggestions } from './hooks/useInputSuggestions'
 
 type NameModeInputProps = {
   gameState: GameState
 }
 
 export const NameModeInput = ({ gameState }: NameModeInputProps) => {
-  const { difficulty, areaLabels, registerNameGuess, prevGuess, currentEntry } =
-    gameState
-  const allSubAreaNames = useSelector(
-    (state: RootState) => state.mapmemo.allSubAreaNames,
-  )
+  const { difficulty, registerNameGuess, prevGuess, currentEntry } = gameState
   const [typedValue, setTypedValue] = useState('')
   const [previewValue, setPreviewValue] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
+
+  // useRef: DOM handles needed for imperative focus, scroll, and click-outside detection.
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const dropdownRef = useRef<HTMLUListElement>(null)
 
   const displayValue = highlightedIndex >= 0 ? previewValue : typedValue
 
-  const hasAutocomplete = difficulty !== 'hard'
-  const sortedAreaLabels = [...areaLabels].sort((a, b) =>
-    a.localeCompare(b, undefined, { sensitivity: 'base' }),
-  )
-  const suggestionPool =
-    difficulty === 'beginner' || difficulty === 'easy'
-      ? sortedAreaLabels
-      : allSubAreaNames
-
-  const filteredSuggestions = hasAutocomplete
-    ? difficulty === 'beginner' && typedValue.length === 0
-      ? suggestionPool
-      : typedValue.length > 0
-        ? suggestionPool.filter((label) =>
-            label.toLowerCase().includes(typedValue.toLowerCase()),
-          )
-        : []
-    : []
+  const filteredSuggestions = useInputSuggestions({
+    gameState,
+    inputValue: typedValue,
+  })
 
   const shouldShowDropdown = isOpen && filteredSuggestions.length > 0
 
@@ -90,6 +73,7 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
     setHighlightedIndex(-1)
   }
 
+  // takes care of keyboard navigation inside the input / suggestion dropdown
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Tab') {
       e.preventDefault()
@@ -127,6 +111,7 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
     }
   }
 
+  // takes care of focus if user types when input is not focused.
   useEffect(function captureKeysToFocusInput() {
     const handleDocumentKeyDown = (e: KeyboardEvent) => {
       if (document.activeElement === inputRef.current) {
