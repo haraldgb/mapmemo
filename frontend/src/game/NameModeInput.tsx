@@ -38,7 +38,7 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
     }
   }
 
-  const handleSelect = (label: string) => {
+  const handleSuggestionSelect = (label: string) => {
     registerNameGuess(label)
     const isCorrect =
       label.trim().toLowerCase() === currentEntry?.label.trim().toLowerCase()
@@ -57,13 +57,13 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const value = highlightedIndex >= 0 ? previewValue : typedValue
     if (!value.trim()) {
       return
     }
-    handleSelect(value)
+    handleSuggestionSelect(value)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,7 +78,7 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
     if (e.key === 'Tab') {
       e.preventDefault()
       if (shouldShowDropdown) {
-        handleSelect(filteredSuggestions[0])
+        handleSuggestionSelect(filteredSuggestions[0])
       }
       return
     }
@@ -103,7 +103,7 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
       updateHighlight(next)
     } else if (e.key === 'Enter' && highlightedIndex >= 0) {
       e.preventDefault()
-      handleSelect(filteredSuggestions[highlightedIndex])
+      handleSuggestionSelect(filteredSuggestions[highlightedIndex])
     } else if (e.key === 'Escape') {
       setIsOpen(false)
       setHighlightedIndex(-1)
@@ -152,7 +152,7 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={handleFormSubmit}
       className={s_name_form}
     >
       <div
@@ -185,7 +185,7 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
                 key={label}
                 onMouseDown={(e) => {
                   e.preventDefault()
-                  handleSelect(label)
+                  handleSuggestionSelect(label)
                 }}
                 onMouseEnter={() => updateHighlight(index)}
                 onMouseLeave={() => {
