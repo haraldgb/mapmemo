@@ -1,5 +1,4 @@
 import type { GameState } from './hooks/useGameState'
-import { NameModeInput } from './NameModeInput'
 
 type GameHUDProps = {
   gameState: GameState
@@ -8,21 +7,15 @@ type GameHUDProps = {
 
 export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
   const {
-    mode,
     promptText,
     correctCount: correctAttemptCount,
     incorrectCount: incorrectAttemptCount,
     scorePercent,
-    isComplete,
   } = gameState
   return (
     <div className={s_ui_container}>
       <div className={s_timer}>{formattedTime}</div>
-      {mode === 'name' && !isComplete ? (
-        <NameModeInput gameState={gameState} />
-      ) : (
-        <div className={s_prompt}>{promptText}</div>
-      )}
+      <div className={s_prompt}>{promptText}</div>
       <div className={s_score_container}>
         <span className='font-semibold text-emerald-600'>
           Correct: {correctAttemptCount}
