@@ -7,31 +7,43 @@ type NameModeInputProps = {
 
 export const NameModeInput = ({ gameState }: NameModeInputProps) => {
   const { areaLabels, registerNameGuess, prevGuess, currentEntry } = gameState
-  const [inputValue, setInputValue] = useState('')
+  const [typedValue, setTypedValue] = useState('')
+  const [previewValue, setPreviewValue] = useState('')
   const [isOpen, setIsOpen] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const displayValue = highlightedIndex >= 0 ? previewValue : typedValue
 
   const sortedLabels = [...areaLabels].sort((a, b) =>
     a.localeCompare(b, undefined, { sensitivity: 'base' }),
   )
 
   const filteredSuggestions =
-    inputValue.length > 0
+    typedValue.length > 0
       ? sortedLabels.filter((label) =>
-          label.toLowerCase().includes(inputValue.toLowerCase()),
+          label.toLowerCase().includes(typedValue.toLowerCase()),
         )
       : []
 
   const shouldShowDropdown = isOpen && filteredSuggestions.length > 0
 
+  const updateHighlight = (newIndex: number) => {
+    setHighlightedIndex(newIndex)
+    if (newIndex >= 0 && newIndex < filteredSuggestions.length) {
+      setPreviewValue(filteredSuggestions[newIndex])
+    }
+  }
+
   const handleSelect = (label: string) => {
     registerNameGuess(label)
     if (label.trim().toLowerCase() === currentEntry?.label.trim().toLowerCase()) {
-      setInputValue('')
+      setTypedValue('')
+      setPreviewValue('')
     } else {
-      setInputValue(label)
+      setTypedValue(label)
+      setPreviewValue('')
     }
     setIsOpen(false)
     setHighlightedIndex(-1)
@@ -40,12 +52,14 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!inputValue.trim()) return
-    handleSelect(inputValue)
+    const value = highlightedIndex >= 0 ? previewValue : typedValue
+    if (!value.trim()) return
+    handleSelect(value)
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value)
+    setTypedValue(e.target.value)
+    setPreviewValue('')
     setIsOpen(true)
     setHighlightedIndex(-1)
   }
@@ -55,20 +69,25 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
 
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setHighlightedIndex((prev) =>
-        prev < filteredSuggestions.length - 1 ? prev + 1 : 0,
-      )
+      const next =
+        highlightedIndex < filteredSuggestions.length - 1
+          ? highlightedIndex + 1
+          : 0
+      updateHighlight(next)
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      setHighlightedIndex((prev) =>
-        prev > 0 ? prev - 1 : filteredSuggestions.length - 1,
-      )
+      const next =
+        highlightedIndex > 0
+          ? highlightedIndex - 1
+          : filteredSuggestions.length - 1
+      updateHighlight(next)
     } else if (e.key === 'Enter' && highlightedIndex >= 0) {
       e.preventDefault()
       handleSelect(filteredSuggestions[highlightedIndex])
     } else if (e.key === 'Escape') {
       setIsOpen(false)
       setHighlightedIndex(-1)
+      setPreviewValue('')
     }
   }
 
@@ -80,6 +99,8 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
           !containerRef.current.contains(e.target as Node)
         ) {
           setIsOpen(false)
+          setHighlightedIndex(-1)
+          setPreviewValue('')
         }
       }
       document.addEventListener('mousedown', handleClickOutside)
@@ -100,11 +121,11 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
         <input
           ref={inputRef}
           type='text'
-          value={inputValue}
+          value={displayValue}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={() => {
-            if (inputValue.length > 0) setIsOpen(true)
+            if (typedValue.length > 0) setIsOpen(true)
           }}
           placeholder='Type area name...'
           autoFocus
@@ -120,7 +141,11 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
                   e.preventDefault()
                   handleSelect(label)
                 }}
-                onMouseEnter={() => setHighlightedIndex(index)}
+                onMouseEnter={() => updateHighlight(index)}
+                onMouseLeave={() => {
+                  setHighlightedIndex(-1)
+                  setPreviewValue('')
+                }}
                 className={sf_dropdown_item(index === highlightedIndex)}
               >
                 {label}
