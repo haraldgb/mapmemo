@@ -13,12 +13,14 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
 export interface MapmemoState {
   gameSettings: GameSettings
   areaOptions: AreaOption[]
+  allSubAreaNames: string[]
   isAppInitialized: boolean
 }
 
 export const initialMapmemoState: MapmemoState = {
   gameSettings: DEFAULT_GAME_SETTINGS,
   areaOptions: [],
+  allSubAreaNames: [],
   isAppInitialized: false,
 }
 
@@ -31,6 +33,9 @@ const mapmemoSlice = createSlice({
     },
     setAreaOptions(state, action: PayloadAction<AreaOption[]>) {
       state.areaOptions = action.payload
+    },
+    setAllSubAreaNames(state, action: PayloadAction<string[]>) {
+      state.allSubAreaNames = action.payload
     },
     initializeApp(state) {
       state.isAppInitialized = false

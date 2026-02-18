@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { useSelector } from 'react-redux'
+import type { RootState } from '../store'
 import type { GameState } from './hooks/useGameState'
 
 type NameModeInputProps = {
@@ -6,7 +8,11 @@ type NameModeInputProps = {
 }
 
 export const NameModeInput = ({ gameState }: NameModeInputProps) => {
-  const { areaLabels, registerNameGuess, prevGuess, currentEntry } = gameState
+  const { difficulty, areaLabels, registerNameGuess, prevGuess, currentEntry } =
+    gameState
+  const allSubAreaNames = useSelector(
+    (state: RootState) => state.mapmemo.allSubAreaNames,
+  )
   const [typedValue, setTypedValue] = useState('')
   const [previewValue, setPreviewValue] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -16,13 +22,17 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
 
   const displayValue = highlightedIndex >= 0 ? previewValue : typedValue
 
-  const sortedLabels = [...areaLabels].sort((a, b) =>
-    a.localeCompare(b, undefined, { sensitivity: 'base' }),
-  )
+  const hasAutocomplete = difficulty !== 'hard'
+  const suggestionPool =
+    difficulty === 'easy'
+      ? [...areaLabels].sort((a, b) =>
+          a.localeCompare(b, undefined, { sensitivity: 'base' }),
+        )
+      : allSubAreaNames
 
   const filteredSuggestions =
-    typedValue.length > 0
-      ? sortedLabels.filter((label) =>
+    hasAutocomplete && typedValue.length > 0
+      ? suggestionPool.filter((label) =>
           label.toLowerCase().includes(typedValue.toLowerCase()),
         )
       : []
