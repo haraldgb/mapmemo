@@ -93,7 +93,7 @@ const convertGeoJsonToLatLng = (geojson: GeoJsonObject) => {
 
 type Props = {
   gameState: {
-    modeCount: number
+    areaCount: number
     selectedAreas: string[]
   }
 }
@@ -150,7 +150,7 @@ export const useFeaturesInPlay = ({ gameState }: Props) => {
   )
 
   if (gameState.selectedAreas.length === 0) {
-    const maxCount = Math.min(gameState.modeCount, allFeatures.length)
+    const maxCount = Math.min(gameState.areaCount, allFeatures.length)
     return allFeatures.slice(0, maxCount)
   }
   return allFeatures.filter((feature) => {
