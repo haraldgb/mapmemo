@@ -4,6 +4,7 @@ import type { AppDispatch, RootState } from '../../store'
 import { mapmemoActions } from '../../duck/reducer'
 import {
   AREA_COUNT_OPTIONS,
+  DIFFICULTY_DESCRIPTIONS,
   DIFFICULTY_OPTIONS,
   MODE_DESCRIPTIONS,
   MODE_OPTIONS,
@@ -143,6 +144,7 @@ export const GameSettings = ({
               <button
                 key={option.value}
                 type='button'
+                title={DIFFICULTY_DESCRIPTIONS[option.value]}
                 disabled={draftSettings.mode !== 'name'}
                 onClick={() =>
                   setDraftSettings((prev) => ({
