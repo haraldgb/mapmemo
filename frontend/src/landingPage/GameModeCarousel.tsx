@@ -1,9 +1,13 @@
 import { useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
+import type { RootState } from '../store'
+import { mapmemoActions } from '../duck/reducer'
 import { MODE_DESCRIPTIONS } from '../game/consts'
+import type { GameMode } from '../game/settings/settingsTypes'
 
 type GameModeSlide = {
-  mode: string
+  mode: GameMode
   label: string
   description: string
   // TODO: replace with actual screenshot paths once captured
@@ -33,6 +37,10 @@ const SLIDES: GameModeSlide[] = [
 export const GameModeCarousel = () => {
   const [activeIndex, setActiveIndex] = useState(0)
   const slide = SLIDES[activeIndex]
+  const dispatch = useDispatch()
+  const gameSettings = useSelector(
+    (state: RootState) => state.mapmemo.gameSettings,
+  )
 
   if (!slide) {
     return null
@@ -59,6 +67,14 @@ export const GameModeCarousel = () => {
         </button>
         <Link
           to='/game'
+          onClick={() =>
+            dispatch(
+              mapmemoActions.setGameSettings({
+                ...gameSettings,
+                mode: slide.mode,
+              }),
+            )
+          }
           className={s_slide_link}
         >
           <img
