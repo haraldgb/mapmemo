@@ -7,15 +7,20 @@ type GameHUDProps = {
 
 export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
   const {
+    mode,
     promptText,
     correctCount: correctAttemptCount,
     incorrectCount: incorrectAttemptCount,
     scorePercent,
+    isComplete,
   } = gameState
+
+  const showPrompt = mode !== 'name' || isComplete
+
   return (
     <div className={s_ui_container}>
       <div className={s_timer}>{formattedTime}</div>
-      <div className={s_prompt}>{promptText}</div>
+      <div className={s_prompt}>{showPrompt ? promptText : '\u00A0'}</div>
       <div className={s_score_container}>
         <span className='font-semibold text-emerald-600'>
           Correct: {correctAttemptCount}

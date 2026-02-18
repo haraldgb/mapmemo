@@ -40,7 +40,7 @@ export const GameUI = ({ gameState, resetGameState }: Props) => {
 const s_ui =
   'pointer-events-auto absolute right-4 top-4 z-20 flex items-center gap-2'
 const s_name_input =
-  'pointer-events-auto absolute inset-x-0 top-16 z-10 flex justify-center'
+  'pointer-events-auto absolute inset-x-4 top-4 z-10 flex items-center justify-center px-4 py-3 md:px-16'
 const s_overlay =
   'pointer-events-auto absolute inset-0 z-20 flex items-center justify-center'
 const s_play_again =
