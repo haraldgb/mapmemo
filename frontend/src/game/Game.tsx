@@ -8,10 +8,23 @@ import { useGame } from './hooks/useGame.ts'
 import { useGameStyling } from './hooks/useGameStyling'
 import { useFeatureLabels } from './hooks/useFeatureLabels'
 import { GameUI } from './GameUI.tsx'
+import { RouteGame } from './RouteGame'
 import type { MapContext } from './types.ts'
 
 export const Game = () => {
-  const { areaCount, selectedAreas, mode } = useSelector(
+  const mode = useSelector(
+    (state: RootState) => state.mapmemo.gameSettings.mode,
+  )
+
+  if (mode === 'route') {
+    return <RouteGame />
+  }
+
+  return <AreaGame mode={mode} />
+}
+
+const AreaGame = ({ mode }: { mode: 'click' | 'name' }) => {
+  const { areaCount, selectedAreas } = useSelector(
     (state: RootState) => state.mapmemo.gameSettings,
   )
   const featuresInPlay = useFeaturesInPlay({
