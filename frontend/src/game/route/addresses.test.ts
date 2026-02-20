@@ -21,8 +21,7 @@ describe('selectRoutePair', () => {
     const pair2 = selectRoutePair(createSeededRng('seedbbbb'))
     // With 8 addresses, different seeds should usually produce different pairs
     const same =
-      pair1.start.name === pair2.start.name &&
-      pair1.end.name === pair2.end.name
+      pair1.start.name === pair2.start.name && pair1.end.name === pair2.end.name
     expect(same).toBe(false)
   })
 

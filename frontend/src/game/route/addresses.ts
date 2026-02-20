@@ -62,8 +62,7 @@ export const selectRoutePair = (
   const startIndex = Math.floor(rng() * addresses.length)
   // Pick end from remaining addresses to guarantee start !== end
   const endOffset = Math.floor(rng() * (addresses.length - 1))
-  const endIndex =
-    endOffset >= startIndex ? endOffset + 1 : endOffset
+  const endIndex = endOffset >= startIndex ? endOffset + 1 : endOffset
 
   return {
     start: addresses[startIndex],
