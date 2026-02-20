@@ -32,6 +32,14 @@ const SLIDES: GameModeSlide[] = [
     imageSrc: '/screenshots/name-mode.png',
     imageAlt: 'Name mode gameplay with text input and highlighted target area',
   },
+  {
+    mode: 'route',
+    label: 'Route Mode',
+    description: MODE_DESCRIPTIONS['route'] ?? '',
+    // TODO: screenshot of route mode gameplay
+    imageSrc: '/screenshots/route-mode.png',
+    imageAlt: 'Route mode gameplay with intersection dots and route polyline',
+  },
 ]
 
 export const GameModeCarousel = () => {

@@ -38,6 +38,7 @@ export const GameSettings = ({
     (state: RootState) => state.mapmemo.areaOptions,
   )
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const isRouteMode = draftSettings.mode === 'route'
   const selectedAreaCount = draftSettings.selectedAreas.length
   const isAreaFilterActive = selectedAreaCount > 0
   const areaButtonLabel =
@@ -165,21 +166,24 @@ export const GameSettings = ({
       </div>
       <div className={s_section}>
         <div className={s_label}>Area count</div>
-        <div className={sf_option_group(isAreaFilterActive)}>
+        <div className={sf_option_group(isAreaFilterActive || isRouteMode)}>
           {AREA_COUNT_OPTIONS.map((mode) => {
             const isSelected = draftSettings.areaCount === mode.value
             return (
               <button
                 key={mode.value}
                 type='button'
-                disabled={isAreaFilterActive}
+                disabled={isAreaFilterActive || isRouteMode}
                 onClick={() =>
                   setDraftSettings((prev) => ({
                     ...prev,
                     areaCount: mode.value,
                   }))
                 }
-                className={sf_option_button(isSelected, isAreaFilterActive)}
+                className={sf_option_button(
+                  isSelected,
+                  isAreaFilterActive || isRouteMode,
+                )}
               >
                 {mode.label}
               </button>
@@ -220,16 +224,18 @@ export const GameSettings = ({
           ))}
         </div>
       </div>
-      <div className={s_section}>
-        <div className={s_label}>Area</div>
-        <AreaDropdown
-          label={areaButtonLabel}
-          options={areaOptions}
-          selectedIds={draftSettings.selectedAreas}
-          onToggleSelection={toggleAreaSelection}
-          outsideClickRef={containerRef}
-        />
-      </div>
+      {!isRouteMode && (
+        <div className={s_section}>
+          <div className={s_label}>Area</div>
+          <AreaDropdown
+            label={areaButtonLabel}
+            options={areaOptions}
+            selectedIds={draftSettings.selectedAreas}
+            onToggleSelection={toggleAreaSelection}
+            outsideClickRef={containerRef}
+          />
+        </div>
+      )}
       {isConfirming && (
         <ConfirmResetPopup
           onConfirm={handleConfirmReset}
