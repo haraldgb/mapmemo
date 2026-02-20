@@ -49,14 +49,16 @@ export const useRoadGraph = (): RoadGraph => {
   // Keep a ref in sync so callbacks always see latest cache without re-rendering
   const cacheRef = useRef<RoadCache>(state.cache)
 
-  const fetchRoad = useCallback(async (roadName: string) => {
+  const fetchRoad = useCallback(async function fetchRoadCb(roadName: string) {
     // Skip if already cached
-    if (cacheRef.current[roadName]) return
+    if (cacheRef.current[roadName]) {
+      return
+    }
 
     setState((prev) => ({ ...prev, isLoading: true, error: null }))
     try {
       const response = await fetchRoadWithIntersections(CITY_NAME, roadName)
-      setState((prev) => {
+      setState(function mergeRoadResponse(prev) {
         const merged = { ...prev.cache, ...response }
         cacheRef.current = merged
         return { cache: merged, isLoading: false, error: null }
@@ -69,12 +71,14 @@ export const useRoadGraph = (): RoadGraph => {
   }, [])
 
   const getIntersectionsForRoad = useCallback(
-    (
+    function getIntersectionsForRoadCb(
       roadName: string,
       excludeIds: Set<number> = new Set(),
-    ): AvailableIntersection[] => {
+    ): AvailableIntersection[] {
       const road = cacheRef.current[roadName]
-      if (!road) return []
+      if (!road) {
+        return []
+      }
       return road.intersections
         .filter((ix) => !excludeIds.has(ix.id))
         .map((ix) => ({ ...ix, sourceRoadName: roadName }))
@@ -83,10 +87,10 @@ export const useRoadGraph = (): RoadGraph => {
   )
 
   const getIntersectionsFromPoint = useCallback(
-    (
+    function getIntersectionsFromPointCb(
       intersectionId: number,
       excludeIds: Set<number> = new Set(),
-    ): AvailableIntersection[] => {
+    ): AvailableIntersection[] {
       const result: AvailableIntersection[] = []
       const seen = new Set<number>(excludeIds)
       seen.add(intersectionId)
@@ -96,11 +100,15 @@ export const useRoadGraph = (): RoadGraph => {
         const hasIntersection = road.intersections.some(
           (ix) => ix.id === intersectionId,
         )
-        if (!hasIntersection) continue
+        if (!hasIntersection) {
+          continue
+        }
 
         // Add all other intersections on this road
         for (const ix of road.intersections) {
-          if (seen.has(ix.id)) continue
+          if (seen.has(ix.id)) {
+            continue
+          }
           seen.add(ix.id)
           result.push({ ...ix, sourceRoadName: road.name })
         }
@@ -111,7 +119,7 @@ export const useRoadGraph = (): RoadGraph => {
     [],
   )
 
-  const reset = useCallback(() => {
+  const reset = useCallback(function resetRoadGraph() {
     cacheRef.current = {}
     setState({ cache: {}, isLoading: false, error: null })
   }, [])
