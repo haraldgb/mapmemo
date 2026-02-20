@@ -68,4 +68,8 @@ export type RouteResult = {
   timeDifference: number
   /** Wall clock time spent playing, in seconds */
   gameTime: number
+  /** Encoded polyline for the optimal route (for map overlay) */
+  optimalPolyline: string
+  /** Encoded polyline for the player's route via waypoints (for map overlay) */
+  playerPolyline: string
 }

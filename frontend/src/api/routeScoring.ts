@@ -135,5 +135,7 @@ export const computeRouteResult = async (
     playerRouteTime,
     timeDifference: playerRouteTime - optimalRouteTime,
     gameTime: gameTimeSeconds,
+    optimalPolyline: optimalRoute.polyline?.encodedPolyline ?? '',
+    playerPolyline: playerRoute.polyline?.encodedPolyline ?? '',
   }
 }
