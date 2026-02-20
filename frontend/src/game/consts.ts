@@ -82,11 +82,13 @@ export const INCORRECT_FLASH_STYLE: google.maps.Data.StyleOptions = {
 export const MODE_OPTIONS = [
   { label: 'Click', value: 'click' },
   { label: 'Name', value: 'name' },
+  { label: 'Route', value: 'route' },
 ] as const
 
 export const MODE_DESCRIPTIONS: Record<string, string> = {
   click: 'Find and click the named area on the map.',
   name: 'Type the name of the highlighted area.',
+  route: 'Navigate from A to B by clicking intersections.',
 }
 
 export const DIFFICULTY_OPTIONS = [
