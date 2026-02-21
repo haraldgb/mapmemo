@@ -38,8 +38,10 @@ export const GameSettings = ({
     (state: RootState) => state.mapmemo.areaOptions,
   )
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const isRouteMode = draftSettings.mode === 'route'
   const selectedAreaCount = draftSettings.selectedAreas.length
   const isAreaFilterActive = selectedAreaCount > 0
+  const isAreaCountDisabled = isAreaFilterActive || isRouteMode
   const areaButtonLabel =
     selectedAreaCount === 0 ? 'All areas' : `${selectedAreaCount} selected`
 
@@ -140,22 +142,20 @@ export const GameSettings = ({
         <div className={sf_option_group(draftSettings.mode !== 'name')}>
           {DIFFICULTY_OPTIONS.map((option) => {
             const isSelected = draftSettings.difficulty === option.value
+            const isDisabled = draftSettings.mode !== 'name'
             return (
               <button
                 key={option.value}
                 type='button'
                 title={DIFFICULTY_DESCRIPTIONS[option.value]}
-                disabled={draftSettings.mode !== 'name'}
+                disabled={isDisabled}
                 onClick={() =>
                   setDraftSettings((prev) => ({
                     ...prev,
                     difficulty: option.value,
                   }))
                 }
-                className={sf_option_button(
-                  isSelected,
-                  draftSettings.mode !== 'name',
-                )}
+                className={sf_option_button(isSelected, isDisabled)}
               >
                 {option.label}
               </button>
@@ -165,21 +165,21 @@ export const GameSettings = ({
       </div>
       <div className={s_section}>
         <div className={s_label}>Area count</div>
-        <div className={sf_option_group(isAreaFilterActive)}>
+        <div className={sf_option_group(isAreaCountDisabled)}>
           {AREA_COUNT_OPTIONS.map((mode) => {
             const isSelected = draftSettings.areaCount === mode.value
             return (
               <button
                 key={mode.value}
                 type='button'
-                disabled={isAreaFilterActive}
+                disabled={isAreaCountDisabled}
                 onClick={() =>
                   setDraftSettings((prev) => ({
                     ...prev,
                     areaCount: mode.value,
                   }))
                 }
-                className={sf_option_button(isSelected, isAreaFilterActive)}
+                className={sf_option_button(isSelected, isAreaCountDisabled)}
               >
                 {mode.label}
               </button>
@@ -220,15 +220,21 @@ export const GameSettings = ({
           ))}
         </div>
       </div>
-      <div className={s_section}>
+      <div className={`${s_section} ${isRouteMode ? 'opacity-60' : ''}`}>
         <div className={s_label}>Area</div>
-        <AreaDropdown
-          label={areaButtonLabel}
-          options={areaOptions}
-          selectedIds={draftSettings.selectedAreas}
-          onToggleSelection={toggleAreaSelection}
-          outsideClickRef={containerRef}
-        />
+        {isRouteMode ? (
+          <div className='mt-2 text-xs text-slate-400'>
+            Not available in route mode
+          </div>
+        ) : (
+          <AreaDropdown
+            label={areaButtonLabel}
+            options={areaOptions}
+            selectedIds={draftSettings.selectedAreas}
+            onToggleSelection={toggleAreaSelection}
+            outsideClickRef={containerRef}
+          />
+        )}
       </div>
       {isConfirming && (
         <ConfirmResetPopup
