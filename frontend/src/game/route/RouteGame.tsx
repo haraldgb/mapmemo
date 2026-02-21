@@ -35,13 +35,7 @@ export const RouteGame = () => {
       >
         {isGMapReady && (
           <>
-            <RouteGameHUD
-              formattedTime={formattedTime}
-              currentRoadName={routeMode.currentRoadName}
-              isLoading={routeMode.isLoading}
-              canReachDestination={routeMode.canReachDestination}
-              endLabel={routeMode.endAddress?.label ?? null}
-            />
+            <RouteGameHUD formattedTime={formattedTime} />
             <RouteMapInteraction
               key={routeMode.gameKey}
               routeMode={routeMode}
