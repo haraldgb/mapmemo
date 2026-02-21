@@ -107,51 +107,46 @@ export const useRouteMode = (): RouteMode => {
     [seed, gameKey],
   )
 
-  const handleIntersectionClick = (intersection: SelectedIntersection) => {
+  const handleIntersectionClick = (
+    currentIntersection: SelectedIntersection,
+  ) => {
     if (isComplete || isLoading) {
       return
     }
 
-    setPath((prev) => [...prev, intersection])
+    setPath((prev) => [...prev, currentIntersection])
 
     // All roads meeting at this intersection
     const roadsAtIntersection = [
-      intersection.roadName,
-      intersection.otherRoadName,
+      currentIntersection.roadName,
+      currentIntersection.otherRoadName,
     ]
-    setCurrentRoadName(intersection.otherRoadName)
+    setCurrentRoadName(currentIntersection.otherRoadName)
 
     // Fetch any roads not yet primary-fetched, then combine all intersections
     const toFetch = roadsAtIntersection.filter(
       (r) => !roadGraph.isFetchedAsPrimary(r),
     )
+    void Promise.all(toFetch.map((road) => roadGraph.fetchRoad(road))).catch(
+      // Fetching a road pre-fetches roads that intersect with it, so we don't have to wait for fetches.
+      (err) => {
+        setError(err instanceof Error ? err.message : 'Failed to fetch road')
+      },
+    )
 
     const updateAvailable = () => {
       const combined = new Map<number, SelectedIntersection>()
       for (const road of roadsAtIntersection) {
-        for (const ix of roadGraph.getIntersectionsForRoad(road)) {
-          if (ix.id !== intersection.id) {
-            combined.set(ix.id, ix)
+        for (const intersection of roadGraph.getIntersectionsForRoad(road)) {
+          if (intersection.id !== currentIntersection.id) {
+            combined.set(intersection.id, intersection)
           }
         }
       }
       setAvailableIntersections([...combined.values()])
     }
 
-    if (toFetch.length > 0) {
-      setIsLoading(true)
-      void Promise.all(toFetch.map((r) => roadGraph.fetchRoad(r)))
-        .then(() => {
-          updateAvailable()
-          setIsLoading(false)
-        })
-        .catch((err) => {
-          setError(err instanceof Error ? err.message : 'Failed to fetch road')
-          setIsLoading(false)
-        })
-    } else {
-      updateAvailable()
-    }
+    updateAvailable()
   }
 
   const handleDestinationClick = () => {

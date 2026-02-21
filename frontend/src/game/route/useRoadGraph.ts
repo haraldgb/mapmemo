@@ -29,8 +29,7 @@ export const useRoadGraph = (): RoadGraph => {
     // Response is a Record<string, RoadInfo> — primary road + branch roads
     for (const [name, info] of Object.entries(response)) {
       const existing = roadCacheRef.current.get(name)
-      // Only overwrite if this is the primary fetch (more complete data)
-      if (!existing || name === roadName) {
+      if (!existing) {
         roadCacheRef.current.set(name, info)
       }
     }
