@@ -9,6 +9,23 @@ type Props = {
   availableIntersections: SelectedIntersection[]
   isReady: boolean
   canReachDestination: boolean
+  onIntersectionClick: (intersection: SelectedIntersection) => void
+  onDestinationClick: () => void
+}
+
+const ENDPOINT_STYLE: Partial<CSSStyleDeclaration> = {
+  color: 'white',
+  fontWeight: '700',
+  fontSize: '14px',
+  width: '32px',
+  height: '32px',
+  borderRadius: '50%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '2px solid white',
+  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+  cursor: 'default',
 }
 
 export const useRouteMapRendering = ({
@@ -18,6 +35,8 @@ export const useRouteMapRendering = ({
   availableIntersections,
   isReady,
   canReachDestination,
+  onIntersectionClick,
+  onDestinationClick,
 }: Props): void => {
   const map = useMap()
 
@@ -44,21 +63,7 @@ export const useRouteMapRendering = ({
       // Create start marker (A)
       const startEl = document.createElement('div')
       startEl.textContent = 'A'
-      startEl.className = 'route-marker route-marker-start'
-      Object.assign(startEl.style, {
-        background: '#3b82f6',
-        color: 'white',
-        fontWeight: '700',
-        fontSize: '14px',
-        width: '32px',
-        height: '32px',
-        borderRadius: '50%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        border: '2px solid white',
-        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-      })
+      Object.assign(startEl.style, { ...ENDPOINT_STYLE, background: '#3b82f6' })
 
       const startMarker = new google.maps.marker.AdvancedMarkerElement({
         map,
@@ -74,20 +79,7 @@ export const useRouteMapRendering = ({
       // Create end marker (B)
       const endEl = document.createElement('div')
       endEl.textContent = 'B'
-      Object.assign(endEl.style, {
-        background: '#ef4444',
-        color: 'white',
-        fontWeight: '700',
-        fontSize: '14px',
-        width: '32px',
-        height: '32px',
-        borderRadius: '50%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        border: '2px solid white',
-        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-      })
+      Object.assign(endEl.style, { ...ENDPOINT_STYLE, background: '#ef4444' })
 
       const endMarker = new google.maps.marker.AdvancedMarkerElement({
         map,
@@ -132,7 +124,7 @@ export const useRouteMapRendering = ({
     [map, isReady, startAddress, endAddress, availableIntersections],
   )
 
-  // Render intersection dots — diff by ID to avoid flash on update
+  // Render intersection dots with click handlers — diff by ID to avoid flash on update
   useEffect(
     function renderIntersectionDots() {
       if (!map) {
@@ -184,6 +176,10 @@ export const useRouteMapRendering = ({
           position: { lat: ix.lat, lng: ix.lng },
           content: el,
           title: ix.otherRoadName,
+          gmpClickable: true,
+        })
+        marker.addEventListener('gmp-click', () => {
+          onIntersectionClick(ix)
         })
         dotMarkersMapRef.current.set(ix.id, marker)
       }
@@ -195,7 +191,7 @@ export const useRouteMapRendering = ({
         dotMarkersMapRef.current.clear()
       }
     },
-    [map, availableIntersections],
+    [map, availableIntersections, onIntersectionClick],
   )
 
   // Draw route polyline through path
@@ -236,18 +232,20 @@ export const useRouteMapRendering = ({
     [map, startAddress, path],
   )
 
-  // Highlight B marker when destination is reachable
+  // Highlight B marker when destination is reachable, attach click handler
   useEffect(
     function highlightDestinationMarker() {
-      if (!endMarkerRef.current) {
+      const marker = endMarkerRef.current
+      if (!marker) {
         return
       }
-      const el = endMarkerRef.current.content as HTMLElement | null
+      const el = marker.content as HTMLElement | null
       if (!el) {
         return
       }
 
       if (canReachDestination) {
+        marker.gmpClickable = true
         el.style.background = '#22c55e'
         el.style.transform = 'scale(1.2)'
         el.style.transition =
@@ -262,19 +260,26 @@ export const useRouteMapRendering = ({
           el.style.transform = 'scale(1.2)'
           el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)'
         }
+        const handleClick = () => {
+          onDestinationClick()
+        }
         el.addEventListener('mouseenter', handleEnter)
         el.addEventListener('mouseleave', handleLeave)
+        marker.addEventListener('gmp-click', handleClick)
 
         return () => {
           el.removeEventListener('mouseenter', handleEnter)
           el.removeEventListener('mouseleave', handleLeave)
+          marker.removeEventListener('gmp-click', handleClick)
+          marker.gmpClickable = false
         }
       } else {
+        marker.gmpClickable = false
         el.style.background = '#ef4444'
         el.style.transform = 'scale(1)'
         el.style.cursor = 'default'
       }
     },
-    [canReachDestination],
+    [canReachDestination, onDestinationClick],
   )
 }
