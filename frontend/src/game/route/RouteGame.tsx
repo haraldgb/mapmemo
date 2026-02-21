@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import { useMap } from '@vis.gl/react-google-maps'
+import { useState } from 'react'
 import { GMap } from '../../components/GMap'
 import { GameSettingsButton } from '../settings/GameSettingsButton'
 import { useGameTimer } from '../hooks/useGameTimer'
@@ -7,8 +6,6 @@ import { useRouteMode } from './useRouteMode'
 import { useRouteMapRendering } from './useRouteMapRendering'
 import { RouteGameHUD } from './RouteGameHUD'
 import { RouteResults } from './RouteResults'
-
-import type { SelectedIntersection, SnappedAddress } from './types'
 
 const EMPTY_FEATURES: google.maps.Data.Feature[] = []
 
@@ -79,8 +76,6 @@ type RouteMapInteractionProps = {
 }
 
 const RouteMapInteraction = ({ routeMode }: RouteMapInteractionProps) => {
-  const map = useMap()
-
   useRouteMapRendering({
     startAddress: routeMode.startAddress,
     endAddress: routeMode.endAddress,
@@ -88,118 +83,11 @@ const RouteMapInteraction = ({ routeMode }: RouteMapInteractionProps) => {
     availableIntersections: routeMode.availableIntersections,
     isReady: routeMode.isReady,
     canReachDestination: routeMode.canReachDestination,
-  })
-
-  useIntersectionClickHandler({
-    map,
-    availableIntersections: routeMode.availableIntersections,
     onIntersectionClick: routeMode.handleIntersectionClick,
     onDestinationClick: routeMode.handleDestinationClick,
-    canReachDestination: routeMode.canReachDestination,
-    endAddress: routeMode.endAddress,
   })
 
   return null
-}
-
-// --- Click handler hook ---
-
-type IntersectionClickProps = {
-  map: google.maps.Map | null
-  availableIntersections: SelectedIntersection[]
-  onIntersectionClick: (intersection: SelectedIntersection) => void
-  onDestinationClick: () => void
-  canReachDestination: boolean
-  endAddress: SnappedAddress | null
-}
-
-const CLICK_THRESHOLD_METERS = 30
-
-const useIntersectionClickHandler = ({
-  map,
-  availableIntersections,
-  onIntersectionClick,
-  onDestinationClick,
-  canReachDestination,
-  endAddress,
-}: IntersectionClickProps) => {
-  useEffect(
-    function handleMapClicks() {
-      if (!map) {
-        return
-      }
-
-      const listener = map.addListener(
-        'click',
-        (event: google.maps.MapMouseEvent) => {
-          if (!event.latLng) {
-            return
-          }
-
-          const clickLat = event.latLng.lat()
-          const clickLng = event.latLng.lng()
-
-          // Check destination click first
-          if (canReachDestination && endAddress) {
-            const distToEnd = haversineDistance(
-              clickLat,
-              clickLng,
-              endAddress.snappedLat,
-              endAddress.snappedLng,
-            )
-            if (distToEnd < CLICK_THRESHOLD_METERS) {
-              onDestinationClick()
-              return
-            }
-          }
-
-          // Find closest intersection
-          let closest: SelectedIntersection | null = null
-          let closestDist = Infinity
-
-          for (const ix of availableIntersections) {
-            const dist = haversineDistance(clickLat, clickLng, ix.lat, ix.lng)
-            if (dist < closestDist) {
-              closestDist = dist
-              closest = ix
-            }
-          }
-
-          if (closest && closestDist < CLICK_THRESHOLD_METERS) {
-            onIntersectionClick(closest)
-          }
-        },
-      )
-
-      return () => {
-        google.maps.event.removeListener(listener)
-      }
-    },
-    [
-      map,
-      availableIntersections,
-      onIntersectionClick,
-      onDestinationClick,
-      canReachDestination,
-      endAddress,
-    ],
-  )
-}
-
-const haversineDistance = (
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number,
-): number => {
-  const R = 6371000
-  const toRad = (deg: number) => (deg * Math.PI) / 180
-  const dLat = toRad(lat2 - lat1)
-  const dLng = toRad(lng2 - lng1)
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
 const s_section = 'flex min-h-0 flex-1'
