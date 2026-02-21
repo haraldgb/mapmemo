@@ -1,5 +1,7 @@
 # Backend (ASP.NET Core)
 
+dotnet build MapMemo.Api                                      # build server
+
 Run locally:
 
 -   `dotnet run --project MapMemo.Api`
@@ -10,7 +12,6 @@ Run tests:
 
 -   `dotnet test MapMemo.Api.Tests`
 
-Format code:
 
 -   `dotnet format MapMemo.Api/MapMemo.Api.csproj`
 -   `dotnet format MapMemo.Api.Tests/MapMemo.Api.Tests.csproj`
