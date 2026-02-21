@@ -41,11 +41,12 @@ export const useRouteMode = (): RouteMode => {
 
   const isReady = startAddress !== null && endAddress !== null && !isLoading
 
+  const lastIntersection = path.at(-1) ?? null
   const canReachDestination =
     endAddress !== null &&
-    availableIntersections.some(
-      (ix) => ix.otherRoadName === endAddress.roadName,
-    )
+    lastIntersection !== null &&
+    (lastIntersection.roadName === endAddress.roadName ||
+      lastIntersection.otherRoadName === endAddress.roadName)
 
   // Init flow: resolve addresses, fetch starting road
   useEffect(
@@ -111,22 +112,35 @@ export const useRouteMode = (): RouteMode => {
 
     setPath((prev) => [...prev, intersection])
 
-    // Turn onto the other road
-    const nextRoadName = intersection.otherRoadName
-    setCurrentRoadName(nextRoadName)
+    // All roads meeting at this intersection
+    const roadsAtIntersection = [
+      intersection.roadName,
+      intersection.otherRoadName,
+    ]
+    setCurrentRoadName(intersection.otherRoadName)
 
-    // Fetch next road if not already primary-fetched
-    if (!roadGraph.isFetchedAsPrimary(nextRoadName)) {
+    // Fetch any roads not yet primary-fetched, then combine all intersections
+    const toFetch = roadsAtIntersection.filter(
+      (r) => !roadGraph.isFetchedAsPrimary(r),
+    )
+
+    const updateAvailable = () => {
+      const combined = new Map<number, SelectedIntersection>()
+      for (const road of roadsAtIntersection) {
+        for (const ix of roadGraph.getIntersectionsForRoad(road)) {
+          if (ix.id !== intersection.id) {
+            combined.set(ix.id, ix)
+          }
+        }
+      }
+      setAvailableIntersections([...combined.values()])
+    }
+
+    if (toFetch.length > 0) {
       setIsLoading(true)
-      void roadGraph
-        .fetchRoad(nextRoadName)
+      void Promise.all(toFetch.map((r) => roadGraph.fetchRoad(r)))
         .then(() => {
-          const intersections = roadGraph.getIntersectionsForRoad(nextRoadName)
-          // Filter out the intersection we just came from
-          const filtered = intersections.filter(
-            (ix) => ix.id !== intersection.id,
-          )
-          setAvailableIntersections(filtered)
+          updateAvailable()
           setIsLoading(false)
         })
         .catch((err) => {
@@ -134,9 +148,7 @@ export const useRouteMode = (): RouteMode => {
           setIsLoading(false)
         })
     } else {
-      const intersections = roadGraph.getIntersectionsForRoad(nextRoadName)
-      const filtered = intersections.filter((ix) => ix.id !== intersection.id)
-      setAvailableIntersections(filtered)
+      updateAvailable()
     }
   }
 
