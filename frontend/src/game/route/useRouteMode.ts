@@ -16,6 +16,7 @@ type RouteMode = {
   isReady: boolean
   isComplete: boolean
   error: string | null
+  gameKey: number
   handleIntersectionClick: (intersection: SelectedIntersection) => void
   handleDestinationClick: () => void
   canReachDestination: boolean
@@ -38,6 +39,7 @@ export const useRouteMode = (): RouteMode => {
   const [isLoading, setIsLoading] = useState(true)
   const [isComplete, setIsComplete] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [gameKey, setGameKey] = useState(0)
 
   const isReady = startAddress !== null && endAddress !== null && !isLoading
 
@@ -102,7 +104,7 @@ export const useRouteMode = (): RouteMode => {
         isActive = false
       }
     },
-    [seed],
+    [seed, gameKey],
   )
 
   const handleIntersectionClick = (intersection: SelectedIntersection) => {
@@ -161,7 +163,6 @@ export const useRouteMode = (): RouteMode => {
   }
 
   const reset = () => {
-    roadGraph.reset()
     setStartAddress(null)
     setEndAddress(null)
     setPath([])
@@ -170,6 +171,7 @@ export const useRouteMode = (): RouteMode => {
     setIsLoading(true)
     setIsComplete(false)
     setError(null)
+    setGameKey((k) => k + 1)
   }
 
   return {
@@ -182,6 +184,7 @@ export const useRouteMode = (): RouteMode => {
     isReady,
     isComplete,
     error,
+    gameKey,
     handleIntersectionClick,
     handleDestinationClick,
     canReachDestination,
