@@ -28,7 +28,9 @@ export const useRouteMapRendering = ({
   const endMarkerRef = useRef<google.maps.marker.AdvancedMarkerElement | null>(
     null,
   )
-  const dotMarkersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([])
+  const dotMarkersMapRef = useRef<
+    Map<number, google.maps.marker.AdvancedMarkerElement>
+  >(new Map())
   const polylineRef = useRef<google.maps.Polyline | null>(null)
   const hasFittedRef = useRef(false)
 
@@ -130,21 +132,33 @@ export const useRouteMapRendering = ({
     [map, isReady, startAddress, endAddress, availableIntersections],
   )
 
-  // Render intersection dots
+  // Render intersection dots — diff by ID to avoid flash on update
   useEffect(
     function renderIntersectionDots() {
       if (!map) {
         return
       }
 
-      // Clear old dots
-      for (const marker of dotMarkersRef.current) {
-        marker.map = null
-      }
-      dotMarkersRef.current = []
+      const nextIds = new Set(availableIntersections.map((ix) => ix.id))
+      const prevIds = new Set(dotMarkersMapRef.current.keys())
 
-      // Create new dots
+      // Remove markers no longer in the list
+      for (const id of prevIds) {
+        if (!nextIds.has(id)) {
+          const marker = dotMarkersMapRef.current.get(id)
+          if (marker) {
+            marker.map = null
+          }
+          dotMarkersMapRef.current.delete(id)
+        }
+      }
+
+      // Add markers that are new
       for (const ix of availableIntersections) {
+        if (dotMarkersMapRef.current.has(ix.id)) {
+          continue
+        }
+
         const el = document.createElement('div')
         Object.assign(el.style, {
           background: '#6f2dbd',
@@ -171,14 +185,14 @@ export const useRouteMapRendering = ({
           content: el,
           title: ix.otherRoadName,
         })
-        dotMarkersRef.current.push(marker)
+        dotMarkersMapRef.current.set(ix.id, marker)
       }
 
       return () => {
-        for (const marker of dotMarkersRef.current) {
+        for (const marker of dotMarkersMapRef.current.values()) {
           marker.map = null
         }
-        dotMarkersRef.current = []
+        dotMarkersMapRef.current.clear()
       }
     },
     [map, availableIntersections],

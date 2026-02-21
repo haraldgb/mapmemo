@@ -113,7 +113,7 @@ type IntersectionClickProps = {
   endAddress: SnappedAddress | null
 }
 
-const CLICK_THRESHOLD_METERS = 15
+const CLICK_THRESHOLD_METERS = 30
 
 const useIntersectionClickHandler = ({
   map,
