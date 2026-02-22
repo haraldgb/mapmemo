@@ -26,6 +26,7 @@ export type GameState = {
   mode: GameMode
   difficulty: GameDifficulty
   areaLabels: string[]
+  promptPrefixDesktop: string
   promptText: string
   correctCount: number
   incorrectCount: number
@@ -151,6 +152,7 @@ export const useGameState = ({ features }: Props): GameState => {
     onGuess: processGuessResult,
   })
 
+  const promptPrefixDesktop = 'Click area: '
   const promptText =
     total === 0
       ? 'Loading areas...'
@@ -158,12 +160,13 @@ export const useGameState = ({ features }: Props): GameState => {
         ? 'All areas covered!'
         : mode === 'name'
           ? 'Type the highlighted area name'
-          : `Click area: ${currentEntry?.label ?? ''}`
+          : `${currentEntry?.label ?? ''}`
 
   return {
     mode,
     difficulty,
     areaLabels,
+    promptPrefixDesktop,
     promptText,
     correctCount,
     incorrectCount,

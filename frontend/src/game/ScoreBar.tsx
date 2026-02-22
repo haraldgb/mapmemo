@@ -103,13 +103,13 @@ export const ScoreBar = ({
   )
 }
 
-const s_wrapper = 'flex items-center md:justify-end'
+const s_wrapper = 'flex items-center justify-end md:justify-center'
 const s_bar =
-  'relative h-7 w-full max-w-64 overflow-hidden rounded-md border-3 md:ml-auto'
+  'relative h-7 w-40 sm:w-64 md:w-full md:max-w-64 overflow-hidden rounded-md border-3 md:ml-auto'
 const s_segments = 'flex h-full gap-px bg-white p-px'
-const s_correct = 'rounded-[2px] bg-emerald-500'
-const s_remaining = 'rounded-[2px] bg-slate-300'
-const s_incorrect = 'rounded-[2px] bg-red-500'
+const s_correct = 'rounded-xs bg-emerald-500'
+const s_remaining = 'rounded-xs bg-slate-300'
+const s_incorrect = 'rounded-xs bg-red-500'
 const s_overlay =
   'pointer-events-none absolute inset-0 flex items-center px-2 text-[10px] font-semibold leading-none'
 const s_overlay_correct = 'text-center text-emerald-800'
