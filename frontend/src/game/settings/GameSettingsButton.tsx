@@ -2,15 +2,12 @@ import { useEffect, useRef, useState } from 'react'
 import { SettingsCogIcon } from '../../components/icons/SettingsCogIcon'
 import { GameSettings } from './GameSettings'
 
-interface IProps {
+type Props = {
   isGameActive: boolean
   resetGameState: () => void
 }
 
-export const GameSettingsButton = ({
-  isGameActive,
-  resetGameState,
-}: IProps) => {
+export const GameSettingsButton = ({ isGameActive, resetGameState }: Props) => {
   const [isOpen, setIsOpen] = useState(true)
   const containerRef = useRef<HTMLDivElement | null>(null)
 

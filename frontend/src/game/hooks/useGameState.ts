@@ -30,6 +30,7 @@ export type GameState = {
   correctCount: number
   incorrectCount: number
   scorePercent: number
+  totalCount: number
   isGameActive: boolean
   isComplete: boolean
   currentEntry: GameEntry | null
@@ -167,6 +168,7 @@ export const useGameState = ({ features }: Props): GameState => {
     correctCount,
     incorrectCount,
     scorePercent,
+    totalCount: entries.length,
     isGameActive,
     isComplete,
     currentEntry,

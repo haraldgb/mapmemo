@@ -17,7 +17,7 @@ import { isValidSeed, randomSeed } from '../utils'
 
 const PRESET_SEEDS = ['dickbutt', 'kumquats', 'oslobest'] as const
 
-interface IProps {
+type Props = {
   isGameActive: boolean
   onClose: () => void
   resetGameState: () => void
@@ -27,7 +27,7 @@ export const GameSettings = ({
   isGameActive,
   onClose,
   resetGameState,
-}: IProps) => {
+}: Props) => {
   const dispatch = useDispatch<AppDispatch>()
   const currentSettings = useSelector(
     (state: RootState) => state.mapmemo.gameSettings,
