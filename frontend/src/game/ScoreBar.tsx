@@ -103,9 +103,8 @@ export const ScoreBar = ({
   )
 }
 
-const s_wrapper = 'flex items-center justify-end md:justify-center'
-const s_bar =
-  'relative h-7 w-40 sm:w-64 md:w-full md:max-w-64 overflow-hidden rounded-md border-3 md:ml-auto'
+const s_wrapper = 'flex items-center'
+const s_bar = 'relative h-7 w-56 overflow-hidden rounded-md border-3'
 const s_segments = 'flex h-full gap-px bg-white p-px'
 const s_correct = 'rounded-xs bg-emerald-500'
 const s_remaining = 'rounded-xs bg-slate-300'

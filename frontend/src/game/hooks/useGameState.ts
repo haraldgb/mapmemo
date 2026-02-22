@@ -152,7 +152,7 @@ export const useGameState = ({ features }: Props): GameState => {
     onGuess: processGuessResult,
   })
 
-  const promptPrefixDesktop = 'Click area: '
+  const promptPrefixDesktop = 'Click area:\u00A0'
   const promptText =
     total === 0
       ? 'Loading areas...'
