@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { useMap } from '@vis.gl/react-google-maps'
 import { twj } from 'tw-to-css'
-import type { SelectedIntersection, SnappedAddress } from './types'
+import type { RouteAddress, SelectedIntersection } from './types'
 
 type Props = {
-  startAddress: SnappedAddress | null
-  endAddress: SnappedAddress | null
+  startAddress: RouteAddress | null
+  endAddress: RouteAddress | null
   path: SelectedIntersection[]
   availableIntersections: SelectedIntersection[]
   isReady: boolean
@@ -71,8 +71,8 @@ export const useRouteMapRendering = ({
       const startMarker = new google.maps.marker.AdvancedMarkerElement({
         map,
         position: {
-          lat: startAddress.snappedLat,
-          lng: startAddress.snappedLng,
+          lat: startAddress.lat,
+          lng: startAddress.lng,
         },
         content: startElement,
         title: startAddress.label,
@@ -88,7 +88,7 @@ export const useRouteMapRendering = ({
 
       const endMarker = new google.maps.marker.AdvancedMarkerElement({
         map,
-        position: { lat: endAddress.snappedLat, lng: endAddress.snappedLng },
+        position: { lat: endAddress.lat, lng: endAddress.lng },
         content: endElement,
         title: endAddress.label,
       })
@@ -117,10 +117,10 @@ export const useRouteMapRendering = ({
 
       const bounds = new google.maps.LatLngBounds()
       bounds.extend({
-        lat: startAddress.snappedLat,
-        lng: startAddress.snappedLng,
+        lat: startAddress.lat,
+        lng: startAddress.lng,
       })
-      bounds.extend({ lat: endAddress.snappedLat, lng: endAddress.snappedLng })
+      bounds.extend({ lat: endAddress.lat, lng: endAddress.lng })
       for (const intersection of availableIntersections) {
         bounds.extend({ lat: intersection.lat, lng: intersection.lng })
       }
@@ -210,7 +210,7 @@ export const useRouteMapRendering = ({
       }
 
       const points = [
-        { lat: startAddress.snappedLat, lng: startAddress.snappedLng },
+        { lat: startAddress.lat, lng: startAddress.lng },
         ...path.map((p) => ({ lat: p.lat, lng: p.lng })),
       ]
 
