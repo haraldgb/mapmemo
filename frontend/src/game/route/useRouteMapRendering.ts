@@ -12,6 +12,7 @@ type Props = {
   canReachDestination: boolean
   onIntersectionClick: (intersection: SelectedIntersection) => void
   onDestinationClick: () => void
+  gameKey: number
 }
 
 const s_addressMarker =
@@ -28,6 +29,7 @@ export const useRouteMapRendering = ({
   canReachDestination,
   onIntersectionClick,
   onDestinationClick,
+  gameKey,
 }: Props): void => {
   const map = useMap()
 
@@ -43,6 +45,14 @@ export const useRouteMapRendering = ({
   >(new Map())
   const polylineRef = useRef<google.maps.Polyline | null>(null)
   const hasFittedRef = useRef(false)
+
+  // Reset fit-bounds flag when game resets
+  useEffect(
+    function resetFitOnNewGame() {
+      hasFittedRef.current = false
+    },
+    [gameKey],
+  )
 
   // Place A/B markers when addresses are resolved
   useEffect(
