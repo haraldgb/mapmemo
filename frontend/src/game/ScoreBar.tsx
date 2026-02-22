@@ -4,6 +4,9 @@ type ScoreBarProps = {
   totalCount: number
 }
 
+/**
+ * Returns a color between red and green based on the ratio of correct answers.
+ */
 const getBorderColor = (
   correctCount: number,
   incorrectCount: number,
@@ -36,12 +39,12 @@ export const ScoreBar = ({
   incorrectCount,
   totalCount,
 }: ScoreBarProps) => {
+  const remaining = totalCount - correctCount - incorrectCount
+  const borderColor = getBorderColor(correctCount, incorrectCount)
+
   if (totalCount === 0) {
     return null
   }
-
-  const remaining = totalCount - correctCount - incorrectCount
-  const borderColor = getBorderColor(correctCount, incorrectCount)
 
   return (
     <div className={s_wrapper}>

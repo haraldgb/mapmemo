@@ -23,7 +23,7 @@ MapMemo is a map-based game app. This is the frontend - a Vite + React SPA
 | Utilities/helpers | camelCase                        | `formatCurrency`             |
 | Constants         | UPPER_SNAKE_CASE                 | `MAX_RETRY_COUNT`            |
 | Types/Interfaces  | PascalCase                       | `UserProfile`, `ApiResponse` |
-| Type props        | PascalCase + `Props` suffix      | `UserCardProps`              |
+| Type props        | `Props`                          | `Props`                      |
 | Enums             | PascalCase, members PascalCase   | `UserRole.Admin`             |
 | Files: components | PascalCase matching component    | `UserProfileCard.tsx`        |
 | Files: hooks      | camelCase matching hook          | `useAuthState.ts`            |
@@ -78,7 +78,7 @@ export const UserCard = ({ name, role }: UserCardProps) => {
 
 - **No `any`**. Use `unknown` + narrowing, generics, or define the type.
 - **No unchecked `as` casts.** If unavoidable, add a `// SAFETY:` comment.
-- **Props types**: Define as `interface` above the component.
+- **Props types**: Define above the component.
 - **Discriminated unions** for state machines and variant types. Always include exhaustive checks:
 
 ```tsx

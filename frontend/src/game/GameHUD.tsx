@@ -29,7 +29,7 @@ export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
           '\u00A0'
         ) : isClickPrompt ? (
           <>
-            <span className={s_prompt_prefix}>Click area: </span>
+            <span className={s_prompt_prefix_desktop_only}>Click area: </span>
             {currentEntry.label}
           </>
         ) : (
@@ -48,6 +48,6 @@ export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
 const s_ui_container =
   'pointer-events-none absolute inset-x-4 top-4 z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-2xl bg-transparent px-4 py-3 text-center md:px-16'
 const s_prompt = 'text-lg font-semibold text-slate-900 md:text-center'
-const s_prompt_prefix = 'hidden md:inline'
+const s_prompt_prefix_desktop_only = 'hidden md:inline'
 const s_timer =
   'flex h-full items-center text-lg font-semibold tabular-nums text-slate-700 md:text-left'
