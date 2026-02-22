@@ -25,12 +25,16 @@ export const GameSettingsButton = ({ isGameActive, resetGameState }: Props) => {
     }
   }
 
+  const handleClick = () => {
+    setIsSettingsOpen(!isSettingsOpen)
+  }
+
   return (
     <>
       <button
         type='button'
         className={s_settings_button}
-        onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+        onClick={handleClick}
         aria-label='Game settings'
       >
         <SettingsCogIcon className={s_settings_icon} />
