@@ -40,7 +40,7 @@ const sf_footer = (isGameRoute: boolean, isVisible: boolean) => {
   if (!isGameRoute) {
     return base
   }
-  const gamePosition = 'absolute inset-x-0 bottom-0 z-20'
+  const gamePosition = `absolute inset-x-0 bottom-0 z-40`
   const visibility = isVisible
     ? '[clip-path:inset(0)] opacity-100'
     : '[clip-path:inset(100%_0_0_0)] opacity-0 pointer-events-none'

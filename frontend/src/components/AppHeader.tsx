@@ -34,7 +34,7 @@ const sf_header = (isGameRoute: boolean, isVisible: boolean) => {
   if (!isGameRoute) {
     return base
   }
-  const gamePosition = 'absolute inset-x-0 top-0 z-20'
+  const gamePosition = `absolute inset-x-0 top-0 z-40`
   const visibility = isVisible
     ? 'translate-y-0 opacity-100'
     : '-translate-y-full opacity-0 pointer-events-none'
