@@ -1,14 +1,28 @@
+import { useSelector } from 'react-redux'
+import type { RootState } from '../store'
 import { ScoreBar } from './ScoreBar'
 import type { GameState } from './hooks/useGameState'
 
 type GameHUDProps = {
-  gameState: GameState
+  gameState?: GameState
   formattedTime: string
 }
 
 export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
+  const mode = useSelector(
+    (state: RootState) => state.mapmemo.gameSettings.mode,
+  )
+
+  if (mode === 'route' || !gameState) {
+    return (
+      <div className={s_route_container}>
+        <div className={s_timer}>{formattedTime}</div>
+      </div>
+    )
+  }
+
   const {
-    mode,
+    mode: gameMode,
     promptText,
     correctCount,
     incorrectCount,
@@ -17,9 +31,9 @@ export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
     currentEntry,
   } = gameState
 
-  const showPrompt = mode !== 'name' || isComplete
+  const showPrompt = gameMode !== 'name' || isComplete
   const isClickPrompt =
-    showPrompt && mode === 'click' && !isComplete && currentEntry
+    showPrompt && gameMode === 'click' && !isComplete && currentEntry
 
   return (
     <div className={s_ui_container}>
@@ -45,6 +59,8 @@ export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
   )
 }
 
+const s_route_container =
+  'pointer-events-none absolute inset-x-4 top-4 z-10 px-4 py-3'
 const s_ui_container =
   'pointer-events-none absolute inset-x-4 top-4 z-10 grid grid-cols-[1fr_auto_1fr] items-center gap-3 rounded-2xl bg-transparent px-4 py-3 text-center md:px-16'
 const s_prompt = 'text-lg font-semibold text-slate-900 md:text-center'
