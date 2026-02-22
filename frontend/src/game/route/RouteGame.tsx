@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { GMap } from '../../components/GMap'
 import { Spinner } from '../../components/Spinner'
+import { GameHUD } from '../GameHUD'
 import { GameSettingsButton } from '../settings/GameSettingsButton'
 import { useGameTimer } from '../hooks/useGameTimer'
 import { useRouteMode } from './useRouteMode'
 import { useRouteMapRendering } from './useRouteMapRendering'
-import { RouteGameHUD } from './RouteGameHUD'
 import { RouteResults } from './RouteResults'
 
 const EMPTY_FEATURES: google.maps.Data.Feature[] = []
@@ -15,6 +15,18 @@ export const RouteGame = () => {
   const routeMode = useRouteMode()
   const { formattedTime, resetTimer } = useGameTimer({
     isRunning: routeMode.isReady && !routeMode.isComplete,
+  })
+
+  useRouteMapRendering({
+    startAddress: routeMode.startAddress,
+    endAddress: routeMode.endAddress,
+    path: routeMode.path,
+    availableIntersections: routeMode.availableIntersections,
+    isReady: routeMode.isReady,
+    canReachDestination: routeMode.canReachDestination,
+    onIntersectionClick: routeMode.handleIntersectionClick,
+    onDestinationClick: routeMode.handleDestinationClick,
+    gameKey: routeMode.gameKey,
   })
 
   const handleMapReady = () => {
@@ -35,11 +47,7 @@ export const RouteGame = () => {
       >
         {isGMapReady && (
           <>
-            <RouteGameHUD formattedTime={formattedTime} />
-            <RouteMapInteraction
-              key={routeMode.gameKey}
-              routeMode={routeMode}
-            />
+            <GameHUD formattedTime={formattedTime} />
             <div className={s_settings}>
               <GameSettingsButton
                 isGameActive={routeMode.path.length > 0}
@@ -73,26 +81,6 @@ export const RouteGame = () => {
       </GMap>
     </section>
   )
-}
-
-// Inner component that has access to the map context via useMap
-type RouteMapInteractionProps = {
-  routeMode: ReturnType<typeof useRouteMode>
-}
-
-const RouteMapInteraction = ({ routeMode }: RouteMapInteractionProps) => {
-  useRouteMapRendering({
-    startAddress: routeMode.startAddress,
-    endAddress: routeMode.endAddress,
-    path: routeMode.path,
-    availableIntersections: routeMode.availableIntersections,
-    isReady: routeMode.isReady,
-    canReachDestination: routeMode.canReachDestination,
-    onIntersectionClick: routeMode.handleIntersectionClick,
-    onDestinationClick: routeMode.handleDestinationClick,
-  })
-
-  return null
 }
 
 const s_section = 'flex min-h-0 flex-1'

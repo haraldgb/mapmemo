@@ -4,11 +4,11 @@ import type { RootState } from '../../store'
 import { resolveAddress } from '../../api/snapToRoads'
 import { getRoutePair } from './routeAddresses'
 import { useRoadGraph } from './useRoadGraph'
-import type { SelectedIntersection, SnappedAddress } from './types'
+import type { RouteAddress, SelectedIntersection } from './types'
 
 type RouteMode = {
-  startAddress: SnappedAddress | null
-  endAddress: SnappedAddress | null
+  startAddress: RouteAddress | null
+  endAddress: RouteAddress | null
   path: SelectedIntersection[]
   availableIntersections: SelectedIntersection[]
   currentRoadName: string | null
@@ -29,8 +29,8 @@ export const useRouteMode = (): RouteMode => {
   )
   const roadGraph = useRoadGraph()
 
-  const [startAddress, setStartAddress] = useState<SnappedAddress | null>(null)
-  const [endAddress, setEndAddress] = useState<SnappedAddress | null>(null)
+  const [startAddress, setStartAddress] = useState<RouteAddress | null>(null)
+  const [endAddress, setEndAddress] = useState<RouteAddress | null>(null)
   const [path, setPath] = useState<SelectedIntersection[]>([])
   const [availableIntersections, setAvailableIntersections] = useState<
     SelectedIntersection[]

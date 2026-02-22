@@ -1,5 +1,5 @@
 import { fetchGoogleMapsApiKey } from '../utils/googleMapsApiKey'
-import type { RouteAddress, SnappedAddress } from '../game/route/types'
+import type { RouteAddress } from '../game/route/types'
 
 type SnapToRoadsResponse = {
   snappedPoints?: {
@@ -32,13 +32,13 @@ const snapToNearestRoad = async (
 
 export const resolveAddress = async (
   address: RouteAddress,
-): Promise<SnappedAddress> => {
+): Promise<RouteAddress> => {
   const apiKey = await fetchGoogleMapsApiKey()
   const snapped = await snapToNearestRoad(address.lat, address.lng, apiKey)
 
   return {
     ...address,
-    snappedLat: snapped.lat,
-    snappedLng: snapped.lng,
+    lat: snapped.lat,
+    lng: snapped.lng,
   }
 }

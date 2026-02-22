@@ -1,8 +1,8 @@
 import { fetchGoogleMapsApiKey } from '../utils/googleMapsApiKey'
 import type {
+  RouteAddress,
   RouteResult,
   SelectedIntersection,
-  SnappedAddress,
 } from '../game/route/types'
 
 type ComputeRoutesResponse = {
@@ -77,36 +77,36 @@ const computeRoute = async (
 }
 
 export const computeOptimalRoute = async (
-  start: SnappedAddress,
-  end: SnappedAddress,
+  start: RouteAddress,
+  end: RouteAddress,
 ): Promise<{ durationSec: number; encodedPolyline: string }> => {
   const apiKey = await fetchGoogleMapsApiKey()
   return computeRoute(
-    { lat: start.snappedLat, lng: start.snappedLng },
-    { lat: end.snappedLat, lng: end.snappedLng },
+    { lat: start.lat, lng: start.lng },
+    { lat: end.lat, lng: end.lng },
     [],
     apiKey,
   )
 }
 
 export const computePlayerRoute = async (
-  start: SnappedAddress,
-  end: SnappedAddress,
+  start: RouteAddress,
+  end: RouteAddress,
   path: SelectedIntersection[],
 ): Promise<{ durationSec: number; encodedPolyline: string }> => {
   const apiKey = await fetchGoogleMapsApiKey()
   const intermediates = path.map((p) => ({ lat: p.lat, lng: p.lng }))
   return computeRoute(
-    { lat: start.snappedLat, lng: start.snappedLng },
-    { lat: end.snappedLat, lng: end.snappedLng },
+    { lat: start.lat, lng: start.lng },
+    { lat: end.lat, lng: end.lng },
     intermediates,
     apiKey,
   )
 }
 
 export const computeRouteResult = async (
-  start: SnappedAddress,
-  end: SnappedAddress,
+  start: RouteAddress,
+  end: RouteAddress,
   path: SelectedIntersection[],
 ): Promise<RouteResult> => {
   const [player, optimal] = await Promise.all([

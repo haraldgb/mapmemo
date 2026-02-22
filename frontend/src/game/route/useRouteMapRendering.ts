@@ -1,32 +1,24 @@
 import { useEffect, useRef } from 'react'
 import { useMap } from '@vis.gl/react-google-maps'
-import type { SelectedIntersection, SnappedAddress } from './types'
+import { twj } from 'tw-to-css'
+import type { RouteAddress, SelectedIntersection } from './types'
 
 type Props = {
-  startAddress: SnappedAddress | null
-  endAddress: SnappedAddress | null
+  startAddress: RouteAddress | null
+  endAddress: RouteAddress | null
   path: SelectedIntersection[]
   availableIntersections: SelectedIntersection[]
   isReady: boolean
   canReachDestination: boolean
   onIntersectionClick: (intersection: SelectedIntersection) => void
   onDestinationClick: () => void
+  gameKey: number
 }
 
-const ENDPOINT_STYLE: Partial<CSSStyleDeclaration> = {
-  color: 'white',
-  fontWeight: '700',
-  fontSize: '14px',
-  width: '32px',
-  height: '32px',
-  borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  border: '2px solid white',
-  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-  cursor: 'default',
-}
+const s_addressMarker =
+  'flex h-8 w-8 cursor-default items-center justify-center rounded-full border-2 border-white text-sm font-bold text-white shadow-[0_2px_6px_rgba(0,0,0,0.3)]'
+const s_intersectionDot =
+  'h-3.5 w-3.5 cursor-pointer rounded-full border-2 border-white shadow-[0_1px_3px_rgba(0,0,0,0.3)] transition-[transform,box-shadow] duration-150 ease-out'
 
 export const useRouteMapRendering = ({
   startAddress,
@@ -37,6 +29,7 @@ export const useRouteMapRendering = ({
   canReachDestination,
   onIntersectionClick,
   onDestinationClick,
+  gameKey,
 }: Props): void => {
   const map = useMap()
 
@@ -53,38 +46,50 @@ export const useRouteMapRendering = ({
   const polylineRef = useRef<google.maps.Polyline | null>(null)
   const hasFittedRef = useRef(false)
 
+  // Reset fit-bounds flag when game resets
+  useEffect(
+    function resetFitOnNewGame() {
+      hasFittedRef.current = false
+    },
+    [gameKey],
+  )
+
   // Place A/B markers when addresses are resolved
   useEffect(
-    function placeEndpointMarkers() {
+    function placeAddressMarkers() {
       if (!map || !startAddress || !endAddress) {
         return
       }
 
       // Create start marker (A)
-      const startEl = document.createElement('div')
-      startEl.textContent = 'A'
-      Object.assign(startEl.style, { ...ENDPOINT_STYLE, background: '#3b82f6' })
+      const startElement = document.createElement('div')
+      startElement.textContent = 'A'
+      Object.assign(startElement.style, twj(s_addressMarker), {
+        background: '#3b82f6',
+      })
 
       const startMarker = new google.maps.marker.AdvancedMarkerElement({
         map,
         position: {
-          lat: startAddress.snappedLat,
-          lng: startAddress.snappedLng,
+          lat: startAddress.lat,
+          lng: startAddress.lng,
         },
-        content: startEl,
+        content: startElement,
         title: startAddress.label,
       })
       startMarkerRef.current = startMarker
 
       // Create end marker (B)
-      const endEl = document.createElement('div')
-      endEl.textContent = 'B'
-      Object.assign(endEl.style, { ...ENDPOINT_STYLE, background: '#ef4444' })
+      const endElement = document.createElement('div')
+      endElement.textContent = 'B'
+      Object.assign(endElement.style, twj(s_addressMarker), {
+        background: '#ef4444',
+      })
 
       const endMarker = new google.maps.marker.AdvancedMarkerElement({
         map,
-        position: { lat: endAddress.snappedLat, lng: endAddress.snappedLng },
-        content: endEl,
+        position: { lat: endAddress.lat, lng: endAddress.lng },
+        content: endElement,
         title: endAddress.label,
       })
       endMarkerRef.current = endMarker
@@ -112,12 +117,12 @@ export const useRouteMapRendering = ({
 
       const bounds = new google.maps.LatLngBounds()
       bounds.extend({
-        lat: startAddress.snappedLat,
-        lng: startAddress.snappedLng,
+        lat: startAddress.lat,
+        lng: startAddress.lng,
       })
-      bounds.extend({ lat: endAddress.snappedLat, lng: endAddress.snappedLng })
-      for (const ix of availableIntersections) {
-        bounds.extend({ lat: ix.lat, lng: ix.lng })
+      bounds.extend({ lat: endAddress.lat, lng: endAddress.lng })
+      for (const intersection of availableIntersections) {
+        bounds.extend({ lat: intersection.lat, lng: intersection.lng })
       }
       map.fitBounds(bounds, { top: 80, right: 40, bottom: 40, left: 40 })
     },
@@ -131,7 +136,7 @@ export const useRouteMapRendering = ({
         return
       }
 
-      const nextIds = new Set(availableIntersections.map((ix) => ix.id))
+      const nextIds = new Set(availableIntersections.map((i) => i.id))
       const prevIds = new Set(dotMarkersMapRef.current.keys())
 
       // Remove markers no longer in the list
@@ -146,42 +151,35 @@ export const useRouteMapRendering = ({
       }
 
       // Add markers that are new
-      for (const ix of availableIntersections) {
-        if (dotMarkersMapRef.current.has(ix.id)) {
+      for (const intersection of availableIntersections) {
+        if (dotMarkersMapRef.current.has(intersection.id)) {
           continue
         }
 
-        const el = document.createElement('div')
-        Object.assign(el.style, {
+        const element = document.createElement('div')
+        Object.assign(element.style, twj(s_intersectionDot), {
           background: '#6f2dbd',
-          width: '14px',
-          height: '14px',
-          borderRadius: '50%',
-          border: '2px solid white',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-          cursor: 'pointer',
-          transition: 'transform 0.15s ease, box-shadow 0.15s ease',
         })
-        el.addEventListener('mouseenter', () => {
-          el.style.transform = 'scale(1.5)'
-          el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)'
+        element.addEventListener('mouseenter', () => {
+          element.style.transform = 'scale(1.5)'
+          element.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)'
         })
-        el.addEventListener('mouseleave', () => {
-          el.style.transform = 'scale(1)'
-          el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)'
+        element.addEventListener('mouseleave', () => {
+          element.style.transform = 'scale(1)'
+          element.style.boxShadow = '0 1px 3px rgba(0,0,0,0.3)'
         })
 
         const marker = new google.maps.marker.AdvancedMarkerElement({
           map,
-          position: { lat: ix.lat, lng: ix.lng },
-          content: el,
-          title: ix.otherRoadName,
+          position: { lat: intersection.lat, lng: intersection.lng },
+          content: element,
+          title: intersection.otherRoadName,
           gmpClickable: true,
         })
         marker.addEventListener('gmp-click', () => {
-          onIntersectionClick(ix)
+          onIntersectionClick(intersection)
         })
-        dotMarkersMapRef.current.set(ix.id, marker)
+        dotMarkersMapRef.current.set(intersection.id, marker)
       }
 
       return () => {
@@ -212,7 +210,7 @@ export const useRouteMapRendering = ({
       }
 
       const points = [
-        { lat: startAddress.snappedLat, lng: startAddress.snappedLng },
+        { lat: startAddress.lat, lng: startAddress.lng },
         ...path.map((p) => ({ lat: p.lat, lng: p.lng })),
       ]
 
@@ -239,45 +237,45 @@ export const useRouteMapRendering = ({
       if (!marker) {
         return
       }
-      const el = marker.content as HTMLElement | null
-      if (!el) {
+      const element = marker.content as HTMLElement | null
+      if (!element) {
         return
       }
 
       if (canReachDestination) {
         marker.gmpClickable = true
-        el.style.background = '#22c55e'
-        el.style.transform = 'scale(1.2)'
-        el.style.transition =
+        element.style.background = '#22c55e'
+        element.style.transform = 'scale(1.2)'
+        element.style.transition =
           'transform 0.15s ease, background 0.2s, box-shadow 0.15s ease'
-        el.style.cursor = 'pointer'
+        element.style.cursor = 'pointer'
 
         const handleEnter = () => {
-          el.style.transform = 'scale(1.4)'
-          el.style.boxShadow = '0 3px 8px rgba(0,0,0,0.4)'
+          element.style.transform = 'scale(1.4)'
+          element.style.boxShadow = '0 3px 8px rgba(0,0,0,0.4)'
         }
         const handleLeave = () => {
-          el.style.transform = 'scale(1.2)'
-          el.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)'
+          element.style.transform = 'scale(1.2)'
+          element.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)'
         }
         const handleClick = () => {
           onDestinationClick()
         }
-        el.addEventListener('mouseenter', handleEnter)
-        el.addEventListener('mouseleave', handleLeave)
+        element.addEventListener('mouseenter', handleEnter)
+        element.addEventListener('mouseleave', handleLeave)
         marker.addEventListener('gmp-click', handleClick)
 
         return () => {
-          el.removeEventListener('mouseenter', handleEnter)
-          el.removeEventListener('mouseleave', handleLeave)
+          element.removeEventListener('mouseenter', handleEnter)
+          element.removeEventListener('mouseleave', handleLeave)
           marker.removeEventListener('gmp-click', handleClick)
           marker.gmpClickable = false
         }
       } else {
         marker.gmpClickable = false
-        el.style.background = '#ef4444'
-        el.style.transform = 'scale(1)'
-        el.style.cursor = 'default'
+        element.style.background = '#ef4444'
+        element.style.transform = 'scale(1)'
+        element.style.cursor = 'default'
       }
     },
     [canReachDestination, onDestinationClick],
