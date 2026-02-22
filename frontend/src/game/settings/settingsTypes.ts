@@ -1,4 +1,4 @@
-export type GameMode = 'click' | 'name'
+export type GameMode = 'click' | 'name' | 'route'
 export type GameDifficulty = 'beginner' | 'easy' | 'medium' | 'hard'
 
 export type GameSettings = {
