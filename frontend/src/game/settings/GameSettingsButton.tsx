@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { SettingsCogIcon } from '../../components/icons/SettingsCogIcon'
 import { GameSettings } from './GameSettings'
+import { useSettingsOpen } from './SettingsOpenContext'
 
 interface IProps {
   isGameActive: boolean
@@ -11,12 +12,19 @@ export const GameSettingsButton = ({
   isGameActive,
   resetGameState,
 }: IProps) => {
-  const [isOpen, setIsOpen] = useState(true)
+  const { isSettingsOpen, setIsSettingsOpen } = useSettingsOpen()
   const containerRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(
+    function openOnMountEffect() {
+      setIsSettingsOpen(true)
+    },
+    [setIsSettingsOpen],
+  )
+
+  useEffect(
     function handleOutsideClickEffect() {
-      if (!isOpen) {
+      if (!isSettingsOpen) {
         return
       }
       const handleOutsideClick = (event: MouseEvent) => {
@@ -24,7 +32,7 @@ export const GameSettingsButton = ({
           return
         }
         if (!containerRef.current.contains(event.target as Node)) {
-          setIsOpen(false)
+          setIsSettingsOpen(false)
         }
       }
       window.addEventListener('mousedown', handleOutsideClick)
@@ -32,7 +40,7 @@ export const GameSettingsButton = ({
         window.removeEventListener('mousedown', handleOutsideClick)
       }
     },
-    [isOpen],
+    [isSettingsOpen, setIsSettingsOpen],
   )
 
   return (
@@ -43,15 +51,15 @@ export const GameSettingsButton = ({
       <button
         type='button'
         className={s_settings_button}
-        onClick={() => setIsOpen((open) => !open)}
+        onClick={() => setIsSettingsOpen(!isSettingsOpen)}
         aria-label='Game settings'
       >
         <SettingsCogIcon className={s_settings_icon} />
       </button>
-      {isOpen && (
+      {isSettingsOpen && (
         <GameSettings
           isGameActive={isGameActive}
-          onClose={() => setIsOpen(false)}
+          onClose={() => setIsSettingsOpen(false)}
           resetGameState={resetGameState}
         />
       )}
