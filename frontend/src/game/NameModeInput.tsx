@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { GameState } from './hooks/useGameState'
+import { s_overlayGUI_item } from './OverlayGuiStyles'
 import { useInputSuggestions } from './hooks/useInputSuggestions'
 
 type NameModeInputProps = {
@@ -208,10 +209,10 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
   )
 }
 
-const s_name_form = 'pointer-events-auto md:text-center'
-const s_autocomplete_container = 'relative inline-block w-full max-w-xs'
+const s_name_form = 'pointer-events-auto'
+const s_autocomplete_container = `relative w-74 max-w-xs ${s_overlayGUI_item}`
 const sf_name_input = (isCorrectState: boolean) =>
-  `w-full rounded-full border-2 bg-white px-4 py-2 text-left text-lg font-semibold shadow-md outline-none ${
+  `h-full w-full rounded-full border-2 bg-white px-4 text-left text-lg font-semibold shadow-md outline-none ${
     isCorrectState
       ? 'border-slate-300 focus:border-blue-500'
       : 'border-red-400 focus:border-red-500'

@@ -1,6 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { SettingsCogIcon } from '../../components/icons/SettingsCogIcon'
 import { GameSettings } from './GameSettings'
+import { useSettingsOpen } from './SettingsOpenContext'
 
 type Props = {
   isGameActive: boolean
@@ -8,55 +10,57 @@ type Props = {
 }
 
 export const GameSettingsButton = ({ isGameActive, resetGameState }: Props) => {
-  const [isOpen, setIsOpen] = useState(true)
-  const containerRef = useRef<HTMLDivElement | null>(null)
+  const { isSettingsOpen, setIsSettingsOpen } = useSettingsOpen()
 
   useEffect(
-    function handleOutsideClickEffect() {
-      if (!isOpen) {
-        return
-      }
-      const handleOutsideClick = (event: MouseEvent) => {
-        if (!containerRef.current) {
-          return
-        }
-        if (!containerRef.current.contains(event.target as Node)) {
-          setIsOpen(false)
-        }
-      }
-      window.addEventListener('mousedown', handleOutsideClick)
-      return () => {
-        window.removeEventListener('mousedown', handleOutsideClick)
-      }
+    function openOnMountEffect() {
+      setIsSettingsOpen(true)
     },
-    [isOpen],
+    [setIsSettingsOpen],
   )
 
+  const handleBackdropClick = (event: React.MouseEvent) => {
+    if (event.target === event.currentTarget) {
+      setIsSettingsOpen(false)
+    }
+  }
+
+  const handleClick = () => {
+    setIsSettingsOpen(!isSettingsOpen)
+  }
+
   return (
-    <div
-      ref={containerRef}
-      className={s_container}
-    >
+    <>
       <button
         type='button'
         className={s_settings_button}
-        onClick={() => setIsOpen((open) => !open)}
+        onClick={handleClick}
         aria-label='Game settings'
       >
         <SettingsCogIcon className={s_settings_icon} />
       </button>
-      {isOpen && (
-        <GameSettings
-          isGameActive={isGameActive}
-          onClose={() => setIsOpen(false)}
-          resetGameState={resetGameState}
-        />
-      )}
-    </div>
+      {/* Portal to body to escape the z-50 stacking context of the button
+          container, so header/footer (z-40) remain clickable above the overlay (z-30) */}
+      {isSettingsOpen &&
+        createPortal(
+          <div
+            className={s_overlay}
+            onMouseDown={handleBackdropClick}
+          >
+            <GameSettings
+              isGameActive={isGameActive}
+              onClose={() => setIsSettingsOpen(false)}
+              resetGameState={resetGameState}
+            />
+          </div>,
+          document.body,
+        )}
+    </>
   )
 }
 
-const s_container = 'relative inline-flex pointer-events-auto'
+const s_overlay =
+  'pointer-events-auto fixed inset-0 z-30 flex items-center justify-center'
 const s_settings_button =
   'inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800'
 const s_settings_icon = 'h-5 w-5'
