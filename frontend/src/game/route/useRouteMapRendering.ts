@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
 import { useMap } from '@vis.gl/react-google-maps'
-import { twj } from 'tw-to-css'
 import type { RouteAddress, SelectedIntersection } from './types'
 
 type Props = {
@@ -14,11 +13,6 @@ type Props = {
   onDestinationClick: () => void
   gameKey: number
 }
-
-const s_addressMarker =
-  'flex h-8 w-8 cursor-default items-center justify-center rounded-full border-2 border-white text-sm font-bold text-white shadow-[0_2px_6px_rgba(0,0,0,0.3)]'
-const s_intersectionDot =
-  'h-3.5 w-3.5 cursor-pointer rounded-full border-2 border-white shadow-[0_1px_3px_rgba(0,0,0,0.3)] transition-[transform,box-shadow] duration-150 ease-out'
 
 export const useRouteMapRendering = ({
   startAddress,
@@ -64,7 +58,7 @@ export const useRouteMapRendering = ({
       // Create start marker (A)
       const startElement = document.createElement('div')
       startElement.textContent = 'A'
-      Object.assign(startElement.style, twj(s_addressMarker), {
+      Object.assign(startElement.style, s_addressMarker, {
         background: '#3b82f6',
       })
 
@@ -82,7 +76,7 @@ export const useRouteMapRendering = ({
       // Create end marker (B)
       const endElement = document.createElement('div')
       endElement.textContent = 'B'
-      Object.assign(endElement.style, twj(s_addressMarker), {
+      Object.assign(endElement.style, s_addressMarker, {
         background: '#ef4444',
       })
 
@@ -157,7 +151,7 @@ export const useRouteMapRendering = ({
         }
 
         const element = document.createElement('div')
-        Object.assign(element.style, twj(s_intersectionDot), {
+        Object.assign(element.style, s_intersectionDot, {
           background: '#6f2dbd',
         })
         element.addEventListener('mouseenter', () => {
@@ -242,6 +236,7 @@ export const useRouteMapRendering = ({
         return
       }
 
+      // Inline styles: imperative DOM, not React-rendered (see s_addressMarker comment)
       if (canReachDestination) {
         marker.gmpClickable = true
         element.style.background = '#22c55e'
@@ -280,4 +275,32 @@ export const useRouteMapRendering = ({
     },
     [canReachDestination, onDestinationClick],
   )
+}
+
+// Plain CSS style objects instead of Tailwind: AdvancedMarkerElement content is created
+// via document.createElement, outside React's render tree. Tailwind classes only work on
+// elements rendered by React (where the class→CSS pipeline runs).
+const s_addressMarker: Partial<CSSStyleDeclaration> = {
+  color: 'white',
+  fontWeight: '700',
+  fontSize: '14px',
+  width: '32px',
+  height: '32px',
+  borderRadius: '50%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '2px solid white',
+  boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+  cursor: 'default',
+}
+
+const s_intersectionDot: Partial<CSSStyleDeclaration> = {
+  width: '14px',
+  height: '14px',
+  borderRadius: '50%',
+  border: '2px solid white',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+  cursor: 'pointer',
+  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
 }
