@@ -1,4 +1,4 @@
-import { fetchGoogleMapsApiKey } from '../utils/googleMapsApiKey'
+import { fetchWithSessionRetry } from '../game/hooks/useFeaturesInPlay'
 import type {
   RouteAddress,
   RouteResult,
@@ -16,11 +16,7 @@ type ComputeRoutesResponse = {
 
 type LatLng = { lat: number; lng: number }
 
-const ROUTES_URL = 'https://routes.googleapis.com/directions/v2:computeRoutes'
-const FIELD_MASK = 'routes.duration,routes.polyline.encodedPolyline'
-
 const parseDurationSec = (duration: string): number => {
-  // Format: "1234s"
   const match = duration.match(/^(\d+)s$/)
   return match ? Number(match[1]) : 0
 }
@@ -29,7 +25,6 @@ const computeRoute = async (
   origin: LatLng,
   destination: LatLng,
   intermediates: LatLng[],
-  apiKey: string,
 ): Promise<{ durationSec: number; encodedPolyline: string }> => {
   const body: Record<string, unknown> = {
     origin: {
@@ -50,13 +45,9 @@ const computeRoute = async (
     }))
   }
 
-  const response = await fetch(ROUTES_URL, {
+  const response = await fetchWithSessionRetry('/api/compute-routes', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Goog-Api-Key': apiKey,
-      'X-Goog-FieldMask': FIELD_MASK,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
 
@@ -80,12 +71,10 @@ export const computeOptimalRoute = async (
   start: RouteAddress,
   end: RouteAddress,
 ): Promise<{ durationSec: number; encodedPolyline: string }> => {
-  const apiKey = await fetchGoogleMapsApiKey()
   return computeRoute(
     { lat: start.lat, lng: start.lng },
     { lat: end.lat, lng: end.lng },
     [],
-    apiKey,
   )
 }
 
@@ -94,13 +83,11 @@ export const computePlayerRoute = async (
   end: RouteAddress,
   path: SelectedIntersection[],
 ): Promise<{ durationSec: number; encodedPolyline: string }> => {
-  const apiKey = await fetchGoogleMapsApiKey()
   const intermediates = path.map((p) => ({ lat: p.lat, lng: p.lng }))
   return computeRoute(
     { lat: start.lat, lng: start.lng },
     { lat: end.lat, lng: end.lng },
     intermediates,
-    apiKey,
   )
 }
 

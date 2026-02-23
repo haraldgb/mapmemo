@@ -1,4 +1,4 @@
-import { fetchGoogleMapsApiKey } from '../utils/googleMapsApiKey'
+import { fetchWithSessionRetry } from '../game/hooks/useFeaturesInPlay'
 import type { RouteAddress } from '../game/route/types'
 
 type SnapToRoadsResponse = {
@@ -14,12 +14,13 @@ type SnapToRoadsResponse = {
 const snapToNearestRoad = async (
   lat: number,
   lng: number,
-  apiKey: string,
 ): Promise<{ lat: number; lng: number }> => {
-  const url = `https://roads.googleapis.com/v1/nearestRoads?points=${lat},${lng}&key=${apiKey}`
-  const response = await fetch(url)
+  const response = await fetchWithSessionRetry('/api/snap-to-roads', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lat, lng }),
+  })
   if (!response.ok) {
-    // Fallback to hardcoded coords if Roads API fails
     return { lat, lng }
   }
   const data = (await response.json()) as SnapToRoadsResponse
@@ -33,8 +34,7 @@ const snapToNearestRoad = async (
 export const resolveAddress = async (
   address: RouteAddress,
 ): Promise<RouteAddress> => {
-  const apiKey = await fetchGoogleMapsApiKey()
-  const snapped = await snapToNearestRoad(address.lat, address.lng, apiKey)
+  const snapped = await snapToNearestRoad(address.lat, address.lng)
 
   return {
     ...address,
