@@ -3,8 +3,7 @@ import {
   SUB_AREA_NAME_KEY,
   type OsloGeoJsonPropertyKey,
 } from '../game/consts'
-
-type LatLng = google.maps.LatLng
+import { getGeometryCenter } from './calculations'
 
 export const getFeatureProperty = (
   feature: google.maps.Data.Feature,
@@ -26,62 +25,6 @@ export const getFeatureProperty = (
   return property
 }
 
-/**
- * Collect all points from a Google Maps Data Geometry into an array of LatLng objects.
- * @param geometry
- * @returns
- */
-const collectGeometryPoints = (
-  geometry: google.maps.Data.Geometry,
-): LatLng[] => {
-  switch (true) {
-    case geometry instanceof google.maps.Data.Point:
-      return [geometry.get()]
-    case geometry instanceof google.maps.Data.MultiPoint:
-      return geometry.getArray()
-    case geometry instanceof google.maps.Data.LineString:
-      return geometry.getArray()
-    case geometry instanceof google.maps.Data.MultiLineString:
-      return geometry.getArray().flatMap((line) => line.getArray())
-    case geometry instanceof google.maps.Data.Polygon:
-      return geometry.getArray().flatMap((path) => path.getArray())
-    case geometry instanceof google.maps.Data.MultiPolygon:
-      return geometry
-        .getArray()
-        .flatMap((polygon) =>
-          polygon.getArray().flatMap((path) => path.getArray()),
-        )
-    case geometry instanceof google.maps.Data.GeometryCollection:
-      return geometry.getArray().flatMap((item) => collectGeometryPoints(item))
-    default:
-      throw new Error('Unknown geometry type')
-  }
-}
-
-/**
- * Simple calculation average of height and width of the points.
- * An uneven distribution of points will result in a center shifted to the side with more points.
- * @param points
- * @returns
- */
-const getPointsCenter = (points: LatLng[]): google.maps.LatLngLiteral => {
-  if (points.length === 0) {
-    throw new Error('No points provided')
-  }
-  const total = points.reduce(
-    (acc, point) => {
-      acc.lat += point.lat()
-      acc.lng += point.lng()
-      return acc
-    },
-    { lat: 0, lng: 0 },
-  )
-  return {
-    lat: total.lat / points.length,
-    lng: total.lng / points.length,
-  }
-}
-
 const createPolygonLabelElement = (label: string, color = '#3f3f3f') => {
   const element = document.createElement('div')
   element.textContent = label
@@ -90,6 +33,7 @@ const createPolygonLabelElement = (label: string, color = '#3f3f3f') => {
   element.style.fontWeight = '500'
   element.style.whiteSpace = 'nowrap'
   element.style.textShadow = '0 0 4px rgba(255, 255, 255, 0.9)'
+  element.style.transform = 'translateY(50%)'
   return element
 }
 
@@ -106,7 +50,7 @@ export const createPolygonLabelMarker = (
     throw new Error('No geometry provided in Google Maps Data Feature')
   }
 
-  const center = getPointsCenter(collectGeometryPoints(geometry))
+  const center = getGeometryCenter(geometry)
   return new AdvancedMarkerElement({
     position: center,
     map,
