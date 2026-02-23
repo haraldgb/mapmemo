@@ -4,8 +4,8 @@ import type { RootState } from '../store'
 import { GMap } from '../components/GMap'
 import { GameHUD } from './GameHUD.tsx'
 import { useFeaturesInPlay } from './hooks/useFeaturesInPlay.ts'
-import { useGame } from './hooks/useGame.ts'
-import { useGameStyling } from './hooks/useGameStyling'
+import { useGameState } from './hooks/useGameState.ts'
+import { useAreaGameStyling } from './hooks/useAreaGameStyling'
 import { useFeatureLabels } from './hooks/useFeatureLabels'
 import { GameUI } from './GameUI.tsx'
 import type { MapContext } from './types.ts'
@@ -19,12 +19,26 @@ export const AreaGame = () => {
   })
   const [isGMapReady, setIsGMapReady] = useState(false)
   const [mapContext, setMapContext] = useState<MapContext>(null)
-  const gameState = useGame({
+  const gameState = useGameState({
     features: featuresInPlay,
     isMapReady: isGMapReady,
   })
-  const gameStyling = useGameStyling({ gameState, mapContext })
-  useFeatureLabels({ gameState, mapContext, features: featuresInPlay })
+
+  if (gameState.mode === 'route') {
+    throw new Error('AreaGame rendered in route mode')
+  }
+
+  const { areaGameState } = gameState
+
+  const gameStyling = useAreaGameStyling({
+    areaGameState,
+    mapContext,
+  })
+  useFeatureLabels({
+    areaGameState: areaGameState,
+    mapContext,
+    features: featuresInPlay,
+  })
 
   const handleMapReady = (payload: MapContext) => {
     setMapContext(payload)
@@ -37,21 +51,15 @@ export const AreaGame = () => {
         spinUntilReady
         features={featuresInPlay}
         onFeatureClick={
-          mode === 'click' ? gameState.registerFeatureClick : undefined
+          mode === 'click' ? areaGameState.registerFeatureClick : undefined
         }
         onFeatureHover={gameStyling.registerFeatureHover}
         onMapReady={(payload) => handleMapReady(payload)}
       >
         {isGMapReady && (
           <>
-            <GameHUD
-              gameState={gameState}
-              formattedTime={gameState.formattedTime}
-            />
-            <GameUI
-              gameState={gameState}
-              resetGameState={gameState.resetGame}
-            />
+            <GameHUD gameState={gameState} />
+            <GameUI gameState={gameState} />
           </>
         )}
       </GMap>

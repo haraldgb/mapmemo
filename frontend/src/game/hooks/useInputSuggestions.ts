@@ -1,9 +1,9 @@
 import { useSelector } from 'react-redux'
 import type { RootState } from '../../store'
-import type { GameState } from './useGameState'
+import type { AreaGameState } from './useAreaGameState'
 
 type UseInputSuggestionsProps = {
-  gameState: GameState
+  areaGameState: AreaGameState
   inputValue: string
 }
 
@@ -11,10 +11,10 @@ type UseInputSuggestionsProps = {
  * For name mode, returns a list of area label suggestions based on the current input value + game state and difficulty.
  */
 export const useInputSuggestions = ({
-  gameState,
+  areaGameState,
   inputValue,
 }: UseInputSuggestionsProps) => {
-  const { difficulty, areaLabels, completedAreaLabels } = gameState
+  const { difficulty, areaLabels, completedAreaLabels } = areaGameState
   const allSubAreaNames = useSelector(
     (state: RootState) => state.mapmemo.allSubAreaNames,
   )

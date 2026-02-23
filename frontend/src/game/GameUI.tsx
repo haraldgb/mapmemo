@@ -10,23 +10,43 @@ import { GameSettingsButton } from './settings/GameSettingsButton.tsx'
 
 type Props = {
   gameState: GameState
-  resetGameState: () => void
 }
 
-export const GameUI = ({ gameState, resetGameState }: Props) => {
-  const { mode, isGameActive, isComplete } = gameState
+export const GameUI = ({ gameState }: Props) => {
+  const isGameActive =
+    gameState.mode === 'route'
+      ? gameState.routeGameState.isGameActive
+      : gameState.areaGameState.isGameActive
+
   return (
     <>
       <div className={s_settings}>
         <GameSettingsButton
           isGameActive={isGameActive}
-          resetGameState={resetGameState}
+          resetGameState={gameState.resetGame}
         />
       </div>
+      {gameState.mode !== 'route' && <AreaGameUI gameState={gameState} />}
+    </>
+  )
+}
+
+/**
+ * Area-specific overlay: name-mode input, play-again button.
+ * Extracted so TS narrows `gameState` to the area branch in the outer check.
+ */
+const AreaGameUI = ({
+  gameState,
+}: {
+  gameState: GameState & { mode: 'click' | 'name' }
+}) => {
+  const { areaGameState } = gameState
+  return (
+    <>
       <div className={s_overlayGUI_row}>
-        {mode === 'name' && !isComplete && (
+        {gameState.mode === 'name' && !areaGameState.isComplete && (
           <div className={s_overlayGUI_left}>
-            <NameModeInput gameState={gameState} />
+            <NameModeInput areaGameState={areaGameState} />
           </div>
         )}
         {/* the div below takes up corresponding space to right side of GameHUD */}
@@ -34,11 +54,11 @@ export const GameUI = ({ gameState, resetGameState }: Props) => {
           className={`sm:flex-1 ${s_overlayGUI_item} ${s_overlayGUI_right}`}
         />
       </div>
-      {isComplete && (
+      {areaGameState.isComplete && (
         <div className={s_overlay}>
           <button
             type='button'
-            onClick={resetGameState}
+            onClick={gameState.resetGame}
             className={s_play_again}
           >
             Play again

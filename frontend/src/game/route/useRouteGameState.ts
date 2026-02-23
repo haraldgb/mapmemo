@@ -6,7 +6,8 @@ import { getRoutePair } from './routeAddresses'
 import { useRoadGraph } from './useRoadGraph'
 import type { RouteAddress, SelectedIntersection } from './types'
 
-type RouteMode = {
+export type RouteGameState = {
+  mode: 'route'
   startAddress: RouteAddress | null
   endAddress: RouteAddress | null
   path: SelectedIntersection[]
@@ -15,6 +16,7 @@ type RouteMode = {
   isLoading: boolean
   isReady: boolean
   isComplete: boolean
+  isGameActive: boolean
   error: string | null
   gameKey: number
   handleIntersectionClick: (intersection: SelectedIntersection) => void
@@ -23,9 +25,14 @@ type RouteMode = {
   reset: () => void
 }
 
-export const useRouteMode = (): RouteMode => {
-  const seed = useSelector(
-    (state: RootState) => state.mapmemo.gameSettings.seed,
+/**
+ * State machine for route-based game mode.
+ * Manages address resolution, road graph traversal, and path building.
+ * Returns `null` when the active mode is not `route`.
+ */
+export const useRouteGameState = (): RouteGameState | null => {
+  const { seed, mode } = useSelector(
+    (state: RootState) => state.mapmemo.gameSettings,
   )
   const roadGraph = useRoadGraph()
 
@@ -42,6 +49,7 @@ export const useRouteMode = (): RouteMode => {
   const [gameKey, setGameKey] = useState(0)
 
   const isReady = startAddress !== null && endAddress !== null && !isLoading
+  const isGameActive = path.length > 0 && !isComplete
 
   const lastIntersection = path.at(-1) ?? null
   const canReachDestination =
@@ -53,6 +61,10 @@ export const useRouteMode = (): RouteMode => {
   // Init flow: resolve addresses, fetch starting road
   useEffect(
     function initRouteMode() {
+      if (mode !== 'route') {
+        return
+      }
+
       let isActive = true
 
       const init = async () => {
@@ -104,7 +116,7 @@ export const useRouteMode = (): RouteMode => {
         isActive = false
       }
     },
-    [seed, gameKey],
+    [seed, gameKey, mode],
   )
 
   const handleIntersectionClick = (
@@ -169,7 +181,13 @@ export const useRouteMode = (): RouteMode => {
     setGameKey((k) => k + 1)
   }
 
+  // All hooks called above — safe to bail out for non-route modes.
+  if (mode !== 'route') {
+    return null
+  }
+
   return {
+    mode: 'route',
     startAddress,
     endAddress,
     path,
@@ -178,6 +196,7 @@ export const useRouteMode = (): RouteMode => {
     isLoading,
     isReady,
     isComplete,
+    isGameActive,
     error,
     gameKey,
     handleIntersectionClick,

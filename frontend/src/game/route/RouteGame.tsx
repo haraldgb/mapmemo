@@ -2,9 +2,8 @@ import { useState } from 'react'
 import { GMap } from '../../components/GMap'
 import { Spinner } from '../../components/Spinner'
 import { GameHUD } from '../GameHUD'
-import { GameSettingsButton } from '../settings/GameSettingsButton'
-import { useGameTimer } from '../hooks/useGameTimer'
-import { useRouteMode } from './useRouteMode'
+import { GameUI } from '../GameUI'
+import { useGameState } from '../hooks/useGameState'
 import { useRouteMapRendering } from './useRouteMapRendering'
 import { RouteResults } from './RouteResults'
 
@@ -12,30 +11,31 @@ const EMPTY_FEATURES: google.maps.Data.Feature[] = []
 
 export const RouteGame = () => {
   const [isGMapReady, setIsGMapReady] = useState(false)
-  const routeMode = useRouteMode()
-  const { formattedTime, resetTimer } = useGameTimer({
-    isRunning: routeMode.isReady && !routeMode.isComplete,
+  const gameState = useGameState({
+    features: EMPTY_FEATURES,
+    isMapReady: isGMapReady,
   })
 
+  if (gameState.mode !== 'route') {
+    throw new Error('RouteGame rendered in non-route mode')
+  }
+
+  const { routeGameState } = gameState
+
   useRouteMapRendering({
-    startAddress: routeMode.startAddress,
-    endAddress: routeMode.endAddress,
-    path: routeMode.path,
-    availableIntersections: routeMode.availableIntersections,
-    isReady: routeMode.isReady,
-    canReachDestination: routeMode.canReachDestination,
-    onIntersectionClick: routeMode.handleIntersectionClick,
-    onDestinationClick: routeMode.handleDestinationClick,
-    gameKey: routeMode.gameKey,
+    startAddress: routeGameState.startAddress,
+    endAddress: routeGameState.endAddress,
+    path: routeGameState.path,
+    availableIntersections: routeGameState.availableIntersections,
+    isReady: routeGameState.isReady,
+    canReachDestination: routeGameState.canReachDestination,
+    onIntersectionClick: routeGameState.handleIntersectionClick,
+    onDestinationClick: routeGameState.handleDestinationClick,
+    gameKey: routeGameState.gameKey,
   })
 
   const handleMapReady = () => {
     setIsGMapReady(true)
-  }
-
-  const handleReset = () => {
-    routeMode.reset()
-    resetTimer()
   }
 
   return (
@@ -47,34 +47,29 @@ export const RouteGame = () => {
       >
         {isGMapReady && (
           <>
-            <GameHUD formattedTime={formattedTime} />
-            <div className={s_settings}>
-              <GameSettingsButton
-                isGameActive={routeMode.path.length > 0}
-                resetGameState={handleReset}
-              />
-            </div>
-            {routeMode.isComplete &&
-              routeMode.startAddress &&
-              routeMode.endAddress && (
+            <GameHUD gameState={gameState} />
+            <GameUI gameState={gameState} />
+            {routeGameState.isComplete &&
+              routeGameState.startAddress &&
+              routeGameState.endAddress && (
                 <RouteResults
-                  startAddress={routeMode.startAddress}
-                  endAddress={routeMode.endAddress}
-                  path={routeMode.path}
-                  formattedTime={formattedTime}
-                  onPlayAgain={handleReset}
+                  startAddress={routeGameState.startAddress}
+                  endAddress={routeGameState.endAddress}
+                  path={routeGameState.path}
+                  formattedTime={gameState.formattedTime}
+                  onPlayAgain={gameState.resetGame}
                 />
               )}
-            {routeMode.isLoading &&
-              routeMode.gameKey > 0 &&
-              !routeMode.startAddress && (
+            {routeGameState.isLoading &&
+              routeGameState.gameKey > 0 &&
+              !routeGameState.startAddress && (
                 <div className={s_reset_overlay}>
                   <Spinner />
                   Preparing next game...
                 </div>
               )}
-            {routeMode.error && (
-              <div className={s_error}>{routeMode.error}</div>
+            {routeGameState.error && (
+              <div className={s_error}>{routeGameState.error}</div>
             )}
           </>
         )}
@@ -84,8 +79,6 @@ export const RouteGame = () => {
 }
 
 const s_section = 'flex min-h-0 flex-1'
-const s_settings =
-  'pointer-events-auto absolute right-4 top-4 z-20 flex items-center gap-2'
 const s_reset_overlay =
   'absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 rounded-xl bg-white/80 text-sm font-medium text-slate-600'
 const s_error =

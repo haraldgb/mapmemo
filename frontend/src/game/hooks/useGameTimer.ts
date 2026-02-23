@@ -12,6 +12,7 @@ type Props = {
 
 const TICK_INTERVAL_MS = 100
 
+/** Tracks elapsed game time with 100ms tick resolution. Formatted as `m:ss.t`. */
 export const useGameTimer = ({ isRunning }: Props): GameTimer => {
   // useRef needed to track start time across renders without triggering
   // re-renders. Only the interval tick updates displayed state.

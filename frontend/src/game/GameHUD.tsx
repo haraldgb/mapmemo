@@ -1,5 +1,3 @@
-import { useSelector } from 'react-redux'
-import type { RootState } from '../store'
 import { ScoreBar } from './ScoreBar'
 import type { GameState } from './hooks/useGameState'
 import {
@@ -9,19 +7,16 @@ import {
   s_overlayGUI_row,
 } from './OverlayGuiStyles'
 
-type GameHUDProps = {
-  gameState?: GameState
-  formattedTime: string
+type Props = {
+  gameState: GameState
 }
 
-export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
-  const mode = useSelector(
-    (state: RootState) => state.mapmemo.gameSettings.mode,
-  )
+export const GameHUD = ({ gameState }: Props) => {
+  const { formattedTime } = gameState
 
-  if (mode === 'route' || !gameState) {
+  if (gameState.mode === 'route') {
     return (
-      <div className={s_route_container}>
+      <div className={s_overlayGUI_row}>
         <div className={s_timer}>{formattedTime}</div>
       </div>
     )
@@ -29,18 +24,18 @@ export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
 
   const {
     promptPrefixDesktop,
-    mode: gameMode,
+    mode,
     promptText,
     correctCount,
     incorrectCount,
     totalCount,
     isComplete,
     currentEntry,
-  } = gameState
+  } = gameState.areaGameState
 
-  const showPrompt = gameMode !== 'name' || isComplete
+  const showPrompt = mode !== 'name' || isComplete
   const isClickPrompt =
-    showPrompt && gameMode === 'click' && !isComplete && currentEntry
+    showPrompt && mode === 'click' && !isComplete && currentEntry
 
   return (
     <div className={s_overlayGUI_row}>
@@ -66,8 +61,6 @@ export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
   )
 }
 
-const s_route_container =
-  'pointer-events-none absolute inset-x-4 top-4 z-10 px-4 py-3'
 const s_prompt = `flex items-center px-4 truncate text-lg font-semibold text-slate-900 ${s_overlayGUI_item}`
 const s_prompt_prefix_desktop_only = 'hidden md:inline'
 const s_timer = `flex items-center text-lg font-semibold tabular-nums text-slate-700 ${s_overlayGUI_item}`

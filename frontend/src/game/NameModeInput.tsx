@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import type { GameState } from './hooks/useGameState'
+import type { AreaGameState } from './hooks/useAreaGameState'
 import { s_overlayGUI_item } from './OverlayGuiStyles'
 import { useInputSuggestions } from './hooks/useInputSuggestions'
 
 type NameModeInputProps = {
-  gameState: GameState
+  areaGameState: AreaGameState
 }
 
-export const NameModeInput = ({ gameState }: NameModeInputProps) => {
-  const { difficulty, registerNameGuess, prevGuess, currentEntry } = gameState
+export const NameModeInput = ({ areaGameState }: NameModeInputProps) => {
+  const { difficulty, registerNameGuess, prevGuess, currentEntry } =
+    areaGameState
   const [typedValue, setTypedValue] = useState('')
   const [previewValue, setPreviewValue] = useState('')
   const [isOpen, setIsOpen] = useState(false)
@@ -22,7 +23,7 @@ export const NameModeInput = ({ gameState }: NameModeInputProps) => {
   const displayValue = highlightedIndex >= 0 ? previewValue : typedValue
 
   const filteredSuggestions = useInputSuggestions({
-    gameState,
+    areaGameState: areaGameState,
     inputValue: typedValue,
   })
 
