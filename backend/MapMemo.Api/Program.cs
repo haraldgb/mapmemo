@@ -29,7 +29,7 @@ var urls = builder.Configuration["ASPNETCORE_URLS"] ?? string.Empty;
 var splitUrls = urls.Split(';', StringSplitOptions.RemoveEmptyEntries);
 var hasHttpsUrl = splitUrls
     .Any(url => url.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
-var selfReferrer = new Uri(splitUrls.First());
+var selfReferrer = new Uri(splitUrls.FirstOrDefault() ?? "http://localhost:5243");
 
 if (httpsPort is not null || hasHttpsUrl) {
     // use https redirection if an HTTPS port/URL is configured.
