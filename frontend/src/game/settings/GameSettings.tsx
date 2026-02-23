@@ -4,6 +4,8 @@ import type { AppDispatch, RootState } from '../../store'
 import { mapmemoActions } from '../../duck/reducer'
 import {
   AREA_COUNT_OPTIONS,
+  AREA_SUB_MODE_DESCRIPTIONS,
+  AREA_SUB_MODE_OPTIONS,
   DIFFICULTY_DESCRIPTIONS,
   DIFFICULTY_OPTIONS,
   MODE_DESCRIPTIONS,
@@ -39,9 +41,10 @@ export const GameSettings = ({
   )
   const containerRef = useRef<HTMLDivElement | null>(null)
   const isRouteMode = draftSettings.mode === 'route'
+  const isNameMode = draftSettings.mode === 'name'
+  const showDifficulty = isNameMode
+  const showAreaSettings = !isRouteMode
   const selectedAreaCount = draftSettings.selectedAreas.length
-  const isAreaFilterActive = selectedAreaCount > 0
-  const isAreaCountDisabled = isAreaFilterActive || isRouteMode
   const areaButtonLabel =
     selectedAreaCount === 0 ? 'All areas' : `${selectedAreaCount} selected`
 
@@ -137,56 +140,83 @@ export const GameSettings = ({
           })}
         </div>
       </div>
-      <div className={s_section}>
-        <div className={s_label}>Difficulty</div>
-        <div className={sf_option_group(draftSettings.mode !== 'name')}>
-          {DIFFICULTY_OPTIONS.map((option) => {
-            const isSelected = draftSettings.difficulty === option.value
-            const isDisabled = draftSettings.mode !== 'name'
-            return (
-              <button
-                key={option.value}
-                type='button'
-                title={DIFFICULTY_DESCRIPTIONS[option.value]}
-                disabled={isDisabled}
-                onClick={() =>
-                  setDraftSettings((prev) => ({
-                    ...prev,
-                    difficulty: option.value,
-                  }))
-                }
-                className={sf_option_button(isSelected, isDisabled)}
-              >
-                {option.label}
-              </button>
-            )
-          })}
+      {showDifficulty && (
+        <div className={s_section}>
+          <div className={s_label}>Difficulty</div>
+          <div className={sf_option_group(false)}>
+            {DIFFICULTY_OPTIONS.map((option) => {
+              const isSelected = draftSettings.difficulty === option.value
+              return (
+                <button
+                  key={option.value}
+                  type='button'
+                  title={DIFFICULTY_DESCRIPTIONS[option.value]}
+                  onClick={() =>
+                    setDraftSettings((prev) => ({
+                      ...prev,
+                      difficulty: option.value,
+                    }))
+                  }
+                  className={sf_option_button(isSelected, false)}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
         </div>
-      </div>
-      <div className={s_section}>
-        <div className={s_label}>Area count</div>
-        <div className={sf_option_group(isAreaCountDisabled)}>
-          {AREA_COUNT_OPTIONS.map((mode) => {
-            const isSelected = draftSettings.areaCount === mode.value
-            return (
-              <button
-                key={mode.value}
-                type='button'
-                disabled={isAreaCountDisabled}
-                onClick={() =>
-                  setDraftSettings((prev) => ({
-                    ...prev,
-                    areaCount: mode.value,
-                  }))
-                }
-                className={sf_option_button(isSelected, isAreaCountDisabled)}
-              >
-                {mode.label}
-              </button>
-            )
-          })}
+      )}
+      {showAreaSettings && (
+        <div className={s_section}>
+          <div className={s_label}>Areas</div>
+          <div className={sf_option_group(false)}>
+            {AREA_SUB_MODE_OPTIONS.map((option) => {
+              const isSelected = draftSettings.areaSubMode === option.value
+              return (
+                <button
+                  key={option.value}
+                  type='button'
+                  title={AREA_SUB_MODE_DESCRIPTIONS[option.value]}
+                  onClick={() =>
+                    setDraftSettings((prev) => ({
+                      ...prev,
+                      areaSubMode: option.value,
+                    }))
+                  }
+                  className={sf_option_button(isSelected, false)}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
         </div>
-      </div>
+      )}
+      {showAreaSettings && draftSettings.areaSubMode === 'areaCount' && (
+        <div className={s_section}>
+          <div className={s_label}>Area count</div>
+          <div className={sf_option_group(false)}>
+            {AREA_COUNT_OPTIONS.map((option) => {
+              const isSelected = draftSettings.areaCount === option.value
+              return (
+                <button
+                  key={option.value}
+                  type='button'
+                  onClick={() =>
+                    setDraftSettings((prev) => ({
+                      ...prev,
+                      areaCount: option.value,
+                    }))
+                  }
+                  className={sf_option_button(isSelected, false)}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
       <div className={s_section}>
         <div className={s_label}>Seed</div>
         <div className={s_seed_row}>
@@ -220,11 +250,9 @@ export const GameSettings = ({
           ))}
         </div>
       </div>
-      <div className={sf_disabled_section(isRouteMode)}>
-        <div className={s_label}>Area</div>
-        {isRouteMode ? (
-          <div className={s_disabled_hint}>Not available in route mode</div>
-        ) : (
+      {showAreaSettings && draftSettings.areaSubMode === 'areaPick' && (
+        <div className={s_section}>
+          <div className={s_label}>Select areas</div>
           <AreaDropdown
             label={areaButtonLabel}
             options={areaOptions}
@@ -232,8 +260,8 @@ export const GameSettings = ({
             onToggleSelection={toggleAreaSelection}
             outsideClickRef={containerRef}
           />
-        )}
-      </div>
+        </div>
+      )}
       {isConfirming && (
         <ConfirmResetPopup
           onConfirm={handleConfirmReset}
@@ -288,9 +316,6 @@ const sf_seed_input = (isValid: boolean) =>
       ? 'border-slate-300 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500'
       : 'border-amber-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500'
   }`
-const sf_disabled_section = (isDisabled: boolean) =>
-  `${s_section} ${isDisabled ? 'opacity-60' : ''}`
-const s_disabled_hint = 'mt-2 text-xs text-slate-400'
 const s_actions = 'mt-4 flex items-center justify-end gap-2'
 const sf_primary_button = (isEnabled: boolean) =>
   `rounded-md px-3 py-1.5 text-sm font-semibold text-white ${

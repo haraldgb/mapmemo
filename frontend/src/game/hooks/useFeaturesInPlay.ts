@@ -1,6 +1,7 @@
 import { useMapsLibrary } from '@vis.gl/react-google-maps'
 import { useEffect, useState } from 'react'
 import { DELBYDELER_GEOJSON_URL } from '../consts'
+import type { AreaSubMode } from '../settings/settingsTypes'
 import { getAreaId } from '../utils'
 
 type GeoJsonObject = {
@@ -93,6 +94,7 @@ const convertGeoJsonToLatLng = (geojson: GeoJsonObject) => {
 
 type Props = {
   gameState: {
+    areaSubMode: AreaSubMode
     areaCount: number
     selectedAreas: string[]
   }
@@ -149,10 +151,15 @@ export const useFeaturesInPlay = ({ gameState }: Props) => {
     [mapsLibrary],
   )
 
-  if (gameState.selectedAreas.length === 0) {
+  if (gameState.areaSubMode === 'areaCount') {
     const maxCount = Math.min(gameState.areaCount, allFeatures.length)
     return allFeatures.slice(0, maxCount)
   }
+
+  if (gameState.selectedAreas.length === 0) {
+    return allFeatures
+  }
+
   return allFeatures.filter((feature) => {
     const areaId = getAreaId(feature)
     return areaId ? gameState.selectedAreas.includes(areaId) : false
