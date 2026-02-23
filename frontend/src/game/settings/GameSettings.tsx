@@ -217,7 +217,19 @@ export const GameSettings = ({
           </div>
         </div>
       )}
-      <div className={s_section}>
+      {showAreaSettings && draftSettings.areaSubMode === 'areaPick' && (
+        <div className={s_section}>
+          <div className={s_label}>Select areas</div>
+          <AreaDropdown
+            label={areaButtonLabel}
+            options={areaOptions}
+            selectedIds={draftSettings.selectedAreas}
+            onToggleSelection={toggleAreaSelection}
+            outsideClickRef={containerRef}
+          />
+        </div>
+      )}
+      <div className={s_seed_section}>
         <div className={s_label}>Seed</div>
         <div className={s_seed_row}>
           <input
@@ -250,18 +262,6 @@ export const GameSettings = ({
           ))}
         </div>
       </div>
-      {showAreaSettings && draftSettings.areaSubMode === 'areaPick' && (
-        <div className={s_section}>
-          <div className={s_label}>Select areas</div>
-          <AreaDropdown
-            label={areaButtonLabel}
-            options={areaOptions}
-            selectedIds={draftSettings.selectedAreas}
-            onToggleSelection={toggleAreaSelection}
-            outsideClickRef={containerRef}
-          />
-        </div>
-      )}
       {isConfirming && (
         <ConfirmResetPopup
           onConfirm={handleConfirmReset}
@@ -290,7 +290,7 @@ export const GameSettings = ({
 }
 
 const s_container =
-  'w-72 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-lg'
+  'flex h-[635px] w-[343px] flex-col rounded-xl border border-slate-200 bg-white p-4 text-left shadow-lg'
 const s_title = 'text-sm font-semibold text-slate-900'
 const s_section = 'mt-3'
 const s_label = 'text-xs font-semibold uppercase tracking-wide text-slate-500'
@@ -302,6 +302,7 @@ const sf_option_button = (isSelected: boolean, isDisabled: boolean) =>
       ? 'border-purple-600 bg-purple-600 text-white'
       : 'border-slate-300 bg-white text-slate-700'
   } ${isDisabled ? 'cursor-not-allowed' : 'hover:border-slate-400'}`
+const s_seed_section = 'mt-auto'
 const s_seed_row = 'mt-2 flex items-center gap-2'
 const s_preset_row = 'mt-1.5 flex flex-wrap gap-1.5'
 const sf_preset_button = (isActive: boolean) =>
