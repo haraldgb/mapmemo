@@ -7,22 +7,31 @@ import {
   s_overlayGUI_row,
 } from './OverlayGuiStyles'
 
-type GameHUDProps = {
+type Props = {
   gameState: GameState
-  formattedTime: string
 }
 
-export const GameHUD = ({ gameState, formattedTime }: GameHUDProps) => {
+export const GameHUD = ({ gameState }: Props) => {
+  const { formattedTime } = gameState
+
+  if (gameState.mode === 'route') {
+    return (
+      <div className={s_overlayGUI_row}>
+        <div className={s_timer}>{formattedTime}</div>
+      </div>
+    )
+  }
+
   const {
-    mode,
     promptPrefixDesktop,
+    mode,
     promptText,
     correctCount,
     incorrectCount,
     totalCount,
     isComplete,
     currentEntry,
-  } = gameState
+  } = gameState.areaGameState
 
   const showPrompt = mode !== 'name' || isComplete
   const isClickPrompt =

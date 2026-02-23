@@ -1,12 +1,14 @@
 namespace MapMemo.Api.Models;
 
-internal sealed record IntersectionRow(
+internal sealed record ConnectedIntersectionRow(
     long Id,
     decimal Lat,
     decimal Lng,
     string? WayType,
-    long OtherRoadId,
-    string OtherRoadName);
+    long RoadAId,
+    string RoadAName,
+    long RoadBId,
+    string RoadBName);
 
 internal sealed record RoadInfo(long Id, string Name, long CityId);
 

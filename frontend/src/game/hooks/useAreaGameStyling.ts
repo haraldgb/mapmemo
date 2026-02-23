@@ -11,15 +11,15 @@ import {
   ID_KEY,
 } from '../consts'
 import { getFeatureProperty } from '../../utils/polygons'
-import type { GameState } from './useGameState'
+import type { AreaGameState } from './useAreaGameState'
 import type { MapContext } from '../types'
 
 type Props = {
-  gameState: GameState
+  areaGameState: AreaGameState
   mapContext: MapContext
 }
 
-export const useGameStyling = ({ gameState, mapContext }: Props) => {
+export const useAreaGameStyling = ({ areaGameState, mapContext }: Props) => {
   const mapRef = useRef<google.maps.Map | null>(null)
   const hoveredIdRef = useRef<string | null>(null)
   const flashIdRef = useRef<string | null>(null)
@@ -38,17 +38,17 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
       return flashIsIncorrect.current ? INCORRECT_FLASH_STYLE : FLASH_STYLE
     }
     if (
-      gameState.mode === 'name' &&
-      gameState.currentEntry?.id === id &&
-      !gameState.correctlyGuessedIdsRef.current.has(id) &&
-      !gameState.lateGuessedIdsRef.current.has(id)
+      areaGameState.mode === 'name' &&
+      areaGameState.currentEntry?.id === id &&
+      !areaGameState.correctlyGuessedIdsRef.current.has(id) &&
+      !areaGameState.lateGuessedIdsRef.current.has(id)
     ) {
       return targetPulseBright.current ? TARGET_STYLE_BRIGHT : TARGET_STYLE_DIM
     }
-    if (gameState.correctlyGuessedIdsRef.current.has(id)) {
+    if (areaGameState.correctlyGuessedIdsRef.current.has(id)) {
       return CORRECT_STYLE
     }
-    if (gameState.lateGuessedIdsRef.current.has(id)) {
+    if (areaGameState.lateGuessedIdsRef.current.has(id)) {
       return LATE_STYLE
     }
     if (hoveredIdRef.current === id) {
@@ -92,7 +92,8 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
 
   useEffect(
     function updateFlash() {
-      const { id, isCorrect, consecutiveIncorrectGuesses } = gameState.prevGuess
+      const { id, isCorrect, consecutiveIncorrectGuesses } =
+        areaGameState.prevGuess
       if (!id && !isCorrect && consecutiveIncorrectGuesses === 0) {
         if (flashTimeoutRef.current) {
           window.clearTimeout(flashTimeoutRef.current)
@@ -128,15 +129,15 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
         refreshStyles()
       }, 650)
     },
-    [gameState.prevGuess, refreshStyles],
+    [areaGameState.prevGuess, refreshStyles],
   )
 
   useEffect(
     function pulseTargetArea() {
       if (
-        gameState.mode !== 'name' ||
-        gameState.isComplete ||
-        !gameState.currentEntry
+        areaGameState.mode !== 'name' ||
+        areaGameState.isComplete ||
+        !areaGameState.currentEntry
       ) {
         if (pulseIntervalRef.current) {
           window.clearInterval(pulseIntervalRef.current)
@@ -156,9 +157,9 @@ export const useGameStyling = ({ gameState, mapContext }: Props) => {
       }
     },
     [
-      gameState.mode,
-      gameState.isComplete,
-      gameState.currentEntry,
+      areaGameState.mode,
+      areaGameState.isComplete,
+      areaGameState.currentEntry,
       refreshStyles,
     ],
   )

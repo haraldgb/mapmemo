@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { INITIAL_PREV_GUESS, type GameState } from './useGameState'
+import { INITIAL_PREV_GUESS, type AreaGameState } from './useAreaGameState'
 import type { MapContext } from '../types'
 import {
   createPolygonLabelMarker,
@@ -8,13 +8,13 @@ import {
 import { ID_KEY } from '../consts'
 
 type Props = {
-  gameState: GameState
+  areaGameState: AreaGameState
   mapContext: MapContext
   features: google.maps.Data.Feature[]
 }
 
 export const useFeatureLabels = ({
-  gameState,
+  areaGameState,
   mapContext,
   features,
 }: Props) => {
@@ -45,7 +45,7 @@ export const useFeatureLabels = ({
 
   useEffect(
     function syncWrongClickLabel() {
-      const { isCorrect, clickedFeature } = gameState.prevGuess
+      const { isCorrect, clickedFeature } = areaGameState.prevGuess
       clearWrongClickMarker()
 
       if (isCorrect || !clickedFeature) {
@@ -64,12 +64,12 @@ export const useFeatureLabels = ({
       )
       wrongClickMarkerRef.current = marker
     },
-    [gameState.prevGuess],
+    [areaGameState.prevGuess],
   )
 
   useEffect(
     function syncLabels() {
-      const { id, isCorrect } = gameState.prevGuess
+      const { id, isCorrect } = areaGameState.prevGuess
       if (!isCorrect || !id) {
         return
       }
@@ -92,16 +92,16 @@ export const useFeatureLabels = ({
         labelMarkersRef.current.set(id, marker)
       }
     },
-    [features, gameState.prevGuess],
+    [features, areaGameState.prevGuess],
   )
 
   useEffect(
     function resetLabels() {
-      if (gameState.prevGuess === INITIAL_PREV_GUESS) {
+      if (areaGameState.prevGuess === INITIAL_PREV_GUESS) {
         clearMarkers()
       }
     },
-    [gameState.prevGuess],
+    [areaGameState.prevGuess],
   )
 
   useEffect(
