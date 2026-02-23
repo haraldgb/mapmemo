@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 
 using MapMemo.Api.Models;
 using MapMemo.Api.Services;
@@ -14,6 +15,7 @@ builder.Services.AddMemoryCache();
 builder.Services.Configure<MapMemo.Api.Services.MapMemoSessionOptions>(
     builder.Configuration.GetSection("Session"));
 builder.Services.AddSingleton<ISessionService, SessionService>();
+builder.Services.AddHttpClient();
 
 WebApplication app = builder.Build();
 
@@ -24,9 +26,10 @@ if (app.Environment.IsDevelopment()) {
 
 var httpsPort = builder.Configuration.GetValue<int?>("ASPNETCORE_HTTPS_PORT");
 var urls = builder.Configuration["ASPNETCORE_URLS"] ?? string.Empty;
-var hasHttpsUrl = urls
-    .Split(';', StringSplitOptions.RemoveEmptyEntries)
+var splitUrls = urls.Split(';', StringSplitOptions.RemoveEmptyEntries);
+var hasHttpsUrl = splitUrls
     .Any(url => url.StartsWith("https://", StringComparison.OrdinalIgnoreCase));
+var selfReferrer = new Uri(splitUrls.First());
 
 if (httpsPort is not null || hasHttpsUrl) {
     // use https redirection if an HTTPS port/URL is configured.
@@ -189,6 +192,76 @@ app.MapGet("/api/roads", async (
         }
 
         return Results.Json(response);
+    });
+
+app.MapPost("/api/snap-to-roads", async (
+    HttpContext context,
+    IConfiguration configuration,
+    ISessionService sessionService,
+    IHttpClientFactory httpClientFactory,
+    SnapToRoadsRequest request) => {
+        if (!sessionService.HasValidSession(context)) {
+            return Results.Unauthorized();
+        }
+
+        var apiKey = configuration["GoogleMaps:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey)) {
+            return Results.Problem("Google Maps API key is not configured.", statusCode: 500);
+        }
+
+        HttpClient client = httpClientFactory.CreateClient();
+        var url = $"https://roads.googleapis.com/v1/nearestRoads?points={request.Lat},{request.Lng}&key={apiKey}";
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
+        requestMessage.Headers.Referrer = selfReferrer;
+        HttpResponseMessage response = await client.SendAsync(requestMessage);
+
+        if (!response.IsSuccessStatusCode) {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            return Results.Problem(
+                $"Google Roads API error: {errorBody}",
+                statusCode: (int)response.StatusCode);
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        return Results.Content(content, "application/json");
+    });
+
+app.MapPost("/api/compute-routes", async (
+    HttpContext context,
+    IConfiguration configuration,
+    ISessionService sessionService,
+    IHttpClientFactory httpClientFactory,
+    JsonElement body) => {
+        if (!sessionService.HasValidSession(context)) {
+            return Results.Unauthorized();
+        }
+
+        var apiKey = configuration["GoogleMaps:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey)) {
+            return Results.Problem("Google Maps API key is not configured.", statusCode: 500);
+        }
+
+        HttpClient client = httpClientFactory.CreateClient();
+        var googleUrl = "https://routes.googleapis.com/directions/v2:computeRoutes";
+
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Post, googleUrl);
+        requestMessage.Content = new StringContent(
+            body.GetRawText(), System.Text.Encoding.UTF8, "application/json");
+        requestMessage.Headers.Referrer = selfReferrer;
+        requestMessage.Headers.Add("X-Goog-Api-Key", apiKey);
+        requestMessage.Headers.Add("X-Goog-FieldMask", "routes.duration,routes.polyline.encodedPolyline");
+
+        HttpResponseMessage response = await client.SendAsync(requestMessage);
+
+        if (!response.IsSuccessStatusCode) {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            return Results.Problem(
+                $"Google Routes API error: {errorBody}",
+                statusCode: (int)response.StatusCode);
+        }
+
+        var content = await response.Content.ReadAsStringAsync();
+        return Results.Content(content, "application/json");
     });
 
 app.Run();
