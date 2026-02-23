@@ -21,28 +21,22 @@ const parseDurationSec = (duration: string): number => {
   return match ? Number(match[1]) : 0
 }
 
+const toLatLngPair = (pt: LatLng) => ({
+  latitude: pt.lat,
+  longitude: pt.lng,
+})
+
 const computeRoute = async (
   origin: LatLng,
   destination: LatLng,
   intermediates: LatLng[],
 ): Promise<{ durationSec: number; encodedPolyline: string }> => {
-  const body: Record<string, unknown> = {
-    origin: {
-      location: { latLng: { latitude: origin.lat, longitude: origin.lng } },
-    },
-    destination: {
-      location: {
-        latLng: { latitude: destination.lat, longitude: destination.lng },
-      },
-    },
-    travelMode: 'WALK',
-    routingPreference: 'ROUTING_PREFERENCE_UNSPECIFIED',
-  }
-
-  if (intermediates.length > 0) {
-    body.intermediates = intermediates.map((pt) => ({
-      location: { latLng: { latitude: pt.lat, longitude: pt.lng } },
-    }))
+  const body = {
+    origin: toLatLngPair(origin),
+    destination: toLatLngPair(destination),
+    ...(intermediates.length > 0 && {
+      intermediates: intermediates.map(toLatLngPair),
+    }),
   }
 
   const response = await fetchWithSessionRetry('/api/compute-routes', {

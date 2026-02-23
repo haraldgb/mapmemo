@@ -223,9 +223,7 @@ export const GameSettings = ({
       <div className={sf_disabled_section(isRouteMode)}>
         <div className={s_label}>Area</div>
         {isRouteMode ? (
-          <div className={s_disabled_hint}>
-            Not available in route mode
-          </div>
+          <div className={s_disabled_hint}>Not available in route mode</div>
         ) : (
           <AreaDropdown
             label={areaButtonLabel}
