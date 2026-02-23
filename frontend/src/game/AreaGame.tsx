@@ -54,7 +54,7 @@ export const AreaGame = () => {
           mode === 'click' ? areaGameState.registerFeatureClick : undefined
         }
         onFeatureHover={gameStyling.registerFeatureHover}
-        onMapReady={(payload) => handleMapReady(payload)}
+        onMapReady={handleMapReady}
       >
         {isGMapReady && (
           <>

@@ -131,12 +131,6 @@ export const RouteResults = ({
     )
   }
 
-  const formatDuration = (sec: number): string => {
-    const mins = Math.floor(sec / 60)
-    const secs = sec % 60
-    return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`
-  }
-
   return (
     <div className={s_overlay}>
       <div className={s_results_panel}>
@@ -148,13 +142,13 @@ export const RouteResults = ({
           </div>
           <div className={s_stat}>
             <div className={s_stat_label}>Your route</div>
-            <div className={sf_stat_value_blue}>
+            <div className={s_stat_value_blue}>
               {formatDuration(result.playerDurationSec)}
             </div>
           </div>
           <div className={s_stat}>
             <div className={s_stat_label}>Optimal route</div>
-            <div className={sf_stat_value_green}>
+            <div className={s_stat_value_green}>
               {formatDuration(result.optimalDurationSec)}
             </div>
           </div>
@@ -186,6 +180,12 @@ export const RouteResults = ({
   )
 }
 
+const formatDuration = (sec: number): string => {
+  const mins = Math.floor(sec / 60)
+  const secs = sec % 60
+  return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`
+}
+
 const s_overlay =
   'pointer-events-auto absolute inset-0 z-20 flex items-end justify-center p-4 sm:items-center'
 const s_panel =
@@ -198,8 +198,8 @@ const s_stat = 'rounded-xl bg-slate-50 p-3 text-center'
 const s_stat_label =
   'text-xs font-medium uppercase tracking-wide text-slate-500'
 const s_stat_value = 'mt-1 text-lg font-bold text-slate-900'
-const sf_stat_value_blue = 'mt-1 text-lg font-bold text-blue-600'
-const sf_stat_value_green = 'mt-1 text-lg font-bold text-green-600'
+const s_stat_value_blue = 'mt-1 text-lg font-bold text-blue-600'
+const s_stat_value_green = 'mt-1 text-lg font-bold text-green-600'
 const s_legend = 'flex items-center gap-4 text-sm text-slate-600'
 const s_legend_player = 'flex items-center gap-1.5'
 const s_legend_optimal = 'flex items-center gap-1.5'

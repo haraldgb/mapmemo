@@ -220,10 +220,10 @@ export const GameSettings = ({
           ))}
         </div>
       </div>
-      <div className={`${s_section} ${isRouteMode ? 'opacity-60' : ''}`}>
+      <div className={sf_disabled_section(isRouteMode)}>
         <div className={s_label}>Area</div>
         {isRouteMode ? (
-          <div className='mt-2 text-xs text-slate-400'>
+          <div className={s_disabled_hint}>
             Not available in route mode
           </div>
         ) : (
@@ -290,6 +290,9 @@ const sf_seed_input = (isValid: boolean) =>
       ? 'border-slate-300 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500'
       : 'border-amber-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500'
   }`
+const sf_disabled_section = (isDisabled: boolean) =>
+  `${s_section} ${isDisabled ? 'opacity-60' : ''}`
+const s_disabled_hint = 'mt-2 text-xs text-slate-400'
 const s_actions = 'mt-4 flex items-center justify-end gap-2'
 const sf_primary_button = (isEnabled: boolean) =>
   `rounded-md px-3 py-1.5 text-sm font-semibold text-white ${
