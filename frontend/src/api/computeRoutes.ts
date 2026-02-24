@@ -1,9 +1,9 @@
-import { fetchWithSessionRetry } from '../game/hooks/useFeaturesInPlay'
 import type {
   RouteAddress,
   RouteResult,
   SelectedIntersection,
 } from '../game/route/types'
+import { fetchWithSessionRetry } from './utils'
 
 type ComputeRoutesResponse = {
   routes: {

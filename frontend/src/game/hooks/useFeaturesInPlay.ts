@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { DELBYDELER_GEOJSON_URL } from '../consts'
 import type { AreaSubMode } from '../settings/settingsTypes'
 import { getAreaId } from '../utils'
+import { fetchWithSessionRetry } from '../../api/utils'
 
 type GeoJsonObject = {
   type: string
@@ -14,26 +15,6 @@ type GeoJsonObject = {
     }
   }
   [key: string]: unknown
-}
-
-export const fetchWithSessionRetry = async (
-  input: RequestInfo,
-  init: RequestInit,
-) => {
-  const response = await fetch(input, { ...init, credentials: 'include' })
-  if (response.status !== 401) {
-    return response
-  }
-
-  const healthResponse = await fetch('/api/health', {
-    method: 'GET',
-    credentials: 'include',
-  })
-  if (!healthResponse.ok) {
-    return response
-  }
-
-  return fetch(input, { ...init, credentials: 'include' })
 }
 
 const getGeoJsonType = (geojson: GeoJsonObject): 'EPSG:3857' | 'unknown' => {

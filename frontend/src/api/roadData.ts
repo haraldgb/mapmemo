@@ -1,4 +1,4 @@
-import { fetchWithSessionRetry } from '../game/hooks/useFeaturesInPlay'
+import { fetchWithSessionRetry } from './utils'
 
 export type RoadIntersection = {
   id: number
