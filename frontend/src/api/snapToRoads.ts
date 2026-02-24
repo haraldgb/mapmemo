@@ -1,5 +1,5 @@
-import { fetchWithSessionRetry } from '../game/hooks/useFeaturesInPlay'
 import type { RouteAddress } from '../game/route/types'
+import { fetchWithSessionRetry } from './utils'
 
 type SnapToRoadsResponse = {
   snappedPoints?: {

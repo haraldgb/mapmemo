@@ -105,6 +105,16 @@ export const DIFFICULTY_DESCRIPTIONS: Record<string, string> = {
   hard: 'No suggestions',
 }
 
+export const AREA_SUB_MODE_OPTIONS = [
+  { label: 'Full pool', value: 'areaCount' },
+  { label: 'Pick areas', value: 'areaPick' },
+] as const
+
+export const AREA_SUB_MODE_DESCRIPTIONS: Record<string, string> = {
+  areaCount: 'Play a set number of areas from the full pool.',
+  areaPick: 'Choose specific areas to play.',
+}
+
 export const AREA_COUNT_OPTIONS = [
   { label: '10', value: 10 },
   { label: '25', value: 25 },

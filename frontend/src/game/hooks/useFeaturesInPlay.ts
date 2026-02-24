@@ -1,7 +1,9 @@
 import { useMapsLibrary } from '@vis.gl/react-google-maps'
 import { useEffect, useState } from 'react'
 import { DELBYDELER_GEOJSON_URL } from '../consts'
+import type { AreaSubMode } from '../settings/settingsTypes'
 import { getAreaId } from '../utils'
+import { fetchWithSessionRetry } from '../../api/utils'
 
 type GeoJsonObject = {
   type: string
@@ -13,26 +15,6 @@ type GeoJsonObject = {
     }
   }
   [key: string]: unknown
-}
-
-export const fetchWithSessionRetry = async (
-  input: RequestInfo,
-  init: RequestInit,
-) => {
-  const response = await fetch(input, { ...init, credentials: 'include' })
-  if (response.status !== 401) {
-    return response
-  }
-
-  const healthResponse = await fetch('/api/health', {
-    method: 'GET',
-    credentials: 'include',
-  })
-  if (!healthResponse.ok) {
-    return response
-  }
-
-  return fetch(input, { ...init, credentials: 'include' })
 }
 
 const getGeoJsonType = (geojson: GeoJsonObject): 'EPSG:3857' | 'unknown' => {
@@ -93,6 +75,7 @@ const convertGeoJsonToLatLng = (geojson: GeoJsonObject) => {
 
 type Props = {
   gameState: {
+    areaSubMode: AreaSubMode
     areaCount: number
     selectedAreas: string[]
   }
@@ -149,10 +132,15 @@ export const useFeaturesInPlay = ({ gameState }: Props) => {
     [mapsLibrary],
   )
 
-  if (gameState.selectedAreas.length === 0) {
+  if (gameState.areaSubMode === 'areaCount') {
     const maxCount = Math.min(gameState.areaCount, allFeatures.length)
     return allFeatures.slice(0, maxCount)
   }
+
+  if (gameState.selectedAreas.length === 0) {
+    return allFeatures
+  }
+
   return allFeatures.filter((feature) => {
     const areaId = getAreaId(feature)
     return areaId ? gameState.selectedAreas.includes(areaId) : false

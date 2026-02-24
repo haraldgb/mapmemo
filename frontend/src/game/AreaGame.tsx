@@ -11,11 +11,11 @@ import { GameUI } from './GameUI.tsx'
 import type { MapContext } from './types.ts'
 
 export const AreaGame = () => {
-  const { areaCount, selectedAreas, mode } = useSelector(
+  const { areaSubMode, areaCount, selectedAreas, mode } = useSelector(
     (state: RootState) => state.mapmemo.gameSettings,
   )
   const featuresInPlay = useFeaturesInPlay({
-    gameState: { areaCount, selectedAreas },
+    gameState: { areaSubMode, areaCount, selectedAreas },
   })
   const [isGMapReady, setIsGMapReady] = useState(false)
   const [mapContext, setMapContext] = useState<MapContext>(null)

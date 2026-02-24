@@ -1,9 +1,11 @@
 import {
   AREA_COUNT_OPTIONS,
+  AREA_SUB_MODE_OPTIONS,
   DIFFICULTY_OPTIONS,
   MODE_OPTIONS,
 } from '../game/consts'
 import type {
+  AreaSubMode,
   GameDifficulty,
   GameMode,
   GameSettings,
@@ -18,6 +20,10 @@ const isValidMode = (value: unknown): value is GameMode =>
 const isValidDifficulty = (value: unknown): value is GameDifficulty =>
   typeof value === 'string' &&
   DIFFICULTY_OPTIONS.some((option) => option.value === value)
+
+const isValidAreaSubMode = (value: unknown): value is AreaSubMode =>
+  typeof value === 'string' &&
+  AREA_SUB_MODE_OPTIONS.some((option) => option.value === value)
 
 const isValidAreaCount = (value: unknown): value is number =>
   typeof value === 'number' &&
@@ -67,6 +73,9 @@ export const loadGameSettings = (): GameSettings | null => {
     return {
       mode: candidate.mode ?? 'click',
       difficulty: candidate.difficulty ?? 'easy',
+      areaSubMode: isValidAreaSubMode(candidate.areaSubMode)
+        ? candidate.areaSubMode
+        : 'areaCount',
       areaCount: candidate.areaCount ?? AREA_COUNT_OPTIONS[0]?.value ?? 10,
       selectedAreas: normalizeSelectedAreas(candidate.selectedAreas),
       seed: seedValue,
@@ -85,6 +94,7 @@ export const saveGameSettings = (settings: GameSettings) => {
     const payload = {
       mode: settings.mode,
       difficulty: settings.difficulty,
+      areaSubMode: settings.areaSubMode,
       areaCount: settings.areaCount,
       selectedAreas: settings.selectedAreas,
       seed: settings.seed,
