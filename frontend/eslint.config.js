@@ -47,6 +47,11 @@ export default defineConfig([
           message:
             'Use an explicit function body with return for PascalCase component arrow functions.',
         },
+        {
+          selector: 'CallExpression[callee.name="useWhyDidYouUpdate"]',
+          message:
+            'useWhyDidYouUpdate is a dev-only debugging util — remove before committing.',
+        },
       ],
       'no-restricted-imports': [
         'error',
