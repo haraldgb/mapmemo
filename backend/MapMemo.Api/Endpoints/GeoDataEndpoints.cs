@@ -1,0 +1,147 @@
+using MapMemo.Api.Models;
+using MapMemo.Api.Services;
+
+using Npgsql;
+
+namespace MapMemo.Api.Endpoints;
+
+internal static class GeoDataEndpoints {
+    public static void MapGeoDataEndpoints(this IEndpointRouteBuilder app) {
+        app.MapGet("/api/oslo-neighboorhoods", (
+            HttpContext context,
+            IWebHostEnvironment env,
+            ISessionService sessionService) => {
+                if (!sessionService.HasValidSession(context)) {
+                    return Results.Unauthorized();
+                }
+
+                var filePath = Path.Combine(
+                    env.ContentRootPath,
+                    "Data",
+                    "Delbydeler_1854838652447253595.geojson");
+
+                if (!File.Exists(filePath)) {
+                    return Results.NotFound(new { error = "Oslo GeoJSON file not found." });
+                }
+
+                return Results.File(filePath, "application/geo+json");
+            });
+
+        app.MapGet("/api/roads", async (
+            HttpContext context,
+            IConfiguration configuration,
+            ISessionService sessionService,
+            string? city_name,
+            string? road_name) => {
+                if (!sessionService.HasValidSession(context)) {
+                    return Results.Unauthorized();
+                }
+
+                if (string.IsNullOrWhiteSpace(city_name) || string.IsNullOrWhiteSpace(road_name)) {
+                    return Results.BadRequest(new { error = "city_name and road_name are required." });
+                }
+
+                var connectionString = configuration["ConnectionStrings:Postgres"];
+                if (string.IsNullOrWhiteSpace(connectionString)) {
+                    return Results.Problem("Database is not configured.", statusCode: 500);
+                }
+
+                await using var conn = new NpgsqlConnection(connectionString);
+                await conn.OpenAsync();
+
+                long? cityId = null;
+                await using (var cmd = new NpgsqlCommand("SELECT id FROM city WHERE LOWER(name) = LOWER(@name)", conn)) {
+                    cmd.Parameters.AddWithValue("name", city_name);
+                    var scalar = await cmd.ExecuteScalarAsync();
+                    if (scalar is not null) {
+                        cityId = Convert.ToInt64(scalar);
+                    }
+                }
+
+                if (cityId is null) {
+                    return Results.NotFound(new { error = "City not found." });
+                }
+
+                long? roadId = null;
+                await using (var cmd = new NpgsqlCommand("SELECT id FROM road WHERE city_id = @city_id AND LOWER(name) = LOWER(@name)", conn)) {
+                    cmd.Parameters.AddWithValue("city_id", cityId.Value);
+                    cmd.Parameters.AddWithValue("name", road_name);
+                    var scalar = await cmd.ExecuteScalarAsync();
+                    if (scalar is not null) {
+                        roadId = Convert.ToInt64(scalar);
+                    }
+                }
+
+                if (roadId is null) {
+                    return Results.NotFound(new { error = "Road not found." });
+                }
+
+                // Discover connected road IDs
+                HashSet<long> roadIds = [roadId.Value];
+                const string connectedIdsSql = @"
+                SELECT DISTINCT
+                    CASE WHEN road_a_id = @road_id THEN road_b_id ELSE road_a_id END
+                FROM intersection
+                WHERE road_a_id = @road_id OR road_b_id = @road_id";
+                await using (var cmd = new NpgsqlCommand(connectedIdsSql, conn)) {
+                    cmd.Parameters.AddWithValue("road_id", roadId.Value);
+                    await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+                    while (await reader.ReadAsync()) {
+                        roadIds.Add(reader.GetInt64(0));
+                    }
+                }
+
+                // Fetch all intersections for all roads in the set
+                List<ConnectedIntersectionRow> allIntersectionRows = new();
+                const string allIntersectionsSql = @"
+                SELECT i.id, i.lat, i.lng, i.way_type,
+                    i.road_a_id, r_a.name,
+                    i.road_b_id, r_b.name
+                FROM intersection i
+                JOIN road r_a ON r_a.id = i.road_a_id
+                JOIN road r_b ON r_b.id = i.road_b_id
+                WHERE i.road_a_id = ANY(@road_ids) OR i.road_b_id = ANY(@road_ids)";
+                await using (var cmd = new NpgsqlCommand(allIntersectionsSql, conn)) {
+                    cmd.Parameters.AddWithValue("road_ids", roadIds.ToArray());
+                    await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+                    while (await reader.ReadAsync()) {
+                        allIntersectionRows.Add(new ConnectedIntersectionRow(
+                            reader.GetInt64(0),
+                            reader.GetDecimal(1),
+                            reader.GetDecimal(2),
+                            reader.IsDBNull(3) ? null : reader.GetString(3),
+                            reader.GetInt64(4),
+                            reader.GetString(5),
+                            reader.GetInt64(6),
+                            reader.GetString(7)
+                        ));
+                    }
+                }
+
+                Dictionary<long, RoadInfo> roadsById = new();
+                foreach (var rid in roadIds) {
+                    await using (var cmd = new NpgsqlCommand("SELECT id, name, city_id FROM road WHERE id = @id", conn)) {
+                        cmd.Parameters.AddWithValue("id", rid);
+                        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
+                        if (await reader.ReadAsync()) {
+                            roadsById[rid] = new RoadInfo(reader.GetInt64(0), reader.GetString(1), reader.GetInt64(2));
+                        }
+                    }
+                }
+
+                Dictionary<string, RoadResponseDto> response = new();
+                foreach ((var rid, RoadInfo road) in roadsById.Select(kv => (kv.Key, kv.Value))) {
+                    var intersections = allIntersectionRows
+                        .Where(r => r.RoadAId == rid || r.RoadBId == rid)
+                        .Select(r => new IntersectionDto(
+                            r.Id, (double)r.Lat, (double)r.Lng, r.WayType,
+                            r.RoadAId == rid ? r.RoadBName : r.RoadAName))
+                        .ToList();
+
+                    response[road.Name] = new RoadResponseDto(road.Id, road.Name, road.CityId, intersections);
+                }
+
+                return Results.Json(response);
+            });
+    }
+}
