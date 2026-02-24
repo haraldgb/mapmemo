@@ -1,12 +1,21 @@
+using MapMemo.Api.Data;
 using MapMemo.Api.Services;
 
 namespace MapMemo.Api.Endpoints;
 
 internal static class SessionEndpoints {
     public static void MapSessionEndpoints(this IEndpointRouteBuilder app) {
-        app.MapGet("/api/health", (HttpContext context, ISessionService sessionService) => {
+        app.MapGet("/api/health", async (HttpContext context, ISessionService sessionService, MapMemoDbContext db) => {
             var sessionId = sessionService.GetOrCreateSessionId(context);
-            return Results.Ok(new { status = "ok" });
+            bool dbHealthy;
+            try {
+                dbHealthy = await db.Database.CanConnectAsync();
+            }
+            catch {
+                dbHealthy = false;
+            }
+
+            return Results.Ok(new { status = "ok", database = dbHealthy });
         });
 
         app.MapGet("/api/google-maps-key", (
