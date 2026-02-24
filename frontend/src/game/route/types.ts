@@ -14,6 +14,11 @@ export type SelectedIntersection = {
   otherRoadName: string
 }
 
+export type OptimalRoute = {
+  durationSec: number
+  encodedPolyline: string
+}
+
 export type RouteResult = {
   playerDurationSec: number
   optimalDurationSec: number

@@ -1,14 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import { useMap } from '@vis.gl/react-google-maps'
-import { computeRouteResult } from '../../api/computeRoutes'
+import { computePlayerRouteResult } from '../../api/computeRoutes'
 import { decodePolyline } from '../../utils/decodePolyline'
 import { Spinner } from '../../components/Spinner'
-import type { RouteAddress, RouteResult, SelectedIntersection } from './types'
+import type {
+  OptimalRoute,
+  RouteAddress,
+  RouteResult,
+  SelectedIntersection,
+} from './types'
 
 type Props = {
   startAddress: RouteAddress
   endAddress: RouteAddress
   path: SelectedIntersection[]
+  optimalRoute: OptimalRoute
   formattedTime: string
   onPlayAgain: () => void
 }
@@ -17,6 +23,7 @@ export const RouteResults = ({
   startAddress,
   endAddress,
   path,
+  optimalRoute,
   formattedTime,
   onPlayAgain,
 }: Props) => {
@@ -32,7 +39,7 @@ export const RouteResults = ({
     function fetchRouteResult() {
       let isActive = true
 
-      void computeRouteResult(startAddress, endAddress, path)
+      void computePlayerRouteResult(startAddress, endAddress, path, optimalRoute)
         .then((res) => {
           if (isActive) {
             setResult(res)
@@ -50,7 +57,7 @@ export const RouteResults = ({
         isActive = false
       }
     },
-    [startAddress, endAddress, path],
+    [startAddress, endAddress, path, optimalRoute],
   )
 
   // Draw both polylines on map

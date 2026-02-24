@@ -51,11 +51,13 @@ export const RouteGame = () => {
             <GameUI gameState={gameState} />
             {routeGameState.isComplete &&
               routeGameState.startAddress &&
-              routeGameState.endAddress && (
+              routeGameState.endAddress &&
+              routeGameState.optimalRoute && (
                 <RouteResults
                   startAddress={routeGameState.startAddress}
                   endAddress={routeGameState.endAddress}
                   path={routeGameState.path}
+                  optimalRoute={routeGameState.optimalRoute}
                   formattedTime={gameState.formattedTime}
                   onPlayAgain={gameState.resetGame}
                 />

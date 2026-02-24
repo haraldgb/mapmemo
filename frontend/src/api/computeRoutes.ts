@@ -1,4 +1,5 @@
 import type {
+  OptimalRoute,
   RouteAddress,
   RouteResult,
   SelectedIntersection,
@@ -94,6 +95,31 @@ export const computeRouteResult = async (
     computePlayerRoute(start, end, path),
     computeOptimalRoute(start, end),
   ])
+
+  const differencePercent =
+    optimal.durationSec > 0
+      ? Math.round(
+          ((player.durationSec - optimal.durationSec) / optimal.durationSec) *
+            100,
+        )
+      : 0
+
+  return {
+    playerDurationSec: player.durationSec,
+    optimalDurationSec: optimal.durationSec,
+    playerPolyline: player.encodedPolyline,
+    optimalPolyline: optimal.encodedPolyline,
+    differencePercent,
+  }
+}
+
+export const computePlayerRouteResult = async (
+  start: RouteAddress,
+  end: RouteAddress,
+  path: SelectedIntersection[],
+  optimal: OptimalRoute,
+): Promise<RouteResult> => {
+  const player = await computePlayerRoute(start, end, path)
 
   const differencePercent =
     optimal.durationSec > 0

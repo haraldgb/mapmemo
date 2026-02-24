@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useSelector } from 'react-redux'
 import type { RootState } from '../../store'
-import { resolveAddress } from '../../api/snapToRoads'
+import { computeOptimalRoute } from '../../api/computeRoutes'
+import { decodePolyline } from '../../utils/decodePolyline'
 import { getRoutePair } from './routeAddresses'
 import { useRoadGraph } from './useRoadGraph'
-import type { RouteAddress, SelectedIntersection } from './types'
+import type { OptimalRoute, RouteAddress, SelectedIntersection } from './types'
 
 export type RouteGameState = {
   mode: 'route'
   startAddress: RouteAddress | null
   endAddress: RouteAddress | null
+  optimalRoute: OptimalRoute | null
   path: SelectedIntersection[]
   availableIntersections: SelectedIntersection[]
   currentRoadName: string | null
@@ -38,6 +40,7 @@ export const useRouteGameState = (): RouteGameState | null => {
 
   const [startAddress, setStartAddress] = useState<RouteAddress | null>(null)
   const [endAddress, setEndAddress] = useState<RouteAddress | null>(null)
+  const [optimalRoute, setOptimalRoute] = useState<OptimalRoute | null>(null)
   const [path, setPath] = useState<SelectedIntersection[]>([])
   const [availableIntersections, setAvailableIntersections] = useState<
     SelectedIntersection[]
@@ -75,17 +78,33 @@ export const useRouteGameState = (): RouteGameState | null => {
 
         try {
           const [rawStart, rawEnd] = getRoutePair(seed)
-          const [resolvedStart, resolvedEnd] = await Promise.all([
-            resolveAddress(rawStart),
-            resolveAddress(rawEnd),
-          ])
+          const optimal = await computeOptimalRoute(rawStart, rawEnd)
 
           if (!isActive) {
             return
           }
 
+          const polylinePoints = decodePolyline(optimal.encodedPolyline)
+          const snappedStart = polylinePoints[0]
+          const snappedEnd = polylinePoints.at(-1)
+          if (!snappedStart || !snappedEnd) {
+            throw new Error('Optimal route returned empty polyline')
+          }
+
+          const resolvedStart: RouteAddress = {
+            ...rawStart,
+            lat: snappedStart.lat,
+            lng: snappedStart.lng,
+          }
+          const resolvedEnd: RouteAddress = {
+            ...rawEnd,
+            lat: snappedEnd.lat,
+            lng: snappedEnd.lng,
+          }
+
           setStartAddress(resolvedStart)
           setEndAddress(resolvedEnd)
+          setOptimalRoute(optimal)
 
           // Fetch the starting road
           await roadGraph.fetchRoad(resolvedStart.roadName)
@@ -172,6 +191,7 @@ export const useRouteGameState = (): RouteGameState | null => {
   const reset = () => {
     setStartAddress(null)
     setEndAddress(null)
+    setOptimalRoute(null)
     setPath([])
     setAvailableIntersections([])
     setCurrentRoadName(null)
@@ -190,6 +210,7 @@ export const useRouteGameState = (): RouteGameState | null => {
     mode: 'route',
     startAddress,
     endAddress,
+    optimalRoute,
     path,
     availableIntersections,
     currentRoadName,
