@@ -76,57 +76,49 @@ export const useRouteGameState = (): RouteGameState | null => {
         setPath([])
         setIsComplete(false)
 
-        try {
-          const [rawStart, rawEnd] = getRoutePair(seed)
-          const optimal = await computeOptimalRoute(rawStart, rawEnd)
+        const [rawStart, rawEnd] = getRoutePair(seed)
+        const optimal = await computeOptimalRoute(rawStart, rawEnd)
 
-          if (!isActive) {
-            return
-          }
-
-          const polylinePoints = decodePolyline(optimal.encodedPolyline)
-          const snappedStart = polylinePoints[0]
-          const snappedEnd = polylinePoints.at(-1)
-          if (!snappedStart || !snappedEnd) {
-            throw new Error('Optimal route returned empty polyline')
-          }
-
-          const resolvedStart: RouteAddress = {
-            ...rawStart,
-            lat: snappedStart.lat,
-            lng: snappedStart.lng,
-          }
-          const resolvedEnd: RouteAddress = {
-            ...rawEnd,
-            lat: snappedEnd.lat,
-            lng: snappedEnd.lng,
-          }
-
-          setStartAddress(resolvedStart)
-          setEndAddress(resolvedEnd)
-          setOptimalRoute(optimal)
-
-          // Fetch the starting road
-          await roadGraph.fetchRoad(resolvedStart.roadName)
-          if (!isActive) {
-            return
-          }
-
-          const intersections = roadGraph.getIntersectionsForRoad(
-            resolvedStart.roadName,
-          )
-          setCurrentRoadName(resolvedStart.roadName)
-          setAvailableIntersections(intersections)
-          setIsLoading(false)
-        } catch (err) {
-          if (!isActive) {
-            return
-          }
-          setError(
-            err instanceof Error ? err.message : 'Failed to initialize route',
-          )
-          setIsLoading(false)
+        if (!isActive) {
+          return
         }
+
+        const polylinePoints = decodePolyline(optimal.encodedPolyline)
+        const snappedStart = polylinePoints[0]
+        const snappedEnd = polylinePoints.at(-1)
+        if (!snappedStart || !snappedEnd) {
+          setError('Optimal route returned invalid polyline')
+          setIsLoading(false)
+          return
+        }
+
+        const resolvedStart: RouteAddress = {
+          ...rawStart,
+          lat: snappedStart.lat,
+          lng: snappedStart.lng,
+        }
+        const resolvedEnd: RouteAddress = {
+          ...rawEnd,
+          lat: snappedEnd.lat,
+          lng: snappedEnd.lng,
+        }
+
+        setStartAddress(resolvedStart)
+        setEndAddress(resolvedEnd)
+        setOptimalRoute(optimal)
+
+        // Fetch the starting road
+        await roadGraph.fetchRoad(resolvedStart.roadName)
+        if (!isActive) {
+          return
+        }
+
+        const intersections = roadGraph.getIntersectionsForRoad(
+          resolvedStart.roadName,
+        )
+        setCurrentRoadName(resolvedStart.roadName)
+        setAvailableIntersections(intersections)
+        setIsLoading(false)
       }
 
       void init()
@@ -135,7 +127,7 @@ export const useRouteGameState = (): RouteGameState | null => {
         isActive = false
       }
     },
-    [seed, gameKey, mode],
+    [seed, gameKey, mode, roadGraph],
   )
 
   const handleIntersectionClick = (

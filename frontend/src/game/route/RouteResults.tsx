@@ -39,7 +39,12 @@ export const RouteResults = ({
     function fetchRouteResult() {
       let isActive = true
 
-      void computePlayerRouteResult(startAddress, endAddress, path, optimalRoute)
+      void computePlayerRouteResult(
+        startAddress,
+        endAddress,
+        path,
+        optimalRoute,
+      )
         .then((res) => {
           if (isActive) {
             setResult(res)
