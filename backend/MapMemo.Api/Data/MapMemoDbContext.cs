@@ -64,10 +64,5 @@ public sealed class MapMemoDbContext(DbContextOptions<MapMemoDbContext> options)
             e.HasIndex(s => s.IntersectionId).HasDatabaseName("idx_intersection_source_intersection_id");
             e.HasIndex(s => s.OsmWayId).HasDatabaseName("idx_intersection_source_osm_way_id");
         });
-
-        modelBuilder.Entity<ConnectedIntersectionRow>(e => {
-            e.HasNoKey();
-            e.ToView(null); // not mapped to any table/view
-        });
     }
 }

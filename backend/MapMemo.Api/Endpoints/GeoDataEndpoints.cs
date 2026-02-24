@@ -57,28 +57,18 @@ internal static class GeoDataEndpoints {
                     return Results.NotFound(new { error = "Road not found." });
                 }
 
-                // Discover connected road IDs via raw SQL
                 HashSet<long> roadIds = [road.Id];
-                List<long> connectedIds = await db.Database
-                    .SqlQuery<long>($@"
-                        SELECT DISTINCT
-                            CASE WHEN road_a_id = {road.Id} THEN road_b_id ELSE road_a_id END AS ""Value""
-                        FROM intersection
-                        WHERE road_a_id = {road.Id} OR road_b_id = {road.Id}")
+                var connectedIds = await db.Intersections
+                    .Where(i => i.RoadAId == road.Id || i.RoadBId == road.Id)
+                    .Select(i => i.RoadAId == road.Id ? i.RoadBId : i.RoadAId)
+                    .Distinct()
                     .ToListAsync();
                 roadIds.UnionWith(connectedIds);
 
-                // Fetch all intersections for all roads in the set via raw SQL
-                List<ConnectedIntersectionRow> allIntersectionRows = await db.Set<ConnectedIntersectionRow>()
-                    .FromSqlRaw(@"
-                        SELECT i.id AS ""Id"", i.lat AS ""Lat"", i.lng AS ""Lng"", i.way_type AS ""WayType"",
-                            i.road_a_id AS ""RoadAId"", r_a.name AS ""RoadAName"",
-                            i.road_b_id AS ""RoadBId"", r_b.name AS ""RoadBName""
-                        FROM intersection i
-                        JOIN road r_a ON r_a.id = i.road_a_id
-                        JOIN road r_b ON r_b.id = i.road_b_id
-                        WHERE i.road_a_id = ANY({0}) OR i.road_b_id = ANY({0})",
-                        roadIds.ToArray())
+                var allIntersections = await db.Intersections
+                    .Include(i => i.RoadA)
+                    .Include(i => i.RoadB)
+                    .Where(i => roadIds.Contains(i.RoadAId) || roadIds.Contains(i.RoadBId))
                     .ToListAsync();
 
                 Dictionary<long, Road> roadsById = await db.Roads
@@ -87,11 +77,11 @@ internal static class GeoDataEndpoints {
 
                 Dictionary<string, RoadResponseDto> response = new();
                 foreach ((var rid, Road? r) in roadsById) {
-                    var intersections = allIntersectionRows
-                        .Where(row => row.RoadAId == rid || row.RoadBId == rid)
-                        .Select(row => new IntersectionDto(
-                            row.Id, (double)row.Lat, (double)row.Lng, row.WayType,
-                            row.RoadAId == rid ? row.RoadBName : row.RoadAName))
+                    var intersections = allIntersections
+                        .Where(i => i.RoadAId == rid || i.RoadBId == rid)
+                        .Select(i => new IntersectionDto(
+                            i.Id, (double)i.Lat, (double)i.Lng, i.WayType,
+                            i.RoadAId == rid ? i.RoadB.Name : i.RoadA.Name))
                         .ToList();
 
                     response[r.Name] = new RoadResponseDto(r.Id, r.Name, r.CityId, intersections);
