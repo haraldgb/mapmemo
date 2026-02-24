@@ -5,6 +5,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsTestProject>true</IsTestProject>
+    <!--
+      Suppress NuGet vulnerability warnings from transitive deps of Respawn → Microsoft.Data.SqlClient.
+      These packages (Azure.Identity, System.Drawing.Common, etc.) are pulled in for SQL Server support
+      that we never use — we only use Respawn's Postgres adapter via Npgsql.
+    -->
+    <NoWarn>NU1902;NU1903;NU1904</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
