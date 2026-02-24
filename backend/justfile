@@ -1,0 +1,48 @@
+api := "MapMemo.Api"
+tests := "MapMemo.Api.Tests/MapMemo.Api.Tests.csproj"
+
+# List available commands
+default:
+    @just --list
+
+# Build the API project
+build:
+    dotnet build {{api}}
+
+# Start the dev server (port 5243)
+run:
+    dotnet run --project {{api}}
+
+# Run all tests (requires Docker)
+test:
+    dotnet test {{tests}}
+
+# Run tests without Docker
+test-fast:
+    dotnet test {{tests}} --filter 'FullyQualifiedName~EndpointsTests|FullyQualifiedName~GoogleProxyEndpointTests'
+
+# Run only Docker integration tests
+test-integration:
+    dotnet test {{tests}} --filter 'FullyQualifiedName~RoadsEndpointTests'
+
+# Format both projects
+format:
+    dotnet format {{api}}/{{api}}.csproj
+    dotnet format {{tests}}
+
+# Verify formatting without changes
+format-check:
+    dotnet format {{api}}/{{api}}.csproj --verify-no-changes
+    dotnet format {{tests}} --verify-no-changes
+
+# Create a new EFC migration: just migrate <name>
+migrate name:
+    dotnet ef migrations add {{name}} --project {{api}} --output-dir Data/Migrations
+
+# Apply pending migrations to the DB
+migrate-apply:
+    dotnet ef database update --project {{api}}
+
+# List all migrations
+migrate-list:
+    dotnet ef migrations list --project {{api}}

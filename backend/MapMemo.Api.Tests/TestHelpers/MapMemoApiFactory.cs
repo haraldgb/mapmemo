@@ -1,13 +1,16 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MapMemo.Api.Tests.TestHelpers;
 
 public sealed class MapMemoApiFactory : WebApplicationFactory<Program> {
     private readonly string _contentRoot;
+    private readonly HttpMessageHandler? _fakeHttpHandler;
 
-    public MapMemoApiFactory() {
+    public MapMemoApiFactory(HttpMessageHandler? fakeHttpHandler = null) {
+        _fakeHttpHandler = fakeHttpHandler;
         _contentRoot = Path.Combine(Path.GetTempPath(), "mapmemo-tests", Guid.NewGuid().ToString("N"));
         var dataDir = Path.Combine(_contentRoot, "Data");
         Directory.CreateDirectory(dataDir);
@@ -24,6 +27,14 @@ public sealed class MapMemoApiFactory : WebApplicationFactory<Program> {
             };
             config.AddInMemoryCollection(settings);
         });
+
+        if (_fakeHttpHandler is not null) {
+            builder.ConfigureServices(services => {
+                // Replace IHttpClientFactory with one that uses our fake handler
+                services.AddHttpClient(string.Empty)
+                    .ConfigurePrimaryHttpMessageHandler(() => _fakeHttpHandler);
+            });
+        }
     }
 
     // cleanup
