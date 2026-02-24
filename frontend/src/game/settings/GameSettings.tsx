@@ -290,7 +290,7 @@ export const GameSettings = ({
 }
 
 const s_container =
-  'flex h-[635px] w-[343px] flex-col rounded-xl border border-slate-200 bg-white p-4 text-left shadow-lg'
+  'flex h-[635px] max-h-[calc(100dvh-6rem)] w-[343px] flex-col overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 text-left shadow-lg'
 const s_title = 'text-sm font-semibold text-slate-900'
 const s_section = 'mt-3'
 const s_label = 'text-xs font-semibold uppercase tracking-wide text-slate-500'

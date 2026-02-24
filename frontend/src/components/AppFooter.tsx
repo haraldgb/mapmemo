@@ -47,6 +47,6 @@ const sf_footer = (isGameRoute: boolean, isVisible: boolean) => {
   return `${base} ${gamePosition} ${visibility}`
 }
 const s_footer_inner =
-  'flex w-full flex-col gap-1 px-4 py-1.5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between'
+  'flex flex-row w-full gap-1 px-4 py-1.5 text-xs text-slate-500 sm:items-center justify-between'
 const s_repo_link =
   'inline-flex items-center gap-1.5 text-slate-500 transition hover:text-slate-900'
