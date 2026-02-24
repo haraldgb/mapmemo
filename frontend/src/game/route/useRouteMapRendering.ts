@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useEffectEvent, useRef } from 'react'
 import { useMap } from '@vis.gl/react-google-maps'
 import type { RouteAddress, SelectedIntersection } from './types'
 
@@ -26,6 +26,23 @@ export const useRouteMapRendering = ({
   gameKey,
 }: Props): void => {
   const map = useMap()
+
+  // useEffectEvent: decouple imperative event handlers from effect deps.
+  // The React Compiler should stabilize these callbacks, but in practice they
+  // re-create on every render for reasons we haven't been able to identify.
+  // Without useEffectEvent, the renderIntersectionDots and
+  // highlightDestinationMarker effects re-run every ~100ms (timer tick),
+  // tearing down and recreating all map markers.
+  const handleIntersectionClickEvent = useEffectEvent(
+    function onIntersectionClickEvent(intersection: SelectedIntersection) {
+      onIntersectionClick(intersection)
+    },
+  )
+  const handleDestinationClickEvent = useEffectEvent(
+    function onDestinationClickEvent() {
+      onDestinationClick()
+    },
+  )
 
   // useRef: imperative Google Maps objects that must be cleaned up manually.
   // These don't trigger re-renders and have their own lifecycle.
@@ -171,7 +188,7 @@ export const useRouteMapRendering = ({
           gmpClickable: true,
         })
         marker.addEventListener('gmp-click', () => {
-          onIntersectionClick(intersection)
+          handleIntersectionClickEvent(intersection)
         })
         dotMarkersMapRef.current.set(intersection.id, marker)
       }
@@ -183,7 +200,7 @@ export const useRouteMapRendering = ({
         dotMarkersMapRef.current.clear()
       }
     },
-    [map, availableIntersections, onIntersectionClick],
+    [map, availableIntersections],
   )
 
   // Draw route polyline through path
@@ -254,7 +271,7 @@ export const useRouteMapRendering = ({
           element.style.boxShadow = '0 2px 6px rgba(0,0,0,0.3)'
         }
         const handleClick = () => {
-          onDestinationClick()
+          handleDestinationClickEvent()
         }
         element.addEventListener('mouseenter', handleEnter)
         element.addEventListener('mouseleave', handleLeave)
@@ -273,7 +290,7 @@ export const useRouteMapRendering = ({
         element.style.cursor = 'default'
       }
     },
-    [canReachDestination, onDestinationClick],
+    [canReachDestination],
   )
 }
 
