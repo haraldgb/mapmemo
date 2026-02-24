@@ -52,7 +52,7 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
             "/api/roads?city_name=Oslo&road_name=Karl Johans gate");
 
         response.EnsureSuccessStatusCode();
-        string content = await response.Content.ReadAsStringAsync();
+        var content = await response.Content.ReadAsStringAsync();
         Assert.Contains("Karl Johans gate", content);
         Assert.Contains("Akersgata", content);
         Assert.Contains("traffic_signals", content);

@@ -11,8 +11,7 @@ namespace MapMemo.Api.Data.Migrations {
     /// </summary>
     public partial class InitialSchema : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder) {
-            migrationBuilder.Sql("""
+        protected override void Up(MigrationBuilder migrationBuilder) => migrationBuilder.Sql("""
                 CREATE TABLE IF NOT EXISTS city (
                     id BIGSERIAL PRIMARY KEY,
                     name VARCHAR(100) NOT NULL,
@@ -72,7 +71,6 @@ namespace MapMemo.Api.Data.Migrations {
                 CREATE INDEX IF NOT EXISTS idx_intersection_source_intersection_id ON intersection_source(intersection_id);
                 CREATE INDEX IF NOT EXISTS idx_intersection_source_osm_way_id ON intersection_source(osm_way_id);
                 """);
-        }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder) {

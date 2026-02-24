@@ -1,42 +1,60 @@
 # Backend (ASP.NET Core)
 
-dotnet build MapMemo.Api                                      # build server
+## Prerequisites
 
-Run locally:
+- .NET 10 SDK
+- Docker Desktop (for integration tests)
+- [`just`](https://github.com/casey/just) task runner (optional but recommended)
 
--   `dotnet run --project MapMemo.Api`
--   Default HTTP URL: `http://localhost:5243`
--   Swagger UI (dev only): `http://localhost:5243/swagger`
+## Quick start
 
-Run tests:
+```bash
+just build              # build server
+just run                # start dev server (http://localhost:5243)
+just test               # run all tests (requires Docker)
+just test-fast          # run tests without Docker
+```
 
--   `dotnet test MapMemo.Api.Tests`
+Or without `just`:
 
+```bash
+dotnet build MapMemo.Api
+dotnet run --project MapMemo.Api
+dotnet test MapMemo.Api.Tests/MapMemo.Api.Tests.csproj
+```
 
--   `dotnet format MapMemo.Api/MapMemo.Api.csproj`
--   `dotnet format MapMemo.Api.Tests/MapMemo.Api.Tests.csproj`
+Swagger UI (dev only): `http://localhost:5243/swagger`
 
-Configuration:
+## Configuration
 
--   Google Maps API key: `GoogleMaps__ApiKey`
--   Session config: `Session__CookieName`, `Session__Ttl` (defaults in `appsettings.json`)
--   Postgres: `ConnectionStrings__Postgres`
+- Google Maps API key: `GoogleMaps__ApiKey`
+- Session config: `Session__CookieName`, `Session__Ttl` (defaults in `appsettings.json`)
+- Postgres: `ConnectionStrings__Postgres`
 
-Database setup (local):
+## Database setup (local)
 
--   Schema: `backend/db/schema.sql`
--   Create DB (once): `createdb -U postgres(or other user) mapmemo`
--   Apply schema: `psql -U postgres(or other user) -d mapmemo -f backend/db/schema.sql`
+1. Create DB: `createdb -U postgres mapmemo`
+2. Apply migrations: `just migrate-apply` (or `dotnet ef database update --project MapMemo.Api`)
 
-DB population:
+For existing databases created with `schema.sql`, running `migrate-apply` once will create the `__EFMigrationsHistory` table and mark the baseline migration as applied.
 
--   The database population process is proprietary. If you are interested, contact the repository owner.
+### Migration commands
 
-Session notes:
+```bash
+just migrate <Name>     # create a new migration
+just migrate-apply      # apply pending migrations
+just migrate-list       # list all migrations
+```
 
--   Session id is issued as an HttpOnly cookie (`mapmemo_session_id` by default).
--   In-memory store only; sessions reset on backend restart.
+## DB population
 
-Frontend dev proxy (optional):
+The database population process is proprietary. If you are interested, contact the repository owner.
 
--   `VITE_BACKEND_URL` (defaults to `http://localhost:5243`)
+## Session notes
+
+- Session id is issued as an HttpOnly cookie (`mapmemo_session_id` by default).
+- In-memory store only; sessions reset on backend restart.
+
+## Frontend dev proxy (optional)
+
+- `VITE_BACKEND_URL` (defaults to `http://localhost:5243`)

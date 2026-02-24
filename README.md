@@ -5,7 +5,7 @@ MapMemo is an attempt at a game for memorizing places of interest within cities.
 ## Project layout
 
 - `frontend/`: Vite + React app (see `frontend/README.md` for setup and env vars).
-- `backend/`: ASP.NET Core Web API (see `backend/README.md`).
+- `backend/`: ASP.NET Core Web API with EFC + PostgreSQL (see `backend/README.md`). Requires Docker for integration tests.
 
 ## Terminology
 

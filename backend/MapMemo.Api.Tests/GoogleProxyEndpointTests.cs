@@ -30,7 +30,7 @@ public sealed class GoogleProxyEndpointTests {
         HttpResponseMessage response = await client.PostAsJsonAsync("/api/compute-routes", body);
 
         response.EnsureSuccessStatusCode();
-        string content = await response.Content.ReadAsStringAsync();
+        var content = await response.Content.ReadAsStringAsync();
         Assert.Contains("abc123", content);
     }
 
@@ -68,7 +68,7 @@ public sealed class GoogleProxyEndpointTests {
         HttpResponseMessage response = await client.PostAsJsonAsync("/api/snap-to-roads", body);
 
         response.EnsureSuccessStatusCode();
-        string content = await response.Content.ReadAsStringAsync();
+        var content = await response.Content.ReadAsStringAsync();
         Assert.Contains("snappedPoints", content);
     }
 }
