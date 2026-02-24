@@ -7,7 +7,7 @@ internal static class GoogleProxyEndpoints {
     public static void MapGoogleProxyEndpoints(this IEndpointRouteBuilder app) {
         var urls = app.ServiceProvider.GetRequiredService<IConfiguration>()["ASPNETCORE_URLS"] ?? string.Empty;
         var splitUrls = urls.Split(';', StringSplitOptions.RemoveEmptyEntries);
-        var selfReferrer = new Uri(splitUrls.FirstOrDefault() ?? "http://localhost:5243");
+        var selfReferrer = new Uri(splitUrls.FirstOrDefault() ?? "http://localhost");
 
         app.MapPost("/api/snap-to-roads", async (
             HttpContext context,

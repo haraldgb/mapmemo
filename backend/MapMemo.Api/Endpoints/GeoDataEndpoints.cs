@@ -1,7 +1,9 @@
+using MapMemo.Api.Data;
+using MapMemo.Api.Data.Entities;
 using MapMemo.Api.Models;
 using MapMemo.Api.Services;
 
-using Npgsql;
+using Microsoft.EntityFrameworkCore;
 
 namespace MapMemo.Api.Endpoints;
 
@@ -29,7 +31,7 @@ internal static class GeoDataEndpoints {
 
         app.MapGet("/api/roads", async (
             HttpContext context,
-            IConfiguration configuration,
+            MapMemoDbContext db,
             ISessionService sessionService,
             string? city_name,
             string? road_name) => {
@@ -41,104 +43,58 @@ internal static class GeoDataEndpoints {
                     return Results.BadRequest(new { error = "city_name and road_name are required." });
                 }
 
-                var connectionString = configuration["ConnectionStrings:Postgres"];
-                if (string.IsNullOrWhiteSpace(connectionString)) {
-                    return Results.Problem("Database is not configured.", statusCode: 500);
-                }
+                City? city = await db.Cities
+                    .FirstOrDefaultAsync(c => c.Name.ToLower() == city_name.ToLower());
 
-                await using var conn = new NpgsqlConnection(connectionString);
-                await conn.OpenAsync();
-
-                long? cityId = null;
-                await using (var cmd = new NpgsqlCommand("SELECT id FROM city WHERE LOWER(name) = LOWER(@name)", conn)) {
-                    cmd.Parameters.AddWithValue("name", city_name);
-                    var scalar = await cmd.ExecuteScalarAsync();
-                    if (scalar is not null) {
-                        cityId = Convert.ToInt64(scalar);
-                    }
-                }
-
-                if (cityId is null) {
+                if (city is null) {
                     return Results.NotFound(new { error = "City not found." });
                 }
 
-                long? roadId = null;
-                await using (var cmd = new NpgsqlCommand("SELECT id FROM road WHERE city_id = @city_id AND LOWER(name) = LOWER(@name)", conn)) {
-                    cmd.Parameters.AddWithValue("city_id", cityId.Value);
-                    cmd.Parameters.AddWithValue("name", road_name);
-                    var scalar = await cmd.ExecuteScalarAsync();
-                    if (scalar is not null) {
-                        roadId = Convert.ToInt64(scalar);
-                    }
-                }
+                Road? road = await db.Roads
+                    .FirstOrDefaultAsync(r => r.CityId == city.Id && r.Name.ToLower() == road_name.ToLower());
 
-                if (roadId is null) {
+                if (road is null) {
                     return Results.NotFound(new { error = "Road not found." });
                 }
 
-                // Discover connected road IDs
-                HashSet<long> roadIds = [roadId.Value];
-                const string connectedIdsSql = @"
-                SELECT DISTINCT
-                    CASE WHEN road_a_id = @road_id THEN road_b_id ELSE road_a_id END
-                FROM intersection
-                WHERE road_a_id = @road_id OR road_b_id = @road_id";
-                await using (var cmd = new NpgsqlCommand(connectedIdsSql, conn)) {
-                    cmd.Parameters.AddWithValue("road_id", roadId.Value);
-                    await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
-                    while (await reader.ReadAsync()) {
-                        roadIds.Add(reader.GetInt64(0));
-                    }
-                }
+                // Discover connected road IDs via raw SQL
+                HashSet<long> roadIds = [road.Id];
+                List<long> connectedIds = await db.Database
+                    .SqlQuery<long>($@"
+                        SELECT DISTINCT
+                            CASE WHEN road_a_id = {road.Id} THEN road_b_id ELSE road_a_id END AS ""Value""
+                        FROM intersection
+                        WHERE road_a_id = {road.Id} OR road_b_id = {road.Id}")
+                    .ToListAsync();
+                roadIds.UnionWith(connectedIds);
 
-                // Fetch all intersections for all roads in the set
-                List<ConnectedIntersectionRow> allIntersectionRows = new();
-                const string allIntersectionsSql = @"
-                SELECT i.id, i.lat, i.lng, i.way_type,
-                    i.road_a_id, r_a.name,
-                    i.road_b_id, r_b.name
-                FROM intersection i
-                JOIN road r_a ON r_a.id = i.road_a_id
-                JOIN road r_b ON r_b.id = i.road_b_id
-                WHERE i.road_a_id = ANY(@road_ids) OR i.road_b_id = ANY(@road_ids)";
-                await using (var cmd = new NpgsqlCommand(allIntersectionsSql, conn)) {
-                    cmd.Parameters.AddWithValue("road_ids", roadIds.ToArray());
-                    await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
-                    while (await reader.ReadAsync()) {
-                        allIntersectionRows.Add(new ConnectedIntersectionRow(
-                            reader.GetInt64(0),
-                            reader.GetDecimal(1),
-                            reader.GetDecimal(2),
-                            reader.IsDBNull(3) ? null : reader.GetString(3),
-                            reader.GetInt64(4),
-                            reader.GetString(5),
-                            reader.GetInt64(6),
-                            reader.GetString(7)
-                        ));
-                    }
-                }
+                // Fetch all intersections for all roads in the set via raw SQL
+                List<ConnectedIntersectionRow> allIntersectionRows = await db.Set<ConnectedIntersectionRow>()
+                    .FromSqlRaw(@"
+                        SELECT i.id AS ""Id"", i.lat AS ""Lat"", i.lng AS ""Lng"", i.way_type AS ""WayType"",
+                            i.road_a_id AS ""RoadAId"", r_a.name AS ""RoadAName"",
+                            i.road_b_id AS ""RoadBId"", r_b.name AS ""RoadBName""
+                        FROM intersection i
+                        JOIN road r_a ON r_a.id = i.road_a_id
+                        JOIN road r_b ON r_b.id = i.road_b_id
+                        WHERE i.road_a_id = ANY({0}) OR i.road_b_id = ANY({0})",
+                        roadIds.ToArray())
+                    .ToListAsync();
 
-                Dictionary<long, RoadInfo> roadsById = new();
-                foreach (var rid in roadIds) {
-                    await using (var cmd = new NpgsqlCommand("SELECT id, name, city_id FROM road WHERE id = @id", conn)) {
-                        cmd.Parameters.AddWithValue("id", rid);
-                        await using NpgsqlDataReader reader = await cmd.ExecuteReaderAsync();
-                        if (await reader.ReadAsync()) {
-                            roadsById[rid] = new RoadInfo(reader.GetInt64(0), reader.GetString(1), reader.GetInt64(2));
-                        }
-                    }
-                }
+                Dictionary<long, Road> roadsById = await db.Roads
+                    .Where(r => roadIds.Contains(r.Id))
+                    .ToDictionaryAsync(r => r.Id);
 
                 Dictionary<string, RoadResponseDto> response = new();
-                foreach ((var rid, RoadInfo road) in roadsById.Select(kv => (kv.Key, kv.Value))) {
+                foreach ((var rid, Road? r) in roadsById) {
                     var intersections = allIntersectionRows
-                        .Where(r => r.RoadAId == rid || r.RoadBId == rid)
-                        .Select(r => new IntersectionDto(
-                            r.Id, (double)r.Lat, (double)r.Lng, r.WayType,
-                            r.RoadAId == rid ? r.RoadBName : r.RoadAName))
+                        .Where(row => row.RoadAId == rid || row.RoadBId == rid)
+                        .Select(row => new IntersectionDto(
+                            row.Id, (double)row.Lat, (double)row.Lng, row.WayType,
+                            row.RoadAId == rid ? row.RoadBName : row.RoadAName))
                         .ToList();
 
-                    response[road.Name] = new RoadResponseDto(road.Id, road.Name, road.CityId, intersections);
+                    response[r.Name] = new RoadResponseDto(r.Id, r.Name, r.CityId, intersections);
                 }
 
                 return Results.Json(response);
