@@ -58,14 +58,14 @@ internal static class GeoDataEndpoints {
                 }
 
                 HashSet<long> roadIds = [road.Id];
-                var connectedIds = await db.Intersections
+                List<long> connectedIds = await db.Intersections
                     .Where(i => i.RoadAId == road.Id || i.RoadBId == road.Id)
                     .Select(i => i.RoadAId == road.Id ? i.RoadBId : i.RoadAId)
                     .Distinct()
                     .ToListAsync();
                 roadIds.UnionWith(connectedIds);
 
-                var allIntersections = await db.Intersections
+                List<Intersection> allIntersections = await db.Intersections
                     .Include(i => i.RoadA)
                     .Include(i => i.RoadB)
                     .Where(i => roadIds.Contains(i.RoadAId) || roadIds.Contains(i.RoadBId))
