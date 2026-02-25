@@ -21,7 +21,7 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
     private async Task SeedCityAndRoadsAsync() {
         var (db, scope) = GetDb();
         using (scope) {
-            City city = new() { Name = "Oslo" };
+            City city = new() { Name = "Oslo, Norway" };
             db.Cities.Add(city);
             await db.SaveChangesAsync();
 
@@ -51,7 +51,7 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
         await client.GetAsync("/api/health");
 
         HttpResponseMessage response = await client.GetAsync(
-            "/api/roads?city_name=Oslo&road_name=Karl Johans gate");
+            "/api/roads?city_name=Oslo, Norway&road_name=Karl Johans gate");
 
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
@@ -66,20 +66,26 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
 
-        HttpResponseMessage response = await client.GetAsync("/api/roads?city_name=Oslo");
+        HttpResponseMessage missingRoadName = await client.GetAsync("/api/roads?city_name=Oslo, Norway");
+        HttpResponseMessage missingCityName = await client.GetAsync("/api/roads?road_name=Karl Johans gate");
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, missingRoadName.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, missingCityName.StatusCode);
     }
 
     [Fact]
-    public async Task Roads_unknown_city_returns_404() {
+    public async Task Roads_unknown_city_or_road_returns_404() {
+        await SeedCityAndRoadsAsync();
         var cookies = new CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
 
-        HttpResponseMessage response = await client.GetAsync(
-            "/api/roads?city_name=Narnia&road_name=Main Street");
+        HttpResponseMessage unknownCity = await client.GetAsync(
+            "/api/roads?city_name=King's Landing, Westeros&road_name=Karl Johans gate");
+        HttpResponseMessage unknownRoad = await client.GetAsync(
+            "/api/roads?city_name=Oslo, Norway&road_name=Diagon Alley");
 
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, unknownCity.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, unknownRoad.StatusCode);
     }
 }
