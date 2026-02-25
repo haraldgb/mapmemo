@@ -57,39 +57,6 @@ namespace MapMemo.Api.Data.Migrations
                     b.ToTable("city", (string)null);
                 });
 
-            modelBuilder.Entity("MapMemo.Api.Data.Entities.ConnectedIntersectionRow", b =>
-                {
-                    b.Property<long>("Id")
-                        .HasColumnType("bigint");
-
-                    b.Property<decimal>("Lat")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("Lng")
-                        .HasColumnType("numeric");
-
-                    b.Property<long>("RoadAId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("RoadAName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<long>("RoadBId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("RoadBName")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("WayType")
-                        .HasColumnType("text");
-
-                    b.ToTable((string)null);
-
-                    b.ToView(null, (string)null);
-                });
-
             modelBuilder.Entity("MapMemo.Api.Data.Entities.Intersection", b =>
                 {
                     b.Property<long>("Id")

@@ -12,31 +12,33 @@ using Xunit;
 namespace MapMemo.Api.Tests;
 
 public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : IntegrationTest(factory) {
-    private async Task<MapMemoDbContext> GetDbAsync() {
+    private (MapMemoDbContext Db, IServiceScope Scope) GetDb() {
         IServiceScope scope = Factory.Services.CreateScope();
         MapMemoDbContext db = scope.ServiceProvider.GetRequiredService<MapMemoDbContext>();
-        return db;
+        return (db, scope);
     }
 
     private async Task SeedCityAndRoadsAsync() {
-        MapMemoDbContext db = await GetDbAsync();
-        City city = new() { Name = "Oslo" };
-        db.Cities.Add(city);
-        await db.SaveChangesAsync();
+        var (db, scope) = GetDb();
+        using (scope) {
+            City city = new() { Name = "Oslo" };
+            db.Cities.Add(city);
+            await db.SaveChangesAsync();
 
-        Road mainRoad = new() { Name = "Karl Johans gate", CityId = city.Id };
-        Road crossRoad = new() { Name = "Akersgata", CityId = city.Id };
-        db.Roads.AddRange(mainRoad, crossRoad);
-        await db.SaveChangesAsync();
+            Road mainRoad = new() { Name = "Karl Johans gate", CityId = city.Id };
+            Road crossRoad = new() { Name = "Akersgata", CityId = city.Id };
+            db.Roads.AddRange(mainRoad, crossRoad);
+            await db.SaveChangesAsync();
 
-        db.Intersections.Add(new Intersection {
-            Lat = 59.913869m,
-            Lng = 10.747564m,
-            RoadAId = mainRoad.Id,
-            RoadBId = crossRoad.Id,
-            WayType = "traffic_signals"
-        });
-        await db.SaveChangesAsync();
+            db.Intersections.Add(new Intersection {
+                Lat = 59.913869m,
+                Lng = 10.747564m,
+                RoadAId = mainRoad.Id,
+                RoadBId = crossRoad.Id,
+                WayType = "traffic_signals"
+            });
+            await db.SaveChangesAsync();
+        }
     }
 
     [Fact]
