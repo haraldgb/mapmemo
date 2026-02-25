@@ -6,7 +6,7 @@ export type RouteAddress = {
   lng: number
 }
 
-export type SelectedIntersection = {
+export type SelectedJunction = {
   id: number
   lat: number
   lng: number

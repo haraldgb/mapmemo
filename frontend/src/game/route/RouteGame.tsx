@@ -26,10 +26,10 @@ export const RouteGame = () => {
     startAddress: routeGameState.startAddress,
     endAddress: routeGameState.endAddress,
     path: routeGameState.path,
-    availableIntersections: routeGameState.availableIntersections,
+    availableJunctions: routeGameState.availableJunctions,
     isReady: routeGameState.isReady,
     canReachDestination: routeGameState.canReachDestination,
-    onIntersectionClick: routeGameState.handleIntersectionClick,
+    onJunctionClick: routeGameState.handleJunctionClick,
     onDestinationClick: routeGameState.handleDestinationClick,
     gameKey: routeGameState.gameKey,
   })

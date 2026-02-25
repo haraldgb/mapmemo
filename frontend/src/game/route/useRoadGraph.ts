@@ -1,16 +1,16 @@
 import { useRef } from 'react'
 import {
-  fetchRoadWithIntersections,
+  fetchRoadWithJunctions,
   type RoadInfo,
-  type RoadIntersection,
+  type RoadJunction,
 } from '../../api/roadData'
-import type { SelectedIntersection } from './types'
+import type { SelectedJunction } from './types'
 
 const CITY_NAME = 'Oslo, Norway'
 
 type RoadGraph = {
   fetchRoad: (roadName: string) => Promise<RoadInfo | null>
-  getIntersectionsForRoad: (roadName: string) => SelectedIntersection[]
+  getJunctionsForRoad: (roadName: string) => SelectedJunction[]
   isFetchedAsPrimary: (roadName: string) => boolean
   reset: () => void
 }
@@ -25,7 +25,7 @@ export const useRoadGraph = (): RoadGraph => {
       return roadCacheRef.current.get(roadName) ?? null
     }
 
-    const response = await fetchRoadWithIntersections(CITY_NAME, roadName)
+    const response = await fetchRoadWithJunctions(CITY_NAME, roadName)
     // Response is a Record<string, RoadInfo> — primary road + branch roads
     for (const [name, info] of Object.entries(response)) {
       const existing = roadCacheRef.current.get(name)
@@ -37,25 +37,23 @@ export const useRoadGraph = (): RoadGraph => {
     return roadCacheRef.current.get(roadName) ?? null
   }
 
-  const toSelectedIntersection = (
-    intersection: RoadIntersection,
+  const toSelectedJunction = (
+    junction: RoadJunction,
     roadName: string,
-  ): SelectedIntersection => ({
-    id: intersection.id,
-    lat: intersection.lat,
-    lng: intersection.lng,
+  ): SelectedJunction => ({
+    id: junction.id,
+    lat: junction.lat,
+    lng: junction.lng,
     roadName,
-    otherRoadName: intersection.otherRoadName,
+    otherRoadName: junction.connectedRoadNames[0] ?? '',
   })
 
-  const getIntersectionsForRoad = (
-    roadName: string,
-  ): SelectedIntersection[] => {
+  const getJunctionsForRoad = (roadName: string): SelectedJunction[] => {
     const road = roadCacheRef.current.get(roadName)
     if (!road) {
       return []
     }
-    return road.intersections.map((ix) => toSelectedIntersection(ix, roadName))
+    return road.junctions.map((jx) => toSelectedJunction(jx, roadName))
   }
 
   const isFetchedAsPrimary = (roadName: string): boolean =>
@@ -66,5 +64,5 @@ export const useRoadGraph = (): RoadGraph => {
     fetchedAsPrimaryRef.current = new Set()
   }
 
-  return { fetchRoad, getIntersectionsForRoad, isFetchedAsPrimary, reset }
+  return { fetchRoad, getJunctionsForRoad, isFetchedAsPrimary, reset }
 }

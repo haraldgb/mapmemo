@@ -1,15 +1,15 @@
 import { useEffect, useRef } from 'react'
 import { useMap } from '@vis.gl/react-google-maps'
-import type { RouteAddress, SelectedIntersection } from './types'
+import type { RouteAddress, SelectedJunction } from './types'
 
 type Props = {
   startAddress: RouteAddress | null
   endAddress: RouteAddress | null
-  path: SelectedIntersection[]
-  availableIntersections: SelectedIntersection[]
+  path: SelectedJunction[]
+  availableJunctions: SelectedJunction[]
   isReady: boolean
   canReachDestination: boolean
-  onIntersectionClick: (intersection: SelectedIntersection) => void
+  onJunctionClick: (junction: SelectedJunction) => void
   onDestinationClick: () => void
   gameKey: number
 }
@@ -18,10 +18,10 @@ export const useRouteMapRendering = ({
   startAddress,
   endAddress,
   path,
-  availableIntersections,
+  availableJunctions,
   isReady,
   canReachDestination,
-  onIntersectionClick,
+  onJunctionClick,
   onDestinationClick,
   gameKey,
 }: Props): void => {
@@ -115,22 +115,22 @@ export const useRouteMapRendering = ({
         lng: startAddress.lng,
       })
       bounds.extend({ lat: endAddress.lat, lng: endAddress.lng })
-      for (const intersection of availableIntersections) {
-        bounds.extend({ lat: intersection.lat, lng: intersection.lng })
+      for (const junction of availableJunctions) {
+        bounds.extend({ lat: junction.lat, lng: junction.lng })
       }
       map.fitBounds(bounds, { top: 80, right: 40, bottom: 40, left: 40 })
     },
-    [map, isReady, startAddress, endAddress, availableIntersections],
+    [map, isReady, startAddress, endAddress, availableJunctions],
   )
 
-  // Render intersection dots with click handlers — diff by ID to avoid flash on update
+  // Render junction dots with click handlers — diff by ID to avoid flash on update
   useEffect(
-    function renderIntersectionDots() {
+    function renderJunctionDots() {
       if (!map) {
         return
       }
 
-      const nextIds = new Set(availableIntersections.map((i) => i.id))
+      const nextIds = new Set(availableJunctions.map((i) => i.id))
       const prevIds = new Set(dotMarkersMapRef.current.keys())
 
       // Remove markers no longer in the list
@@ -145,13 +145,13 @@ export const useRouteMapRendering = ({
       }
 
       // Add markers that are new
-      for (const intersection of availableIntersections) {
-        if (dotMarkersMapRef.current.has(intersection.id)) {
+      for (const junction of availableJunctions) {
+        if (dotMarkersMapRef.current.has(junction.id)) {
           continue
         }
 
         const element = document.createElement('div')
-        Object.assign(element.style, s_intersectionDot, {
+        Object.assign(element.style, s_junctionDot, {
           background: '#6f2dbd',
         })
         element.addEventListener('mouseenter', () => {
@@ -165,15 +165,15 @@ export const useRouteMapRendering = ({
 
         const marker = new google.maps.marker.AdvancedMarkerElement({
           map,
-          position: { lat: intersection.lat, lng: intersection.lng },
+          position: { lat: junction.lat, lng: junction.lng },
           content: element,
-          title: intersection.otherRoadName,
+          title: junction.otherRoadName,
           gmpClickable: true,
         })
         marker.addEventListener('gmp-click', () => {
-          onIntersectionClick(intersection)
+          onJunctionClick(junction)
         })
-        dotMarkersMapRef.current.set(intersection.id, marker)
+        dotMarkersMapRef.current.set(junction.id, marker)
       }
 
       return () => {
@@ -183,7 +183,7 @@ export const useRouteMapRendering = ({
         dotMarkersMapRef.current.clear()
       }
     },
-    [map, availableIntersections, onIntersectionClick],
+    [map, availableJunctions, onJunctionClick],
   )
 
   // Draw route polyline through path
@@ -295,7 +295,7 @@ const s_addressMarker: Partial<CSSStyleDeclaration> = {
   cursor: 'default',
 }
 
-const s_intersectionDot: Partial<CSSStyleDeclaration> = {
+const s_junctionDot: Partial<CSSStyleDeclaration> = {
   width: '14px',
   height: '14px',
   borderRadius: '50%',
