@@ -44,6 +44,7 @@ export const useRoadGraph = (): RoadGraph => {
     id: junction.id,
     lat: junction.lat,
     lng: junction.lng,
+    nodeIndex: junction.nodeIndex,
     roadName,
     connectedRoadNames: junction.connectedRoadNames,
   })

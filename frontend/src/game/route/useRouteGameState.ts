@@ -144,13 +144,45 @@ export const useRouteGameState = (): RouteGameState | null => {
       },
     )
 
+    // Direction: find the previous junction's nodeIndex within currentRoad's junction list.
+    // This works even when the previous click was on a different road — the entry junction
+    // is always a junction on currentRoad too (with its own nodeIndex in that road).
+    // Not stored in state, so re-entering a road later always starts unconstrained.
+    const previousJunction = path.at(-1) ?? null
+    const previousOnCurrentRoad =
+      previousJunction !== null
+        ? (roadGraph
+            .getJunctionsForRoad(currentJunction.roadName)
+            .find((j) => j.id === previousJunction.id) ?? null)
+        : null
+    const directionEstablished = previousOnCurrentRoad !== null
+    const goingForward =
+      directionEstablished &&
+      currentJunction.nodeIndex > previousOnCurrentRoad!.nodeIndex
+
     const updateAvailable = () => {
       const combined = new Map<number, SelectedJunction>()
       for (const road of roadsAtJunction) {
+        const isCurrentRoad = road === currentJunction.roadName
         for (const junction of roadGraph.getJunctionsForRoad(road)) {
-          if (junction.id !== currentJunction.id) {
-            combined.set(junction.id, junction)
+          if (junction.id === currentJunction.id) {
+            continue
           }
+          if (isCurrentRoad && directionEstablished) {
+            if (
+              goingForward &&
+              junction.nodeIndex <= currentJunction.nodeIndex
+            ) {
+              continue
+            }
+            if (
+              !goingForward &&
+              junction.nodeIndex >= currentJunction.nodeIndex
+            ) {
+              continue
+            }
+          }
+          combined.set(junction.id, junction)
         }
       }
       setAvailableJunctions([...combined.values()])

@@ -10,6 +10,7 @@ export type SelectedJunction = {
   id: number
   lat: number
   lng: number
+  nodeIndex: number
   roadName: string
   connectedRoadNames: string[]
 }
