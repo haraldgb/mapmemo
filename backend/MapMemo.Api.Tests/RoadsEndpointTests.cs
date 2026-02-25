@@ -19,7 +19,7 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
     }
 
     private async Task SeedCityAndRoadsAsync() {
-        var (db, scope) = GetDb();
+        (MapMemoDbContext? db, IServiceScope? scope) = GetDb();
         using (scope) {
             City city = new() { Name = "Oslo, Norway" };
             db.Cities.Add(city);
