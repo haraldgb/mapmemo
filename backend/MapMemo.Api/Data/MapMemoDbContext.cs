@@ -8,8 +8,9 @@ public sealed class MapMemoDbContext(DbContextOptions<MapMemoDbContext> options)
     public DbSet<City> Cities => Set<City>();
     public DbSet<Road> Roads => Set<Road>();
     public DbSet<OsmWay> OsmWays => Set<OsmWay>();
-    public DbSet<Intersection> Intersections => Set<Intersection>();
-    public DbSet<IntersectionSource> IntersectionSources => Set<IntersectionSource>();
+    public DbSet<Roundabout> Roundabouts => Set<Roundabout>();
+    public DbSet<Junction> Junctions => Set<Junction>();
+    public DbSet<RoadJunction> RoadJunctions => Set<RoadJunction>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         modelBuilder.Entity<City>(e => {
@@ -39,30 +40,35 @@ public sealed class MapMemoDbContext(DbContextOptions<MapMemoDbContext> options)
             e.HasIndex(o => o.RoadId).HasDatabaseName("idx_osm_way_road_id");
         });
 
-        modelBuilder.Entity<Intersection>(e => {
-            e.ToTable("intersection");
-            e.Property(i => i.Id).HasColumnName("id");
-            e.Property(i => i.Lat).HasColumnName("lat").HasPrecision(9, 6);
-            e.Property(i => i.Lng).HasColumnName("lng").HasPrecision(9, 6);
-            e.Property(i => i.RoadAId).HasColumnName("road_a_id");
-            e.Property(i => i.RoadBId).HasColumnName("road_b_id");
-            e.Property(i => i.WayType).HasColumnName("way_type").HasMaxLength(50);
-            e.HasOne(i => i.RoadA).WithMany().HasForeignKey(i => i.RoadAId).OnDelete(DeleteBehavior.Cascade);
-            e.HasOne(i => i.RoadB).WithMany().HasForeignKey(i => i.RoadBId).OnDelete(DeleteBehavior.Cascade);
-            e.HasIndex(i => i.RoadAId).HasDatabaseName("idx_intersection_road_a_id");
-            e.HasIndex(i => i.RoadBId).HasDatabaseName("idx_intersection_road_b_id");
+        modelBuilder.Entity<Roundabout>(e => {
+            e.ToTable("roundabout");
+            e.Property(r => r.Id).HasColumnName("id");
+            e.Property(r => r.CityId).HasColumnName("city_id");
+            e.HasOne(r => r.City).WithMany(c => c.Roundabouts).HasForeignKey(r => r.CityId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(r => r.CityId).HasDatabaseName("idx_roundabout_city_id");
         });
 
-        modelBuilder.Entity<IntersectionSource>(e => {
-            e.ToTable("intersection_source");
-            e.Property(s => s.Id).HasColumnName("id");
-            e.Property(s => s.IntersectionId).HasColumnName("intersection_id");
-            e.Property(s => s.OsmWayId).HasColumnName("osm_way_id");
-            e.Property(s => s.NodeId).HasColumnName("node_id");
-            e.HasOne(s => s.Intersection).WithMany(i => i.IntersectionSources).HasForeignKey(s => s.IntersectionId).OnDelete(DeleteBehavior.Cascade);
-            e.HasOne(s => s.OsmWay).WithMany(o => o.IntersectionSources).HasForeignKey(s => s.OsmWayId).OnDelete(DeleteBehavior.Cascade);
-            e.HasIndex(s => s.IntersectionId).HasDatabaseName("idx_intersection_source_intersection_id");
-            e.HasIndex(s => s.OsmWayId).HasDatabaseName("idx_intersection_source_osm_way_id");
+        modelBuilder.Entity<Junction>(e => {
+            e.ToTable("junction");
+            e.Property(j => j.Id).HasColumnName("id");
+            e.Property(j => j.Lat).HasColumnName("lat").HasPrecision(9, 6);
+            e.Property(j => j.Lng).HasColumnName("lng").HasPrecision(9, 6);
+            e.Property(j => j.WayType).HasColumnName("way_type").HasMaxLength(50);
+            e.Property(j => j.RoundaboutId).HasColumnName("roundabout_id");
+            e.HasOne(j => j.Roundabout).WithMany(r => r.Junctions).HasForeignKey(j => j.RoundaboutId).OnDelete(DeleteBehavior.SetNull);
+            e.HasIndex(j => j.RoundaboutId).HasDatabaseName("idx_junction_roundabout_id");
+        });
+
+        modelBuilder.Entity<RoadJunction>(e => {
+            e.ToTable("road_junction");
+            e.Property(rj => rj.Id).HasColumnName("id");
+            e.Property(rj => rj.JunctionId).HasColumnName("junction_id");
+            e.Property(rj => rj.RoadId).HasColumnName("road_id");
+            e.Property(rj => rj.NodeIndex).HasColumnName("node_index");
+            e.HasOne(rj => rj.Junction).WithMany(j => j.RoadJunctions).HasForeignKey(rj => rj.JunctionId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(rj => rj.Road).WithMany(r => r.RoadJunctions).HasForeignKey(rj => rj.RoadId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(rj => rj.JunctionId).HasDatabaseName("idx_road_junction_junction_id");
+            e.HasIndex(rj => rj.RoadId).HasDatabaseName("idx_road_junction_road_id");
         });
     }
 }

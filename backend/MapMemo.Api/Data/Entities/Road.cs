@@ -7,4 +7,5 @@ public sealed class Road {
 
     public City City { get; set; } = null!;
     public ICollection<OsmWay> OsmWays { get; set; } = [];
+    public ICollection<RoadJunction> RoadJunctions { get; set; } = [];
 }

@@ -7,4 +7,5 @@ public sealed class City {
     public DateTimeOffset Updated { get; set; }
 
     public ICollection<Road> Roads { get; set; } = [];
+    public ICollection<Roundabout> Roundabouts { get; set; } = [];
 }

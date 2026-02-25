@@ -6,5 +6,4 @@ public sealed class OsmWay {
     public string? Name { get; set; }
 
     public Road Road { get; set; } = null!;
-    public ICollection<IntersectionSource> IntersectionSources { get; set; } = [];
 }

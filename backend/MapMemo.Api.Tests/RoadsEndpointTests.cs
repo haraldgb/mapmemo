@@ -1,5 +1,4 @@
 using System.Net;
-using System.Net.Http.Json;
 
 using MapMemo.Api.Data;
 using MapMemo.Api.Data.Entities;
@@ -30,21 +29,26 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
             db.Roads.AddRange(mainRoad, crossRoad);
             await db.SaveChangesAsync();
 
-            db.Intersections.Add(new Intersection {
+            Junction junction = new() {
                 Lat = 59.913869m,
                 Lng = 10.747564m,
-                RoadAId = mainRoad.Id,
-                RoadBId = crossRoad.Id,
                 WayType = "traffic_signals"
-            });
+            };
+            db.Junctions.Add(junction);
+            await db.SaveChangesAsync();
+
+            db.RoadJunctions.AddRange(
+                new RoadJunction { JunctionId = junction.Id, RoadId = mainRoad.Id, NodeIndex = 0 },
+                new RoadJunction { JunctionId = junction.Id, RoadId = crossRoad.Id, NodeIndex = 0 }
+            );
             await db.SaveChangesAsync();
         }
     }
 
     [Fact]
-    public async Task Roads_returns_road_data_with_intersections() {
+    public async Task Roads_returns_road_data_with_junctions() {
         await SeedCityAndRoadsAsync();
-        var cookies = new CookieContainer();
+        var cookies = new System.Net.CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
 
         // Get session
@@ -62,7 +66,7 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
 
     [Fact]
     public async Task Roads_missing_params_returns_400() {
-        var cookies = new CookieContainer();
+        var cookies = new System.Net.CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
 
@@ -76,7 +80,7 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
     [Fact]
     public async Task Roads_unknown_city_or_road_returns_404() {
         await SeedCityAndRoadsAsync();
-        var cookies = new CookieContainer();
+        var cookies = new System.Net.CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
 
