@@ -167,7 +167,7 @@ export const useRouteMapRendering = ({
           map,
           position: { lat: junction.lat, lng: junction.lng },
           content: element,
-          title: junction.otherRoadName,
+          title: junction.connectedRoadNames.join(', '),
           gmpClickable: true,
         })
         marker.addEventListener('gmp-click', () => {

@@ -45,7 +45,7 @@ export const useRoadGraph = (): RoadGraph => {
     lat: junction.lat,
     lng: junction.lng,
     roadName,
-    otherRoadName: junction.connectedRoadNames[0] ?? '',
+    connectedRoadNames: junction.connectedRoadNames,
   })
 
   const getJunctionsForRoad = (roadName: string): SelectedJunction[] => {

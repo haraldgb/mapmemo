@@ -11,7 +11,7 @@ export type SelectedJunction = {
   lat: number
   lng: number
   roadName: string
-  otherRoadName: string
+  connectedRoadNames: string[]
 }
 
 export type RouteResult = {

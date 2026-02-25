@@ -56,7 +56,7 @@ export const useRouteGameState = (): RouteGameState | null => {
     endAddress !== null &&
     lastJunction !== null &&
     (lastJunction.roadName === endAddress.roadName ||
-      lastJunction.otherRoadName === endAddress.roadName)
+      lastJunction.connectedRoadNames.includes(endAddress.roadName))
 
   // Init flow: resolve addresses, fetch starting road
   useEffect(
@@ -127,8 +127,11 @@ export const useRouteGameState = (): RouteGameState | null => {
     setPath((prev) => [...prev, currentJunction])
 
     // All roads meeting at this junction
-    const roadsAtJunction = [currentJunction.roadName, currentJunction.otherRoadName]
-    setCurrentRoadName(currentJunction.otherRoadName)
+    const roadsAtJunction = [
+      currentJunction.roadName,
+      ...currentJunction.connectedRoadNames,
+    ]
+    setCurrentRoadName(currentJunction.roadName)
 
     // Fetch any roads not yet primary-fetched, then combine all junctions
     const toFetch = roadsAtJunction.filter(
