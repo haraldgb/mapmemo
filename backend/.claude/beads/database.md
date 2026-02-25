@@ -8,22 +8,25 @@ PostgreSQL. Schema in `db/schema.sql`. Data populated via private submodule (`db
 city          — id, name, added, updated (auto-trigger)
 road          — id, name, city_id (FK city, unique per city)
 osm_way       — id (OSM ID), road_id (FK road), name
-intersection  — id, lat, lng, road_a_id, road_b_id (FK road), way_type
-intersection_source — id, intersection_id, osm_way_id, node_id
+roundabout    — id, city_id (FK city)
+junction      — id, lat, lng, way_type, roundabout_id (FK roundabout, nullable)
+road_junction — id, junction_id (FK junction), road_id (FK road), node_index
 ```
 
 ## Key relationships
 
 - `road` belongs to `city` (cascading delete)
-- `intersection` links two `road` records (`road_a_id`, `road_b_id`)
+- `junction` is a point where ≥2 roads meet; linked to roads via `road_junction`
+- `road_junction.node_index` records the junction's ordered position along the road
+- `roundabout` groups junctions that belong to the same physical roundabout
 - `osm_way` links OSM data to internal road records
-- `intersection_source` traces intersections back to OSM ways/nodes
 
 ## Indexes
 
 - `road(city_id)`, unique `road(city_id, name)`
-- `intersection(road_a_id)`, `intersection(road_b_id)`
-- `osm_way(road_id)`, `intersection_source(intersection_id, osm_way_id)`
+- `junction(roundabout_id)`
+- `road_junction(junction_id)`, `road_junction(road_id)`
+- `osm_way(road_id)`, `roundabout(city_id)`
 
 ## Query patterns
 

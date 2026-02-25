@@ -14,7 +14,7 @@ All prefixed `/api`:
 - `GET /health` — health check, creates session cookie
 - `GET /google-maps-key` — returns API key (requires session)
 - `GET /oslo-neighboorhoods` — returns GeoJSON file (requires session)
-- `GET /roads?city_name=X&road_name=Y` — returns road intersection data (requires session)
+- `GET /roads?city_name=X&road_name=Y` — returns road junction data (requires session)
 
 ## Session management (`SessionService`)
 
