@@ -9,7 +9,6 @@ import { useAreaGameStyling } from './hooks/useAreaGameStyling'
 import { useFeatureLabels } from './hooks/useFeatureLabels'
 import { GameUI } from './GameUI.tsx'
 import type { MapContext } from './types.ts'
-import { useWhyDidYouUpdate } from '../utils/developerUtils.ts'
 
 export const AreaGame = () => {
   const { areaSubMode, areaCount, selectedAreas, mode } = useSelector(
