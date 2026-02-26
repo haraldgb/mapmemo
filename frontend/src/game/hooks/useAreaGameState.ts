@@ -1,10 +1,8 @@
-import { useRef, useState, type MutableRefObject } from 'react'
+import { useRef, useState, type RefObject } from 'react'
 import { useSelector } from 'react-redux'
 import { ID_KEY, SUB_AREA_NAME_KEY } from '../consts'
 import { getFeatureProperty } from '../../utils/polygons'
 import { createSeededRng, getAreaId, shuffleEntriesWithRng } from '../utils'
-import { useClickModeGuess } from './useClickModeGuess'
-import { useNameModeGuess } from './useNameModeGuess'
 import type { GameEntry, GuessOutcome } from '../types'
 import type { GameDifficulty } from '../settings/settingsTypes'
 import type { RootState } from '../../store'
@@ -40,8 +38,8 @@ export type AreaGameState = {
   resetGameState: () => void
   prevGuess: PrevGuess
   completedAreaLabels: Set<string>
-  correctlyGuessedIdsRef: MutableRefObject<Set<string>>
-  lateGuessedIdsRef: MutableRefObject<Set<string>>
+  correctlyGuessedIdsRef: RefObject<Set<string>>
+  lateGuessedIdsRef: RefObject<Set<string>>
 }
 
 type Props = {
@@ -144,18 +142,36 @@ export const useAreaGameState = ({ features }: Props): AreaGameState | null => {
     setPrevGuess(INITIAL_PREV_GUESS)
   }
 
-  const registerFeatureClick = useClickModeGuess({
-    entries,
-    currentIndex,
-    answeredIdsRef,
-    onGuess: processGuessResult,
-  })
+  const registerFeatureClick = (feature: google.maps.Data.Feature) => {
+    const targetEntry = entries[currentIndex]
+    if (!targetEntry || currentIndex >= entries.length) {
+      return
+    }
+    const clickedId = getFeatureProperty(feature, ID_KEY)
+    if (!clickedId || answeredIdsRef.current.has(clickedId)) {
+      return
+    }
+    const isCorrect = clickedId === targetEntry.id
+    processGuessResult({
+      isCorrect,
+      entryId: targetEntry.id,
+      clickedFeature: isCorrect ? null : feature,
+    })
+  }
 
-  const registerNameGuess = useNameModeGuess({
-    entries,
-    currentIndex,
-    onGuess: processGuessResult,
-  })
+  const registerNameGuess = (name: string) => {
+    const targetEntry = entries[currentIndex]
+    if (!targetEntry || currentIndex >= entries.length) {
+      return
+    }
+    const isCorrect =
+      name.trim().toLowerCase() === targetEntry.label.trim().toLowerCase()
+    processGuessResult({
+      isCorrect,
+      entryId: targetEntry.id,
+      clickedFeature: null,
+    })
+  }
 
   const promptPrefixDesktop = 'Click area:\u00A0'
   const promptText =

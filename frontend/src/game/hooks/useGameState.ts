@@ -50,8 +50,9 @@ export const useGameState = ({ features, isMapReady }: Props): GameState => {
   })
 
   if (routeState) {
+    const routeReset = routeState.reset
     const resetGame = () => {
-      routeState.reset()
+      routeReset()
       resetTimer()
     }
     return {
@@ -65,8 +66,9 @@ export const useGameState = ({ features, isMapReady }: Props): GameState => {
 
   // SAFETY: areaState is non-null when routeState is null (modes are mutually exclusive)
   const area = areaState as AreaGameState
+  const areaReset = area.resetGameState
   const resetGame = () => {
-    area.resetGameState()
+    areaReset()
     resetTimer()
   }
   return {

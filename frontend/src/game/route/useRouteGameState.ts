@@ -73,41 +73,29 @@ export const useRouteGameState = (): RouteGameState | null => {
         setPath([])
         setIsComplete(false)
 
-        try {
-          const [rawStart, rawEnd] = getRoutePair(seed)
-          const [resolvedStart, resolvedEnd] = await Promise.all([
-            resolveAddress(rawStart),
-            resolveAddress(rawEnd),
-          ])
+        const [rawStart, rawEnd] = getRoutePair(seed)
+        const [resolvedStart, resolvedEnd] = await Promise.all([
+          resolveAddress(rawStart),
+          resolveAddress(rawEnd),
+        ])
 
-          if (!isActive) {
-            return
-          }
-
-          setStartAddress(resolvedStart)
-          setEndAddress(resolvedEnd)
-
-          // Fetch the starting road
-          await roadGraph.fetchRoad(resolvedStart.roadName)
-          if (!isActive) {
-            return
-          }
-
-          const junctions = roadGraph.getJunctionsForRoad(
-            resolvedStart.roadName,
-          )
-          setCurrentRoadName(resolvedStart.roadName)
-          setAvailableJunctions(junctions)
-          setIsLoading(false)
-        } catch (err) {
-          if (!isActive) {
-            return
-          }
-          setError(
-            err instanceof Error ? err.message : 'Failed to initialize route',
-          )
-          setIsLoading(false)
+        if (!isActive) {
+          return
         }
+
+        setStartAddress(resolvedStart)
+        setEndAddress(resolvedEnd)
+
+        // Fetch the starting road
+        await roadGraph.fetchRoad(resolvedStart.roadName)
+        if (!isActive) {
+          return
+        }
+
+        const junctions = roadGraph.getJunctionsForRoad(resolvedStart.roadName)
+        setCurrentRoadName(resolvedStart.roadName)
+        setAvailableJunctions(junctions)
+        setIsLoading(false)
       }
 
       void init()
@@ -116,7 +104,7 @@ export const useRouteGameState = (): RouteGameState | null => {
         isActive = false
       }
     },
-    [seed, gameKey, mode],
+    [seed, gameKey, mode, roadGraph],
   )
 
   const handleJunctionClick = (currentJunction: SelectedJunction) => {
