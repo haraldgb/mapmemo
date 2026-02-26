@@ -88,7 +88,7 @@ export const MODE_OPTIONS = [
 export const MODE_DESCRIPTIONS: Record<string, string> = {
   click: 'Find and click the named area on the map.',
   name: 'Type the name of the highlighted area.',
-  route: 'Navigate from A to B through intersections.',
+  route: 'Navigate from A to B through junctions.',
 }
 
 export const DIFFICULTY_OPTIONS = [

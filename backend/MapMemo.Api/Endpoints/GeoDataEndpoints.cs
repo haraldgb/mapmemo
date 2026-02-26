@@ -57,34 +57,68 @@ internal static class GeoDataEndpoints {
                     return Results.NotFound(new { error = "Road not found." });
                 }
 
+                // Find all junction IDs for the requested road
+                List<long> junctionIds = await db.RoadJunctions
+                    .Where(rj => rj.RoadId == road.Id)
+                    .Select(rj => rj.JunctionId)
+                    .ToListAsync();
+
+                // Find all roads connected via those junctions
                 HashSet<long> roadIds = [road.Id];
-                List<long> connectedIds = await db.Intersections
-                    .Where(i => i.RoadAId == road.Id || i.RoadBId == road.Id)
-                    .Select(i => i.RoadAId == road.Id ? i.RoadBId : i.RoadAId)
+                List<long> connectedIds = await db.RoadJunctions
+                    .Where(rj => junctionIds.Contains(rj.JunctionId) && rj.RoadId != road.Id)
+                    .Select(rj => rj.RoadId)
                     .Distinct()
                     .ToListAsync();
                 roadIds.UnionWith(connectedIds);
 
-                List<Intersection> allIntersections = await db.Intersections
-                    .Include(i => i.RoadA)
-                    .Include(i => i.RoadB)
-                    .Where(i => roadIds.Contains(i.RoadAId) || roadIds.Contains(i.RoadBId))
+                // Get all junction IDs that any of our roads participate in
+                List<long> allJunctionIds = await db.RoadJunctions
+                    .Where(rj => roadIds.Contains(rj.RoadId))
+                    .Select(rj => rj.JunctionId)
+                    .Distinct()
+                    .ToListAsync();
+
+                // Fetch all road_junction rows for those junctions, with navigation props
+                List<RoadJunction> allRoadJunctions = await db.RoadJunctions
+                    .Include(rj => rj.Junction)
+                    .Include(rj => rj.Road)
+                    .Where(rj => allJunctionIds.Contains(rj.JunctionId))
                     .ToListAsync();
 
                 Dictionary<long, Road> roadsById = await db.Roads
                     .Where(r => roadIds.Contains(r.Id))
                     .ToDictionaryAsync(r => r.Id);
 
+                // Group road_junctions by road to build per-road junction lists
+                var roadJunctionsByRoad = allRoadJunctions
+                    .Where(rj => roadIds.Contains(rj.RoadId))
+                    .GroupBy(rj => rj.RoadId)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
                 Dictionary<string, RoadResponseDto> response = new();
-                foreach ((var rid, Road? r) in roadsById) {
-                    var intersections = allIntersections
-                        .Where(i => i.RoadAId == rid || i.RoadBId == rid)
-                        .Select(i => new IntersectionDto(
-                            i.Id, (double)i.Lat, (double)i.Lng, i.WayType,
-                            i.RoadAId == rid ? i.RoadB.Name : i.RoadA.Name))
+                foreach ((var roadId, Road r) in roadsById) {
+                    List<RoadJunction> roadJunctions = roadJunctionsByRoad.GetValueOrDefault(roadId) ?? [];
+
+                    var junctions = roadJunctions
+                        .OrderBy(rj => rj.NodeIndex)
+                        .Select(rj => {
+                            var otherRoads = allRoadJunctions
+                                .Where(x => x.JunctionId == rj.JunctionId && x.RoadId != rj.RoadId)
+                                .Select(x => x.Road.Name)
+                                .ToList();
+                            return new JunctionDto(
+                                rj.JunctionId,
+                                (double)rj.Junction.Lat,
+                                (double)rj.Junction.Lng,
+                                rj.Junction.WayType,
+                                rj.NodeIndex,
+                                otherRoads,
+                                rj.Junction.RoundaboutId);
+                        })
                         .ToList();
 
-                    response[r.Name] = new RoadResponseDto(r.Id, r.Name, r.CityId, intersections);
+                    response[r.Name] = new RoadResponseDto(r.Id, r.Name, r.CityId, junctions);
                 }
 
                 return Results.Json(response);

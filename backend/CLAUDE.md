@@ -53,7 +53,7 @@ MapMemo.Api/
 │   ├── MapMemoDbContext.cs     # DbContext with model configuration
 │   └── Migrations/             # EFC migrations (baseline: InitialSchema)
 ├── Models/
-│   ├── Roads.cs                # response DTOs (IntersectionDto, RoadResponseDto)
+│   ├── Roads.cs                # response DTOs (JunctionDto, RoadResponseDto)
 │   └── GoogleMaps.cs           # request DTOs (SnapToRoadsRequest, etc.)
 ├── Services/SessionService.cs  # session management
 └── Data/                       # static data files (GeoJSON) — separate from EFC Data/
@@ -97,7 +97,7 @@ Standard C# conventions apply. Project-specific patterns:
 
 ### Schema
 
-Defined in `db/schema.sql` and mirrored in EFC entities/migrations. Tables: `city`, `road`, `osm_way`, `intersection`, `intersection_source`.
+Defined in `db/schema.sql` and mirrored in EFC entities/migrations. Tables: `city`, `road`, `osm_way`, `roundabout`, `junction`, `road_junction`.
 
 ### Migrations
 

@@ -1,7 +1,7 @@
 import type {
   RouteAddress,
   RouteResult,
-  SelectedIntersection,
+  SelectedJunction,
 } from '../game/route/types'
 import { fetchWithSessionRetry } from './utils'
 
@@ -75,7 +75,7 @@ export const computeOptimalRoute = async (
 export const computePlayerRoute = async (
   start: RouteAddress,
   end: RouteAddress,
-  path: SelectedIntersection[],
+  path: SelectedJunction[],
 ): Promise<{ durationSec: number; encodedPolyline: string }> => {
   const intermediates = path.map((p) => ({ lat: p.lat, lng: p.lng }))
   return computeRoute(
@@ -88,7 +88,7 @@ export const computePlayerRoute = async (
 export const computeRouteResult = async (
   start: RouteAddress,
   end: RouteAddress,
-  path: SelectedIntersection[],
+  path: SelectedJunction[],
 ): Promise<RouteResult> => {
   const [player, optimal] = await Promise.all([
     computePlayerRoute(start, end, path),

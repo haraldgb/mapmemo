@@ -38,7 +38,7 @@ const SLIDES: GameModeSlide[] = [
     description: MODE_DESCRIPTIONS['route'] ?? '',
     // TODO: screenshot of route mode gameplay
     imageSrc: '/screenshots/route-mode.png',
-    imageAlt: 'Route mode gameplay navigating between intersections',
+    imageAlt: 'Route mode gameplay navigating between junctions',
   },
 ]
 

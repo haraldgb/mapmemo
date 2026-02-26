@@ -30,26 +30,30 @@ CREATE TABLE osm_way (
   name VARCHAR(200)
 );
 
-CREATE TABLE intersection (
+CREATE TABLE roundabout (
+  id BIGSERIAL PRIMARY KEY,
+  city_id BIGINT NOT NULL REFERENCES city(id) ON DELETE CASCADE
+);
+
+CREATE TABLE junction (
   id BIGSERIAL PRIMARY KEY,
   lat NUMERIC(9, 6) NOT NULL,
   lng NUMERIC(9, 6) NOT NULL,
-  road_a_id BIGINT NOT NULL REFERENCES road(id) ON DELETE CASCADE,
-  road_b_id BIGINT NOT NULL REFERENCES road(id) ON DELETE CASCADE,
-  way_type VARCHAR(50)
+  way_type VARCHAR(50),
+  roundabout_id BIGINT REFERENCES roundabout(id) ON DELETE SET NULL
 );
 
-CREATE TABLE intersection_source (
+CREATE TABLE road_junction (
   id BIGSERIAL PRIMARY KEY,
-  intersection_id BIGINT NOT NULL REFERENCES intersection(id) ON DELETE CASCADE,
-  osm_way_id BIGINT NOT NULL REFERENCES osm_way(id) ON DELETE CASCADE,
-  node_id BIGINT NOT NULL
+  junction_id BIGINT NOT NULL REFERENCES junction(id) ON DELETE CASCADE,
+  road_id BIGINT NOT NULL REFERENCES road(id) ON DELETE CASCADE,
+  node_index INTEGER NOT NULL
 );
 
 CREATE INDEX idx_road_city_id ON road(city_id);
 CREATE UNIQUE INDEX ux_road_city_name ON road(city_id, name);
 CREATE INDEX idx_osm_way_road_id ON osm_way(road_id);
-CREATE INDEX idx_intersection_road_a_id ON intersection(road_a_id);
-CREATE INDEX idx_intersection_road_b_id ON intersection(road_b_id);
-CREATE INDEX idx_intersection_source_intersection_id ON intersection_source(intersection_id);
-CREATE INDEX idx_intersection_source_osm_way_id ON intersection_source(osm_way_id);
+CREATE INDEX idx_roundabout_city_id ON roundabout(city_id);
+CREATE INDEX idx_junction_roundabout_id ON junction(roundabout_id);
+CREATE INDEX idx_road_junction_junction_id ON road_junction(junction_id);
+CREATE INDEX idx_road_junction_road_id ON road_junction(road_id);

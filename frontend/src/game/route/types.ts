@@ -6,12 +6,13 @@ export type RouteAddress = {
   lng: number
 }
 
-export type SelectedIntersection = {
+export type SelectedJunction = {
   id: number
   lat: number
   lng: number
+  nodeIndex: number
   roadName: string
-  otherRoadName: string
+  connectedRoadNames: string[]
 }
 
 export type RouteResult = {

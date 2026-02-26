@@ -171,7 +171,7 @@ src/
 | `store/index.ts`                  | Redux store config. Exports `RootState`, `AppDispatch`                                                           |
 | `duck/reducer.ts`                 | Single `mapmemo` slice (duck pattern): game settings, area options, init flag                                    |
 | `duck/sagas.ts`                   | Redux Saga side effects: app init, settings persistence to localStorage                                          |
-| `api/roadData.ts`                 | Road/intersection API calls                                                                                      |
+| `api/roadData.ts`                 | Road/junction API calls                                                                                          |
 | `game/hooks/useFeaturesInPlay.ts` | GeoJSON fetching + `fetchWithSessionRetry()` (401 retry via `/api/health`)                                       |
 | `utils/googleMapsApiKey.ts`       | Google Maps API key fetch (memoized)                                                                             |
 
