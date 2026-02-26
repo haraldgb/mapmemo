@@ -91,15 +91,16 @@ internal static class GeoDataEndpoints {
                     .ToDictionaryAsync(r => r.Id);
 
                 // Group road_junctions by road to build per-road junction lists
-                IEnumerable<IGrouping<long, RoadJunction>> roadJunctionsByRoad = allRoadJunctions
+                var roadJunctionsByRoad = allRoadJunctions
                     .Where(rj => roadIds.Contains(rj.RoadId))
-                    .GroupBy(rj => rj.RoadId);
+                    .GroupBy(rj => rj.RoadId)
+                    .ToDictionary(g => g.Key, g => g.ToList());
 
                 Dictionary<string, RoadResponseDto> response = new();
-                foreach (IGrouping<long, RoadJunction> group in roadJunctionsByRoad) {
-                    if (!roadsById.TryGetValue(group.Key, out Road? r)) continue;
+                foreach ((var roadId, Road r) in roadsById) {
+                    List<RoadJunction> roadJunctions = roadJunctionsByRoad.GetValueOrDefault(roadId) ?? [];
 
-                    var junctions = group
+                    var junctions = roadJunctions
                         .OrderBy(rj => rj.NodeIndex)
                         .Select(rj => {
                             var otherRoads = allRoadJunctions
