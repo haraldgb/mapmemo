@@ -4,14 +4,14 @@ import type { RootState } from '../../store'
 import { resolveAddress } from '../../api/snapToRoads'
 import { getRoutePair } from './routeAddresses'
 import { useRoadGraph } from './useRoadGraph'
-import type { RouteAddress, SelectedIntersection } from './types'
+import type { RouteAddress, SelectedJunction } from './types'
 
 export type RouteGameState = {
   mode: 'route'
   startAddress: RouteAddress | null
   endAddress: RouteAddress | null
-  path: SelectedIntersection[]
-  availableIntersections: SelectedIntersection[]
+  path: SelectedJunction[]
+  availableJunctions: SelectedJunction[]
   currentRoadName: string | null
   isLoading: boolean
   isReady: boolean
@@ -19,7 +19,7 @@ export type RouteGameState = {
   isGameActive: boolean
   error: string | null
   gameKey: number
-  handleIntersectionClick: (intersection: SelectedIntersection) => void
+  handleJunctionClick: (junction: SelectedJunction) => void
   handleDestinationClick: () => void
   canReachDestination: boolean
   reset: () => void
@@ -38,9 +38,9 @@ export const useRouteGameState = (): RouteGameState | null => {
 
   const [startAddress, setStartAddress] = useState<RouteAddress | null>(null)
   const [endAddress, setEndAddress] = useState<RouteAddress | null>(null)
-  const [path, setPath] = useState<SelectedIntersection[]>([])
-  const [availableIntersections, setAvailableIntersections] = useState<
-    SelectedIntersection[]
+  const [path, setPath] = useState<SelectedJunction[]>([])
+  const [availableJunctions, setAvailableJunctions] = useState<
+    SelectedJunction[]
   >([])
   const [currentRoadName, setCurrentRoadName] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -51,12 +51,12 @@ export const useRouteGameState = (): RouteGameState | null => {
   const isReady = startAddress !== null && endAddress !== null && !isLoading
   const isGameActive = path.length > 0 && !isComplete
 
-  const lastIntersection = path.at(-1) ?? null
+  const lastJunction = path.at(-1) ?? null
   const canReachDestination =
     endAddress !== null &&
-    lastIntersection !== null &&
-    (lastIntersection.roadName === endAddress.roadName ||
-      lastIntersection.otherRoadName === endAddress.roadName)
+    lastJunction !== null &&
+    (lastJunction.roadName === endAddress.roadName ||
+      lastJunction.connectedRoadNames.includes(endAddress.roadName))
 
   // Init flow: resolve addresses, fetch starting road
   useEffect(
@@ -93,11 +93,11 @@ export const useRouteGameState = (): RouteGameState | null => {
             return
           }
 
-          const intersections = roadGraph.getIntersectionsForRoad(
+          const junctions = roadGraph.getJunctionsForRoad(
             resolvedStart.roadName,
           )
           setCurrentRoadName(resolvedStart.roadName)
-          setAvailableIntersections(intersections)
+          setAvailableJunctions(junctions)
           setIsLoading(false)
         } catch (err) {
           if (!isActive) {
@@ -119,43 +119,73 @@ export const useRouteGameState = (): RouteGameState | null => {
     [seed, gameKey, mode],
   )
 
-  const handleIntersectionClick = (
-    currentIntersection: SelectedIntersection,
-  ) => {
+  const handleJunctionClick = (currentJunction: SelectedJunction) => {
     if (isComplete || isLoading) {
       return
     }
 
-    setPath((prev) => [...prev, currentIntersection])
+    setPath((prev) => [...prev, currentJunction])
 
-    // All roads meeting at this intersection
-    const roadsAtIntersection = [
-      currentIntersection.roadName,
-      currentIntersection.otherRoadName,
+    // All roads meeting at this junction
+    const roadsAtJunction = [
+      currentJunction.roadName,
+      ...currentJunction.connectedRoadNames,
     ]
-    setCurrentRoadName(currentIntersection.otherRoadName)
+    setCurrentRoadName(currentJunction.roadName)
 
-    // Fetch any roads not yet primary-fetched, then combine all intersections
-    const toFetch = roadsAtIntersection.filter(
+    // Fetch any roads not yet primary-fetched, then combine all junctions
+    const toFetch = roadsAtJunction.filter(
       (r) => !roadGraph.isFetchedAsPrimary(r),
     )
     void Promise.all(toFetch.map((road) => roadGraph.fetchRoad(road))).catch(
-      // Fetching a road pre-fetches roads that intersect with it, so we don't have to wait for fetches.
+      // Fetching a road pre-fetches roads that share junctions with it, so we don't have to wait for fetches.
       (err) => {
         setError(err instanceof Error ? err.message : 'Failed to fetch road')
       },
     )
 
+    // Direction: find the previous junction's nodeIndex within currentRoad's junction list.
+    // This works even when the previous click was on a different road — the entry junction
+    // is always a junction on currentRoad too (with its own nodeIndex in that road).
+    // Not stored in state, so re-entering a road later always starts unconstrained.
+    const previousJunction = path.at(-1) ?? null
+    const previousOnCurrentRoad =
+      previousJunction !== null
+        ? (roadGraph
+            .getJunctionsForRoad(currentJunction.roadName)
+            .find((j) => j.id === previousJunction.id) ?? null)
+        : null
+    const isDirectionEstablished = previousOnCurrentRoad !== null
+    const isGoingForward =
+      isDirectionEstablished &&
+      currentJunction.nodeIndex > previousOnCurrentRoad!.nodeIndex
+
     const updateAvailable = () => {
-      const combined = new Map<number, SelectedIntersection>()
-      for (const road of roadsAtIntersection) {
-        for (const intersection of roadGraph.getIntersectionsForRoad(road)) {
-          if (intersection.id !== currentIntersection.id) {
-            combined.set(intersection.id, intersection)
+      const combined = new Map<number, SelectedJunction>()
+      for (const road of roadsAtJunction) {
+        const isCurrentRoad = road === currentJunction.roadName
+        for (const junction of roadGraph.getJunctionsForRoad(road)) {
+          if (junction.id === currentJunction.id) {
+            continue
           }
+          if (isCurrentRoad && isDirectionEstablished) {
+            if (
+              isGoingForward &&
+              junction.nodeIndex <= currentJunction.nodeIndex
+            ) {
+              continue
+            }
+            if (
+              !isGoingForward &&
+              junction.nodeIndex >= currentJunction.nodeIndex
+            ) {
+              continue
+            }
+          }
+          combined.set(junction.id, junction)
         }
       }
-      setAvailableIntersections([...combined.values()])
+      setAvailableJunctions([...combined.values()])
     }
 
     updateAvailable()
@@ -166,14 +196,14 @@ export const useRouteGameState = (): RouteGameState | null => {
       return
     }
     setIsComplete(true)
-    setAvailableIntersections([])
+    setAvailableJunctions([])
   }
 
   const reset = () => {
     setStartAddress(null)
     setEndAddress(null)
     setPath([])
-    setAvailableIntersections([])
+    setAvailableJunctions([])
     setCurrentRoadName(null)
     setIsLoading(true)
     setIsComplete(false)
@@ -191,7 +221,7 @@ export const useRouteGameState = (): RouteGameState | null => {
     startAddress,
     endAddress,
     path,
-    availableIntersections,
+    availableJunctions,
     currentRoadName,
     isLoading,
     isReady,
@@ -199,7 +229,7 @@ export const useRouteGameState = (): RouteGameState | null => {
     isGameActive,
     error,
     gameKey,
-    handleIntersectionClick,
+    handleJunctionClick,
     handleDestinationClick,
     canReachDestination,
     reset,

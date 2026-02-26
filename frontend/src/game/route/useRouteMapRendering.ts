@@ -1,15 +1,15 @@
 import { useEffect, useRef } from 'react'
 import { useMap } from '@vis.gl/react-google-maps'
-import type { RouteAddress, SelectedIntersection } from './types'
+import type { RouteAddress, SelectedJunction } from './types'
 
 type Props = {
   startAddress: RouteAddress | null
   endAddress: RouteAddress | null
-  path: SelectedIntersection[]
-  availableIntersections: SelectedIntersection[]
+  path: SelectedJunction[]
+  availableJunctions: SelectedJunction[]
   isReady: boolean
   canReachDestination: boolean
-  onIntersectionClick: (intersection: SelectedIntersection) => void
+  onJunctionClick: (junction: SelectedJunction) => void
   onDestinationClick: () => void
   gameKey: number
 }
@@ -18,10 +18,10 @@ export const useRouteMapRendering = ({
   startAddress,
   endAddress,
   path,
-  availableIntersections,
+  availableJunctions,
   isReady,
   canReachDestination,
-  onIntersectionClick,
+  onJunctionClick,
   onDestinationClick,
   gameKey,
 }: Props): void => {
@@ -39,6 +39,12 @@ export const useRouteMapRendering = ({
   >(new Map())
   const polylineRef = useRef<google.maps.Polyline | null>(null)
   const hasFittedRef = useRef(false)
+  // useRef: keep latest callback without making it a dep of the diff effect,
+  // so onJunctionClick identity changes don't trigger full marker re-creation.
+  const onJunctionClickRef = useRef(onJunctionClick)
+  useEffect(function syncOnJunctionClickRef() {
+    onJunctionClickRef.current = onJunctionClick
+  })
 
   // Reset fit-bounds flag when game resets
   useEffect(
@@ -115,22 +121,38 @@ export const useRouteMapRendering = ({
         lng: startAddress.lng,
       })
       bounds.extend({ lat: endAddress.lat, lng: endAddress.lng })
-      for (const intersection of availableIntersections) {
-        bounds.extend({ lat: intersection.lat, lng: intersection.lng })
+      for (const junction of availableJunctions) {
+        bounds.extend({ lat: junction.lat, lng: junction.lng })
       }
       map.fitBounds(bounds, { top: 80, right: 40, bottom: 40, left: 40 })
     },
-    [map, isReady, startAddress, endAddress, availableIntersections],
+    [map, isReady, startAddress, endAddress, availableJunctions],
   )
 
-  // Render intersection dots with click handlers — diff by ID to avoid flash on update
+  // Clean up all dot markers when map instance changes or unmounts
   useEffect(
-    function renderIntersectionDots() {
+    function cleanupDotMarkersOnMapChange() {
+      if (!map) {
+        return
+      }
+      return () => {
+        for (const marker of dotMarkersMapRef.current.values()) {
+          marker.map = null
+        }
+        dotMarkersMapRef.current.clear()
+      }
+    },
+    [map],
+  )
+
+  // Diff junction dots — only add/remove changed markers, no full-reset cleanup
+  useEffect(
+    function renderJunctionDots() {
       if (!map) {
         return
       }
 
-      const nextIds = new Set(availableIntersections.map((i) => i.id))
+      const nextIds = new Set(availableJunctions.map((i) => i.id))
       const prevIds = new Set(dotMarkersMapRef.current.keys())
 
       // Remove markers no longer in the list
@@ -145,13 +167,13 @@ export const useRouteMapRendering = ({
       }
 
       // Add markers that are new
-      for (const intersection of availableIntersections) {
-        if (dotMarkersMapRef.current.has(intersection.id)) {
+      for (const junction of availableJunctions) {
+        if (dotMarkersMapRef.current.has(junction.id)) {
           continue
         }
 
         const element = document.createElement('div')
-        Object.assign(element.style, s_intersectionDot, {
+        Object.assign(element.style, s_junctionDot, {
           background: '#6f2dbd',
         })
         element.addEventListener('mouseenter', () => {
@@ -165,25 +187,18 @@ export const useRouteMapRendering = ({
 
         const marker = new google.maps.marker.AdvancedMarkerElement({
           map,
-          position: { lat: intersection.lat, lng: intersection.lng },
+          position: { lat: junction.lat, lng: junction.lng },
           content: element,
-          title: intersection.otherRoadName,
+          title: junction.connectedRoadNames.join(', '),
           gmpClickable: true,
         })
         marker.addEventListener('gmp-click', () => {
-          onIntersectionClick(intersection)
+          onJunctionClickRef.current(junction)
         })
-        dotMarkersMapRef.current.set(intersection.id, marker)
-      }
-
-      return () => {
-        for (const marker of dotMarkersMapRef.current.values()) {
-          marker.map = null
-        }
-        dotMarkersMapRef.current.clear()
+        dotMarkersMapRef.current.set(junction.id, marker)
       }
     },
-    [map, availableIntersections, onIntersectionClick],
+    [map, availableJunctions],
   )
 
   // Draw route polyline through path
@@ -295,7 +310,7 @@ const s_addressMarker: Partial<CSSStyleDeclaration> = {
   cursor: 'default',
 }
 
-const s_intersectionDot: Partial<CSSStyleDeclaration> = {
+const s_junctionDot: Partial<CSSStyleDeclaration> = {
   width: '14px',
   height: '14px',
   borderRadius: '50%',
