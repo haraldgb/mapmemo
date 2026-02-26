@@ -24,7 +24,8 @@ public sealed class SessionService : ISessionService {
 
     public string GetOrCreateSessionId(HttpContext context) {
         if (context.Request.Cookies.TryGetValue(_options.CookieName, out var existingId) &&
-            !string.IsNullOrWhiteSpace(existingId)) {
+            !string.IsNullOrWhiteSpace(existingId) &&
+            _cache.TryGetValue(existingId, out _)) {
             _cache.Set(existingId, true, _options.Ttl);
             return existingId;
         }
