@@ -155,9 +155,9 @@ export const useRouteGameState = (): RouteGameState | null => {
             .getJunctionsForRoad(currentJunction.roadName)
             .find((j) => j.id === previousJunction.id) ?? null)
         : null
-    const directionEstablished = previousOnCurrentRoad !== null
-    const goingForward =
-      directionEstablished &&
+    const isDirectionEstablished = previousOnCurrentRoad !== null
+    const isGoingForward =
+      isDirectionEstablished &&
       currentJunction.nodeIndex > previousOnCurrentRoad!.nodeIndex
 
     const updateAvailable = () => {
@@ -168,15 +168,15 @@ export const useRouteGameState = (): RouteGameState | null => {
           if (junction.id === currentJunction.id) {
             continue
           }
-          if (isCurrentRoad && directionEstablished) {
+          if (isCurrentRoad && isDirectionEstablished) {
             if (
-              goingForward &&
+              isGoingForward &&
               junction.nodeIndex <= currentJunction.nodeIndex
             ) {
               continue
             }
             if (
-              !goingForward &&
+              !isGoingForward &&
               junction.nodeIndex >= currentJunction.nodeIndex
             ) {
               continue
