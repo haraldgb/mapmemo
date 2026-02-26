@@ -39,6 +39,12 @@ export const useRouteMapRendering = ({
   >(new Map())
   const polylineRef = useRef<google.maps.Polyline | null>(null)
   const hasFittedRef = useRef(false)
+  // useRef: keep latest callback without making it a dep of the diff effect,
+  // so onJunctionClick identity changes don't trigger full marker re-creation.
+  const onJunctionClickRef = useRef(onJunctionClick)
+  useEffect(function syncOnJunctionClickRef() {
+    onJunctionClickRef.current = onJunctionClick
+  })
 
   // Reset fit-bounds flag when game resets
   useEffect(
@@ -123,7 +129,23 @@ export const useRouteMapRendering = ({
     [map, isReady, startAddress, endAddress, availableJunctions],
   )
 
-  // Render junction dots with click handlers — diff by ID to avoid flash on update
+  // Clean up all dot markers when map instance changes or unmounts
+  useEffect(
+    function cleanupDotMarkersOnMapChange() {
+      if (!map) {
+        return
+      }
+      return () => {
+        for (const marker of dotMarkersMapRef.current.values()) {
+          marker.map = null
+        }
+        dotMarkersMapRef.current.clear()
+      }
+    },
+    [map],
+  )
+
+  // Diff junction dots — only add/remove changed markers, no full-reset cleanup
   useEffect(
     function renderJunctionDots() {
       if (!map) {
@@ -171,19 +193,12 @@ export const useRouteMapRendering = ({
           gmpClickable: true,
         })
         marker.addEventListener('gmp-click', () => {
-          onJunctionClick(junction)
+          onJunctionClickRef.current(junction)
         })
         dotMarkersMapRef.current.set(junction.id, marker)
       }
-
-      return () => {
-        for (const marker of dotMarkersMapRef.current.values()) {
-          marker.map = null
-        }
-        dotMarkersMapRef.current.clear()
-      }
     },
-    [map, availableJunctions, onJunctionClick],
+    [map, availableJunctions],
   )
 
   // Draw route polyline through path
