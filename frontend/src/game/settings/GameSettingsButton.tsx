@@ -62,5 +62,5 @@ export const GameSettingsButton = ({ isGameActive, resetGameState }: Props) => {
 const s_overlay =
   'pointer-events-auto fixed inset-0 z-30 flex items-center justify-center'
 const s_settings_button =
-  'inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800'
+  'inline-flex z-50 h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-800'
 const s_settings_icon = 'h-5 w-5'

@@ -92,7 +92,7 @@ const s_dropdown = 'relative mt-2'
 const s_dropdown_button =
   'flex w-full items-center justify-between rounded-md border border-slate-300 bg-white px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:border-slate-400'
 const s_dropdown_menu =
-  'absolute left-0 right-0 z-20 mt-2 max-h-48 overflow-auto rounded-md border border-slate-200 bg-white p-2 shadow-lg'
+  'absolute left-0 right-0 z-10 mt-2 max-h-48 overflow-auto rounded-md border border-slate-200 bg-white p-2 shadow-lg'
 const s_dropdown_empty = 'px-2 py-1 text-sm text-slate-500'
 const s_checkbox_option =
   'flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm text-slate-700 hover:bg-slate-50'

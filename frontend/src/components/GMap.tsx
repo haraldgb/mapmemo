@@ -43,20 +43,6 @@ export const GMap = ({
   )
 
   useEffect(
-    function updateFullscreenControlOptions() {
-      if (!map) {
-        return
-      }
-      map.setOptions({
-        fullscreenControlOptions: {
-          position: google.maps.ControlPosition.RIGHT_BOTTOM,
-        },
-      })
-    },
-    [map],
-  )
-
-  useEffect(
     function notifyMapReadyEffect() {
       if (!map || !markerLibrary?.AdvancedMarkerElement) {
         return
@@ -177,8 +163,9 @@ export const GMap = ({
         defaultCenter={{ lat: 59.91, lng: 10.73 }}
         defaultZoom={11}
         mapTypeControl={false}
-        fullscreenControl={true}
+        fullscreenControl={false}
         streetViewControl={false}
+        cameraControl={false}
         className={sf_map_canvas(isMapReady)}
         style={{ width: '100%', height: '100%' }}
       />

@@ -6,8 +6,8 @@ interface AppHeaderProps {
 }
 
 export const AppHeader = ({ isGameRoute }: AppHeaderProps) => {
-  const { isSettingsOpen } = useSettingsOpen()
-  const isVisible = !isGameRoute || isSettingsOpen
+  const { isSettingsOpen, isInfoOpen } = useSettingsOpen()
+  const isVisible = !isGameRoute || isSettingsOpen || isInfoOpen
 
   return (
     <header className={sf_header(isGameRoute, isVisible)}>

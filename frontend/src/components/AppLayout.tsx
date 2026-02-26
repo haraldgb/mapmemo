@@ -16,11 +16,12 @@ export const AppLayout = () => {
   const isGameRoute = location.pathname === '/game'
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [isInfoOpen, setIsInfoOpen] = useState(false)
   const settingsContextValue = useMemo(
     function buildSettingsContext() {
-      return { isSettingsOpen, setIsSettingsOpen }
+      return { isSettingsOpen, setIsSettingsOpen, isInfoOpen, setIsInfoOpen }
     },
-    [isSettingsOpen],
+    [isSettingsOpen, isInfoOpen],
   )
 
   useEffect(

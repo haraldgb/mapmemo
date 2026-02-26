@@ -6,8 +6,8 @@ interface AppFooterProps {
 }
 
 export const AppFooter = ({ version, isGameRoute }: AppFooterProps) => {
-  const { isSettingsOpen } = useSettingsOpen()
-  const isVisible = !isGameRoute || isSettingsOpen
+  const { isSettingsOpen, isInfoOpen } = useSettingsOpen()
+  const isVisible = !isGameRoute || isSettingsOpen || isInfoOpen
 
   return (
     <footer className={sf_footer(isGameRoute, isVisible)}>
