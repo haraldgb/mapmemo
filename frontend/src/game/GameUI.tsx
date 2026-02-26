@@ -19,10 +19,13 @@ export const GameUI = ({ gameState }: Props) => {
       ? gameState.routeGameState.isGameActive
       : gameState.areaGameState.isGameActive
 
+  const isAreaComplete =
+    gameState.mode !== 'route' && gameState.areaGameState.isComplete
+
   return (
     <>
       <div className={s_settings}>
-        <GameInfoButton />
+        <GameInfoButton isDisabled={isAreaComplete} />
         <GameSettingsButton
           isGameActive={isGameActive}
           resetGameState={gameState.resetGame}
@@ -72,7 +75,7 @@ const AreaGameUI = ({
 }
 
 const s_settings =
-  'pointer-events-auto absolute right-16 bottom-6 z-50 flex flex-col items-center gap-2'
+  'pointer-events-auto absolute right-4 bottom-4 flex flex-col items-center gap-4'
 const s_overlay =
   'pointer-events-auto absolute inset-0 z-20 flex items-center justify-center'
 const s_play_again =

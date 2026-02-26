@@ -219,7 +219,7 @@ const sf_name_input = (isCorrectState: boolean) =>
       : 'border-red-400 focus:border-red-500'
   }`
 const s_dropdown =
-  'absolute left-0 right-0 z-20 mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg'
+  'absolute left-0 right-0 z-10 mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg'
 const sf_dropdown_item = (isHighlighted: boolean) =>
   `flex cursor-pointer items-center justify-between px-4 py-2 text-left text-sm ${
     isHighlighted
