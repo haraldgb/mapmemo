@@ -176,6 +176,28 @@ export const GMap = ({
           {mapStatusLabel}
         </div>
       )}
+      <div className={s_attribution}>
+        <a
+          href='https://www.openstreetmap.org/copyright'
+          target='_blank'
+          rel='noreferrer'
+          className={s_attribution_link}
+        >
+          © OpenStreetMap contributors
+        </a>
+        <span className={s_attribution_separator_desktop_only}>
+          {/* \u00A0·\u00A0 */}
+          {'\u00A0·\u00A0'}
+        </span>
+        <a
+          href='https://www.oslo.kommune.no/statistikk-og-data/apne-data/'
+          target='_blank'
+          rel='noreferrer'
+          className={s_attribution_link}
+        >
+          © Oslo kommune
+        </a>
+      </div>
     </div>
   )
 }
@@ -186,3 +208,7 @@ const sf_map_canvas = (isReady: boolean) =>
   `absolute inset-0 transition-opacity duration-300 ${isReady ? 'opacity-100' : 'opacity-0'}`
 const s_loading_overlay =
   'absolute inset-0 flex flex-col items-center justify-center gap-3 rounded-xl bg-white/80 text-sm font-medium text-slate-600'
+const s_attribution =
+  'pointer-events-auto absolute flex flex-col-reverse sm:flex-row bottom-0 left-0 z-10 rounded bg-white/80 px-1.5 py-0.5 text-[10px] text-slate-600 backdrop-blur-sm'
+const s_attribution_link = 'hover:text-slate-900 hover:underline'
+const s_attribution_separator_desktop_only = 'hidden sm:inline'
