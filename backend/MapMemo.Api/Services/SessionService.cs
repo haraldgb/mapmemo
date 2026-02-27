@@ -16,10 +16,12 @@ public interface ISessionService {
 public sealed class SessionService : ISessionService {
     private readonly IMemoryCache _cache;
     private readonly MapMemoSessionOptions _options;
+    private readonly IHostEnvironment _env;
 
-    public SessionService(IMemoryCache cache, IOptions<MapMemoSessionOptions> options) {
+    public SessionService(IMemoryCache cache, IOptions<MapMemoSessionOptions> options, IHostEnvironment env) {
         _cache = cache;
         _options = options.Value;
+        _env = env;
     }
 
     public string GetOrCreateSessionId(HttpContext context) {
@@ -31,10 +33,11 @@ public sealed class SessionService : ISessionService {
         }
 
         var sessionId = Guid.NewGuid().ToString("N");
+        var isProduction = _env.IsProduction();
         var cookieOptions = new CookieOptions {
             HttpOnly = true,
-            SameSite = SameSiteMode.Lax,
-            Secure = context.Request.IsHttps,
+            SameSite = isProduction ? SameSiteMode.None : SameSiteMode.Lax,
+            Secure = isProduction,
             Expires = DateTimeOffset.UtcNow.Add(_options.Ttl),
             Path = "/"
         };
