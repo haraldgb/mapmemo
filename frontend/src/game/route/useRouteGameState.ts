@@ -98,7 +98,12 @@ export const useRouteGameState = (): RouteGameState | null => {
         setIsLoading(false)
       }
 
-      void init()
+      void init().catch((err) => {
+        if (isActive) {
+          setError(err instanceof Error ? err.message : 'Failed to initialize')
+          setIsLoading(false)
+        }
+      })
 
       return () => {
         isActive = false

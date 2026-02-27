@@ -1,7 +1,10 @@
 import { useEffect, useRef } from 'react'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useWhyDidYouUpdate(name: string, props: Record<string, any>) {
+export const useWhyDidYouUpdate = (
+  name: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  props: Record<string, any>,
+) => {
   // Get a mutable ref object where we can store props ...
   // ... for comparison next time this hook runs.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
