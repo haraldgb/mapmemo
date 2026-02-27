@@ -5,6 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+builder.Services.AddCors(options =>
+    options.AddDefaultPolicy(policy =>
+        policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddMemoryCache();
@@ -40,6 +45,8 @@ var hasHttpsUrl = splitUrls
 if (httpsPort is not null || hasHttpsUrl) {
     app.UseHttpsRedirection();
 }
+
+app.UseCors();
 
 app.MapSessionEndpoints();
 app.MapGeoDataEndpoints();
