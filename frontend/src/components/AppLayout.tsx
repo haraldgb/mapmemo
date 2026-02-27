@@ -6,6 +6,7 @@ import { AppFooter } from './AppFooter'
 import { AppHeader } from './AppHeader'
 import { Game } from '../game/Game'
 import { Landing } from '../landingPage/Landing'
+import { Privacy } from '../privacyPage/Privacy'
 import { mapmemoActions } from '../duck/reducer'
 import { SettingsOpenContext } from '../game/settings/SettingsOpenContext'
 
@@ -45,6 +46,10 @@ export const AppLayout = () => {
             <Route
               path='/game'
               element={<Game />}
+            />
+            <Route
+              path='/privacy'
+              element={<Privacy />}
             />
           </Routes>
         </main>
