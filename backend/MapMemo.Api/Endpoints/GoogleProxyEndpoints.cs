@@ -19,9 +19,9 @@ internal static class GoogleProxyEndpoints {
                     return Results.Unauthorized();
                 }
 
-                var apiKey = configuration["GoogleMaps:ApiKey"];
+                var apiKey = configuration["GoogleMaps:ServerApiKey"];
                 if (string.IsNullOrWhiteSpace(apiKey)) {
-                    return Results.Problem("Google Maps API key is not configured.", statusCode: 500);
+                    return Results.Problem("Google Maps server API key is not configured.", statusCode: 500);
                 }
 
                 HttpClient client = httpClientFactory.CreateClient();
@@ -55,9 +55,9 @@ internal static class GoogleProxyEndpoints {
                     return Results.Problem("Too many intermediates (max 98).", statusCode: 400);
                 }
 
-                var apiKey = configuration["GoogleMaps:ApiKey"];
+                var apiKey = configuration["GoogleMaps:ServerApiKey"];
                 if (string.IsNullOrWhiteSpace(apiKey)) {
-                    return Results.Problem("Google Maps API key is not configured.", statusCode: 500);
+                    return Results.Problem("Google Maps server API key is not configured.", statusCode: 500);
                 }
 
                 static object ToWaypoint(LatLngPair p) => new {

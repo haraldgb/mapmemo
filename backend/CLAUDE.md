@@ -8,7 +8,8 @@ All commands run from `backend/`. Requires [`just`](https://github.com/casey/jus
 
 ```bash
 just build              # build server
-just run                # start dev server (port 5243)
+just run-dev            # start dev server (port 5243)
+just run-prod           # start production server (port 5243, all interfaces)
 just test               # run all tests (requires Docker)
 just test-fast          # run tests without Docker
 just test-integration   # run only Docker integration tests
@@ -23,7 +24,8 @@ Or without `just`:
 
 ```bash
 dotnet build MapMemo.Api
-dotnet run --project MapMemo.Api
+dotnet run --project MapMemo.Api --launch-profile http       # dev
+dotnet run --project MapMemo.Api --launch-profile production # prod
 dotnet test MapMemo.Api.Tests/MapMemo.Api.Tests.csproj
 dotnet format MapMemo.Api/MapMemo.Api.csproj
 dotnet format MapMemo.Api.Tests/MapMemo.Api.Tests.csproj
