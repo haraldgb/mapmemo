@@ -1,4 +1,4 @@
-import type { MutableRefObject } from 'react'
+import type { RefObject } from 'react'
 import { ID_KEY } from '../consts'
 import { getFeatureProperty } from '../../utils/polygons'
 import type { GameEntry, GuessOutcome } from '../types'
@@ -6,7 +6,7 @@ import type { GameEntry, GuessOutcome } from '../types'
 type Props = {
   entries: GameEntry[]
   currentIndex: number
-  answeredIdsRef: MutableRefObject<Set<string>>
+  answeredIdsRef: RefObject<Set<string>>
   onGuess: (outcome: GuessOutcome) => void
 }
 
