@@ -10,8 +10,12 @@ build:
     dotnet build {{api}}
 
 # Start the dev server (port 5243)
-run:
-    dotnet run --project {{api}}
+run-dev:
+    dotnet run --project {{api}} --launch-profile http
+
+# Start the production server (port 5243, all interfaces)
+run-prod:
+    dotnet run --project {{api}} --launch-profile production
 
 # Run all tests (requires Docker)
 test:

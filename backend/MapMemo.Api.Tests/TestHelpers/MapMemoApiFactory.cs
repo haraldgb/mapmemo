@@ -20,10 +20,12 @@ public sealed class MapMemoApiFactory : WebApplicationFactory<Program> {
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder) {
+        builder.UseEnvironment("Testing");
         builder.UseContentRoot(_contentRoot);
         builder.ConfigureAppConfiguration(config => {
             var settings = new Dictionary<string, string?> {
-                ["GoogleMaps:ApiKey"] = "test-google-maps-key"
+                ["GoogleMaps:ApiKey"] = "test-google-maps-key",
+                ["GoogleMaps:ServerApiKey"] = "test-google-maps-server-key"
             };
             config.AddInMemoryCollection(settings);
         });
