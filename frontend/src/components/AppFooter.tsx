@@ -1,6 +1,19 @@
 import { Link } from 'react-router-dom'
 import { useSettingsOpen } from '../game/settings/SettingsOpenContext'
 
+const REPO = 'https://github.com/haraldgb/mapmemo'
+
+const getVersionInfo = (version: string): { display: string; url: string } => {
+  if (/^[0-9a-f]+$/i.test(version)) {
+    return { display: `#${version}`, url: `${REPO}/commit/${version}` }
+  }
+  const offsetMatch = version.match(/^(.+)-\d+-g([0-9a-f]+)$/)
+  if (offsetMatch) {
+    return { display: version, url: `${REPO}/commit/${offsetMatch[2]}` }
+  }
+  return { display: version, url: `${REPO}/releases/tag/${version}` }
+}
+
 interface AppFooterProps {
   version: string
   isGameRoute: boolean
@@ -9,11 +22,19 @@ interface AppFooterProps {
 export const AppFooter = ({ version, isGameRoute }: AppFooterProps) => {
   const { isSettingsOpen, isInfoOpen } = useSettingsOpen()
   const isVisible = !isGameRoute || isSettingsOpen || isInfoOpen
+  const { display, url } = getVersionInfo(version)
 
   return (
     <footer className={sf_footer(isGameRoute, isVisible)}>
       <div className={s_footer_inner}>
-        <span>Version {version}</span>
+        <a
+          href={url}
+          className={s_repo_link}
+          rel='noreferrer'
+          target='_blank'
+        >
+          Version {display}
+        </a>
         <div className={s_footer_links}>
           <Link
             to='/privacy'
