@@ -19,6 +19,10 @@ public sealed class MapMemoDbContext(DbContextOptions<MapMemoDbContext> options)
             e.Property(c => c.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
             e.Property(c => c.Added).HasColumnName("added").HasDefaultValueSql("now()");
             e.Property(c => c.Updated).HasColumnName("updated").HasDefaultValueSql("now()");
+            e.Property(c => c.MinLat).HasColumnName("min_lat");
+            e.Property(c => c.MinLon).HasColumnName("min_lon");
+            e.Property(c => c.MaxLat).HasColumnName("max_lat");
+            e.Property(c => c.MaxLon).HasColumnName("max_lon");
         });
 
         modelBuilder.Entity<Road>(e => {

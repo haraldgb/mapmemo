@@ -9,6 +9,40 @@ namespace MapMemo.Api.Endpoints;
 
 internal static class GeoDataEndpoints {
     public static void MapGeoDataEndpoints(this IEndpointRouteBuilder app) {
+        app.MapGet("/api/cities", async (
+            HttpContext context,
+            MapMemoDbContext db,
+            ISessionService sessionService) => {
+                if (!sessionService.HasValidSession(context)) {
+                    return Results.Unauthorized();
+                }
+
+                List<CityListItemDto> cities = await db.Cities
+                    .Select(c => new CityListItemDto(c.Id, c.Name))
+                    .ToListAsync();
+
+                return Results.Json(cities);
+            });
+
+        app.MapGet("/api/cities/{cityName}", async (
+            HttpContext context,
+            MapMemoDbContext db,
+            ISessionService sessionService,
+            string cityName) => {
+                if (!sessionService.HasValidSession(context)) {
+                    return Results.Unauthorized();
+                }
+
+                City? city = await db.Cities
+                    .FirstOrDefaultAsync(c => c.Name.ToLower() == cityName.ToLower());
+
+                if (city is null) {
+                    return Results.NotFound(new { error = "City not found." });
+                }
+
+                return Results.Json(new CityDetailDto(city.Id, city.Name, city.MinLat, city.MinLon, city.MaxLat, city.MaxLon));
+            });
+
         app.MapGet("/api/oslo-neighboorhoods", (
             HttpContext context,
             IWebHostEnvironment env,

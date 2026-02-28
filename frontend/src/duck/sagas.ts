@@ -1,6 +1,8 @@
 import { all, call, put, takeLatest } from 'redux-saga/effects'
 import { mapmemoActions } from './reducer'
 import type { GameSettings } from '../game/settings/settingsTypes'
+import type { CityInfo } from '../api/cityApi'
+import { fetchCityInfo } from '../api/cityApi'
 import { loadGameSettings, saveGameSettings } from './sagaUtils'
 import { DELBYDELER_GEOJSON_URL } from '../game/consts'
 import {
@@ -30,6 +32,8 @@ function* handleInitializeApp() {
       // reducer has default values if none are found.
       yield put(mapmemoActions.setGameSettings(storedSettings))
     }
+    const cityInfo: CityInfo = yield call(fetchCityInfo, 'Oslo, Norway')
+    yield put(mapmemoActions.setCityInfo(cityInfo))
     yield call(loadAreaOptionsFromOsloGeoJson)
   } finally {
     yield put(mapmemoActions.setAppInitialized(true))
