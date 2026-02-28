@@ -37,7 +37,6 @@ export const useRouteMapRendering = ({
   const dotMarkersMapRef = useRef<
     Map<number, google.maps.marker.AdvancedMarkerElement>
   >(new Map())
-  const polylineRef = useRef<google.maps.Polyline | null>(null)
   const hasFittedRef = useRef(false)
   // useRef: keep latest callback without making it a dep of the diff effect,
   // so onJunctionClick identity changes don't trigger full marker re-creation.
@@ -201,42 +200,89 @@ export const useRouteMapRendering = ({
     [map, availableJunctions],
   )
 
-  // Draw route polyline through path
+  // Draw numbered path dots — full re-render on path or availableJunctions change.
+  // Same junction can appear multiple times (revisit); indices are grouped and
+  // shown as "1·4" (two visits) or "..." (three or more).
+  // Path dots that are also in availableJunctions remain clickable.
   useEffect(
-    function drawRoutePolyline() {
-      if (!map || !startAddress) {
+    function drawPathDots() {
+      if (!map || path.length === 0) {
         return
       }
 
-      // Remove old polyline
-      if (polylineRef.current) {
-        polylineRef.current.setMap(null)
-      }
+      const availableIds = new Set(availableJunctions.map((j) => j.id))
 
-      if (path.length === 0) {
-        polylineRef.current = null
-        return
-      }
-
-      const points = [
-        { lat: startAddress.lat, lng: startAddress.lng },
-        ...path.map((p) => ({ lat: p.lat, lng: p.lng })),
-      ]
-
-      const polyline = new google.maps.Polyline({
-        path: points,
-        strokeColor: '#3b82f6',
-        strokeWeight: 4,
-        strokeOpacity: 0.8,
-        map,
+      // Group 1-based visit indices by junction ID
+      const indicesByJunctionId = new Map<number, number[]>()
+      path.forEach((junction, i) => {
+        const existing = indicesByJunctionId.get(junction.id) ?? []
+        existing.push(i + 1)
+        indicesByJunctionId.set(junction.id, existing)
       })
-      polylineRef.current = polyline
+
+      // One dot per unique junction (first occurrence determines position)
+      const uniqueJunctions = path.filter(
+        (j, i) => path.findIndex((p) => p.id === j.id) === i,
+      )
+
+      const markers = uniqueJunctions.map((junction) => {
+        const indices = indicesByJunctionId.get(junction.id)!
+        const label =
+          indices.length === 1
+            ? String(indices[0])
+            : indices.length === 2
+              ? `${indices[0]}·${indices[1]}`
+              : '...'
+        const fontSize = indices.length === 2 ? '9px' : '11px'
+        const isClickable = availableIds.has(junction.id)
+
+        const element = document.createElement('div')
+        element.textContent = label
+        Object.assign(element.style, s_pathDot, {
+          fontSize,
+          cursor: isClickable ? 'pointer' : 'default',
+          background: isClickable ? '#6f2dbd' : '#3b82f6',
+        })
+
+        element.addEventListener('mouseenter', () => {
+          element.style.transform = 'scale(1.5)'
+          element.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)'
+        })
+        element.addEventListener('mouseleave', () => {
+          element.style.transform = 'scale(1)'
+          element.style.boxShadow = '0 1px 4px rgba(0,0,0,0.35)'
+        })
+
+        const marker = new google.maps.marker.AdvancedMarkerElement({
+          map,
+          position: { lat: junction.lat, lng: junction.lng },
+          content: element,
+          title: junction.connectedRoadNames.join(', '),
+          gmpClickable: isClickable,
+        })
+
+        if (isClickable) {
+          // Use the availableJunctions version — it has the correct roadName for
+          // the current traversal context, which handleJunctionClick needs for
+          // direction logic. The path version has the roadName from the original visit.
+          const availableJunction = availableJunctions.find(
+            (j) => j.id === junction.id,
+          )!
+          marker.addEventListener('gmp-click', () => {
+            onJunctionClickRef.current(availableJunction)
+          })
+        }
+
+        return marker
+      })
 
       return () => {
-        polyline.setMap(null)
+        for (const marker of markers) {
+          marker.map = null
+        }
       }
     },
-    [map, startAddress, path],
+    [map, path, availableJunctions],
   )
 
   // Highlight B marker when destination is reachable, attach click handler
@@ -318,4 +364,20 @@ const s_junctionDot: Partial<CSSStyleDeclaration> = {
   boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
   cursor: 'pointer',
   transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+}
+
+const s_pathDot: Partial<CSSStyleDeclaration> = {
+  color: 'white',
+  fontWeight: '700',
+  width: '22px',
+  height: '22px',
+  borderRadius: '50%',
+  background: '#3b82f6',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '2px solid white',
+  boxShadow: '0 1px 4px rgba(0,0,0,0.35)',
+  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+  cursor: 'default',
 }
