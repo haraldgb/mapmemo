@@ -116,7 +116,7 @@ export const usePlaceAutocomplete = ({
         streetAddress: string,
       ) => {
         if (!roadName) {
-          setValidationError('Could not determine road name for this address.')
+          setValidationError('Try selecting from the dropdown.')
           return
         }
         setValidationError(null)
@@ -188,9 +188,7 @@ export const usePlaceAutocomplete = ({
           const geocoder = new google.maps.Geocoder()
           void geocoder.geocode({ address: query }, (results, status) => {
             if (status !== 'OK' || !results?.length) {
-              setValidationError(
-                'Could not find that address. Try selecting from the dropdown.',
-              )
+              setValidationError('Try selecting from the dropdown.')
               return
             }
             const result = results[0]

@@ -42,6 +42,7 @@ export const GameSettings = ({
   )
   const cityInfo = useSelector((state: RootState) => state.mapmemo.cityInfo)
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const [addressError, setAddressError] = useState<string | null>(null)
   const isRouteMode = draftSettings.mode === 'route'
   const isNameMode = draftSettings.mode === 'name'
   const showDifficulty = isNameMode
@@ -144,7 +145,12 @@ export const GameSettings = ({
       </div>
       {isRouteMode && (
         <div className={s_section}>
-          <div className={s_label}>Addresses</div>
+          <div className={s_addresses_header}>
+            <div className={s_label}>Addresses</div>
+            {addressError && (
+              <span className={s_address_error}>{addressError}</span>
+            )}
+          </div>
           <div className='mt-2'>
             <RouteAddressInput
               addresses={draftSettings.routeAddresses}
@@ -153,6 +159,7 @@ export const GameSettings = ({
               onAddressesChange={(routeAddresses) =>
                 setDraftSettings((prev) => ({ ...prev, routeAddresses }))
               }
+              onValidationError={setAddressError}
             />
           </div>
         </div>
@@ -307,9 +314,11 @@ export const GameSettings = ({
 }
 
 const s_container =
-  'flex h-[635px] max-h-[calc(100dvh-6rem)] w-[343px] flex-col overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 text-left shadow-lg'
+  'flex h-[635px] max-h-[calc(100dvh-6rem)] w-[343px] flex-col rounded-xl border border-slate-200 bg-white p-4 text-left shadow-lg'
 const s_title = 'text-sm font-semibold text-slate-900'
 const s_section = 'mt-3'
+const s_addresses_header = 'flex items-baseline gap-2'
+const s_address_error = 'text-xs text-amber-600 m-0'
 const s_label = 'text-xs font-semibold uppercase tracking-wide text-slate-500'
 const sf_option_group = (isDisabled: boolean) =>
   `mt-2 flex flex-wrap gap-2 ${isDisabled ? 'opacity-60' : ''}`
