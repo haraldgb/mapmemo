@@ -33,7 +33,7 @@ export type RouteGameState = {
  * Returns `null` when the active mode is not `route`.
  */
 export const useRouteGameState = (): RouteGameState | null => {
-  const { seed, mode } = useSelector(
+  const { seed, mode, routeAddresses } = useSelector(
     (state: RootState) => state.mapmemo.gameSettings,
   )
   const roadGraph = useRoadGraph()
@@ -91,7 +91,7 @@ export const useRouteGameState = (): RouteGameState | null => {
         setIsComplete(false)
         setCurrentJunctionHasMissingConnectedJunctions(false)
 
-        const [rawStart, rawEnd] = getRoutePair(seed)
+        const [rawStart, rawEnd] = getRoutePair(seed, routeAddresses)
         const [resolvedStart, resolvedEnd] = await Promise.all([
           resolveAddress(rawStart),
           resolveAddress(rawEnd),

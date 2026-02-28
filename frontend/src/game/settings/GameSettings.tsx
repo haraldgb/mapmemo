@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
-import { mapmemoActions } from '../../duck/reducer'
+import { mapmemoActions, DEFAULT_GAME_SETTINGS } from '../../duck/reducer'
 import {
   AREA_COUNT_OPTIONS,
   AREA_SUB_MODE_DESCRIPTIONS,
@@ -15,6 +15,7 @@ import {
 import { ConfirmResetPopup } from '../../components/ConfirmResetPopup'
 import type { GameSettings as GameSettingsModel } from './settingsTypes'
 import { AreaDropdown } from './AreaDropdown'
+import { RouteAddressInput } from './RouteAddressInput'
 import { isValidSeed, randomSeed } from '../utils'
 
 const PRESET_SEEDS = ['dickbutt', 'kumquats', 'oslobest'] as const
@@ -39,6 +40,7 @@ export const GameSettings = ({
   const areaOptions = useSelector(
     (state: RootState) => state.mapmemo.areaOptions,
   )
+  const cityInfo = useSelector((state: RootState) => state.mapmemo.cityInfo)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const isRouteMode = draftSettings.mode === 'route'
   const isNameMode = draftSettings.mode === 'name'
@@ -140,6 +142,21 @@ export const GameSettings = ({
           })}
         </div>
       </div>
+      {isRouteMode && (
+        <div className={s_section}>
+          <div className={s_label}>Addresses</div>
+          <div className='mt-2'>
+            <RouteAddressInput
+              addresses={draftSettings.routeAddresses}
+              defaultAddresses={DEFAULT_GAME_SETTINGS.routeAddresses}
+              cityInfo={cityInfo}
+              onAddressesChange={(routeAddresses) =>
+                setDraftSettings((prev) => ({ ...prev, routeAddresses }))
+              }
+            />
+          </div>
+        </div>
+      )}
       {showDifficulty && (
         <div className={s_section}>
           <div className={s_label}>Difficulty</div>

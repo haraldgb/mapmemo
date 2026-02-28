@@ -10,6 +10,8 @@ import type {
   GameMode,
   GameSettings,
 } from '../game/settings/settingsTypes'
+import type { RouteAddress } from '../game/route/types'
+import { DEFAULT_ROUTE_ADDRESSES } from '../game/route/routeAddresses'
 import { isValidSeed, randomSeed } from '../game/utils'
 
 const SETTINGS_STORAGE_KEY = 'mapmemo.gameSettings'
@@ -28,6 +30,23 @@ const isValidAreaSubMode = (value: unknown): value is AreaSubMode =>
 const isValidAreaCount = (value: unknown): value is number =>
   typeof value === 'number' &&
   AREA_COUNT_OPTIONS.some((option) => option.value === value)
+
+const isRouteAddress = (value: unknown): value is RouteAddress =>
+  value !== null &&
+  typeof value === 'object' &&
+  typeof (value as RouteAddress).label === 'string' &&
+  typeof (value as RouteAddress).streetAddress === 'string' &&
+  typeof (value as RouteAddress).roadName === 'string' &&
+  typeof (value as RouteAddress).lat === 'number' &&
+  typeof (value as RouteAddress).lng === 'number'
+
+const normalizeRouteAddresses = (value: unknown): RouteAddress[] => {
+  if (!Array.isArray(value)) {
+    return DEFAULT_ROUTE_ADDRESSES
+  }
+  const valid = value.filter(isRouteAddress)
+  return valid.length >= 2 ? valid : DEFAULT_ROUTE_ADDRESSES
+}
 
 const normalizeSelectedAreas = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
@@ -79,6 +98,7 @@ export const loadGameSettings = (): GameSettings | null => {
       areaCount: candidate.areaCount ?? AREA_COUNT_OPTIONS[0]?.value ?? 10,
       selectedAreas: normalizeSelectedAreas(candidate.selectedAreas),
       seed: seedValue,
+      routeAddresses: normalizeRouteAddresses(candidate.routeAddresses),
     }
   } catch {
     return null
@@ -98,6 +118,7 @@ export const saveGameSettings = (settings: GameSettings) => {
       areaCount: settings.areaCount,
       selectedAreas: settings.selectedAreas,
       seed: settings.seed,
+      routeAddresses: settings.routeAddresses,
     }
     window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload))
   } catch {
