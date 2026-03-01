@@ -9,6 +9,7 @@ import type {
   GameDifficulty,
   GameMode,
   GameSettings,
+  SelectedCity,
 } from '../game/settings/settingsTypes'
 import type { RouteAddress } from '../game/route/types'
 import { DEFAULT_ROUTE_ADDRESSES } from '../game/route/routeAddresses'
@@ -46,6 +47,21 @@ const normalizeRouteAddresses = (value: unknown): RouteAddress[] => {
   }
   const valid = value.filter(isRouteAddress)
   return valid.length >= 2 ? valid : DEFAULT_ROUTE_ADDRESSES
+}
+
+const normalizeSelectedCity = (value: unknown): SelectedCity | null => {
+  if (
+    value !== null &&
+    typeof value === 'object' &&
+    typeof (value as SelectedCity).id === 'number' &&
+    typeof (value as SelectedCity).name === 'string'
+  ) {
+    return {
+      id: (value as SelectedCity).id,
+      name: (value as SelectedCity).name,
+    }
+  }
+  return null
 }
 
 const normalizeSelectedAreas = (value: unknown): string[] => {
@@ -99,6 +115,7 @@ export const loadGameSettings = (): GameSettings | null => {
       selectedAreas: normalizeSelectedAreas(candidate.selectedAreas),
       seed: seedValue,
       routeAddresses: normalizeRouteAddresses(candidate.routeAddresses),
+      selectedCity: normalizeSelectedCity(candidate.selectedCity),
     }
   } catch {
     return null
@@ -119,6 +136,7 @@ export const saveGameSettings = (settings: GameSettings) => {
       selectedAreas: settings.selectedAreas,
       seed: settings.seed,
       routeAddresses: settings.routeAddresses,
+      selectedCity: settings.selectedCity,
     }
     window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload))
   } catch {

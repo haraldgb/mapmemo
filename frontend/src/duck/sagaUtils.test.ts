@@ -43,6 +43,7 @@ const baseSettings = {
   selectedAreas: [],
   seed: 'abcd1234',
   routeAddresses: [validAddress, { ...validAddress, label: 'Test street 2' }],
+  selectedCity: null,
 }
 
 describe('loadGameSettings / saveGameSettings round-trip', () => {
