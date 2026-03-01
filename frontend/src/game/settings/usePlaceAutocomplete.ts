@@ -195,11 +195,11 @@ export const usePlaceAutocomplete = ({
             const location = result.geometry.location
             const lat = location.lat()
             const lng = location.lng()
-            // SAFETY: Geocoder AddressComponent is structurally compatible with
-            // Places AddressComponent (both have `types: string[]` and `longText`)
-            const roadName = extractRouteComponent(
-              result.address_components as unknown as google.maps.places.AddressComponent[],
+            // GeocoderAddressComponent uses long_name (not longText like Places API)
+            const routeComponent = result.address_components?.find((c) =>
+              c.types.includes('route'),
             )
+            const roadName = routeComponent?.long_name ?? ''
             const label = result.formatted_address ?? query
             const streetAddress = result.formatted_address ?? query
             addAddress(lat, lng, roadName, label, streetAddress)

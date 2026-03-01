@@ -127,7 +127,7 @@ export const useRouteGameState = (): RouteGameState | null => {
         isActive = false
       }
     },
-    [seed, gameKey, mode, roadGraph],
+    [seed, gameKey, mode, roadGraph, routeAddresses],
   )
 
   const handleJunctionClick = (currentJunction: SelectedJunction) => {
