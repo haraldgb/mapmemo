@@ -17,13 +17,10 @@
     "run-checks": "pnpm lint && pnpm format-check && pnpm type-check && pnpm test"
   },
   "dependencies": {
-    "@google-cloud/secret-manager": "^6.1.1",
     "@reduxjs/toolkit": "^2.11.2",
     "@vercel/analytics": "^1.6.1",
-    "@vercel/oidc": "^3.1.0",
     "@vis.gl/react-google-maps": "^1.7.1",
     "antd": "^6.2.0",
-    "google-auth-library": "^10.5.0",
     "react": "19.3.0-canary-4a3d993e-20260114",
     "react-dom": "19.3.0-canary-4a3d993e-20260114",
     "react-error-boundary": "^6.1.0",
