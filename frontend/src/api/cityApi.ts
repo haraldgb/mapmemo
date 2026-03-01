@@ -5,6 +5,15 @@ export type CityListItem = {
   name: string
 }
 
+export type DefaultAddress = {
+  id: number
+  label: string
+  streetAddress: string
+  roadName: string
+  lat: number
+  lng: number
+}
+
 export type CityInfo = {
   id: number
   name: string
@@ -12,6 +21,7 @@ export type CityInfo = {
   minLon: number | null
   maxLat: number | null
   maxLon: number | null
+  defaultAddresses: DefaultAddress[]
 }
 
 export const fetchCities = async (): Promise<CityListItem[]> => {
@@ -25,16 +35,13 @@ export const fetchCities = async (): Promise<CityListItem[]> => {
   return (await response.json()) as CityListItem[]
 }
 
-export const fetchCityInfo = async (cityName: string): Promise<CityInfo> => {
-  const response = await fetchWithSessionRetry(
-    `/api/cities/${encodeURIComponent(cityName)}`,
-    {
-      credentials: 'include',
-      headers: { Accept: 'application/json' },
-    },
-  )
+export const fetchCityInfo = async (cityId: number): Promise<CityInfo> => {
+  const response = await fetchWithSessionRetry(`/api/cities/${cityId}`, {
+    credentials: 'include',
+    headers: { Accept: 'application/json' },
+  })
   if (!response.ok) {
-    throw new Error(`Failed to fetch city info for ${cityName}`)
+    throw new Error(`Failed to fetch city info for id ${cityId}`)
   }
   return (await response.json()) as CityInfo
 }

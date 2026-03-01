@@ -24,23 +24,28 @@ internal static class GeoDataEndpoints {
                 return Results.Json(cities);
             });
 
-        app.MapGet("/api/cities/{cityName}", async (
+        app.MapGet("/api/cities/{cityId:long}", async (
             HttpContext context,
             MapMemoDbContext db,
             ISessionService sessionService,
-            string cityName) => {
+            long cityId) => {
                 if (!sessionService.HasValidSession(context)) {
                     return Results.Unauthorized();
                 }
 
                 City? city = await db.Cities
-                    .FirstOrDefaultAsync(c => c.Name.ToLower() == cityName.ToLower());
+                    .Include(c => c.DefaultAddresses)
+                    .FirstOrDefaultAsync(c => c.Id == cityId);
 
                 if (city is null) {
                     return Results.NotFound(new { error = "City not found." });
                 }
 
-                return Results.Json(new CityDetailDto(city.Id, city.Name, city.MinLat, city.MinLon, city.MaxLat, city.MaxLon));
+                var defaultAddresses = city.DefaultAddresses
+                    .Select(a => new DefaultAddressDto(a.Id, a.Label, a.StreetAddress, a.RoadName, a.Lat, a.Lng))
+                    .ToList();
+
+                return Results.Json(new CityDetailDto(city.Id, city.Name, city.MinLat, city.MinLon, city.MaxLat, city.MaxLon, defaultAddresses));
             });
 
         app.MapGet("/api/oslo-neighboorhoods", (
