@@ -68,6 +68,11 @@ export const RouteGame = () => {
                   Preparing next game...
                 </div>
               )}
+            {routeGameState.currentJunctionHasMissingConnectedJunctions && (
+              <div className={s_fetching_spinner_wrapper}>
+                <Spinner className={s_fetching_spinner} />
+              </div>
+            )}
             {routeGameState.error && (
               <div className={s_error}>{routeGameState.error}</div>
             )}
@@ -81,5 +86,9 @@ export const RouteGame = () => {
 const s_section = 'flex min-h-0 flex-1'
 const s_reset_overlay =
   'absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 rounded-xl bg-white/80 text-sm font-medium text-slate-600'
+const s_fetching_spinner_wrapper =
+  'pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center'
+const s_fetching_spinner =
+  'h-10 w-10 animate-spin rounded-full border-3 border-slate-300 border-t-sky-500'
 const s_error =
   'pointer-events-none absolute inset-x-4 bottom-4 z-10 rounded-xl bg-red-50 px-4 py-3 text-center text-sm font-medium text-red-700'

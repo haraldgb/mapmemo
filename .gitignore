@@ -3,6 +3,7 @@ tanker.txt
 .secrets
 .env
 osm/
+.claude/worktrees
 
 # Editor directories and files
 .vscode/*

@@ -12,7 +12,7 @@ import { SettingsOpenContext } from '../game/settings/SettingsOpenContext'
 
 export const AppLayout = () => {
   const dispatch = useDispatch<AppDispatch>()
-  const appVersion = 'N/A'
+  const appVersion = __APP_VERSION__
   const location = useLocation()
   const isGameRoute = location.pathname === '/game'
 

@@ -8,10 +8,11 @@ import type { SelectedJunction } from './types'
 
 const CITY_NAME = 'Oslo, Norway'
 
-type RoadGraph = {
+export type RoadGraph = {
   fetchRoad: (roadName: string) => Promise<RoadInfo | null>
   getJunctionsForRoad: (roadName: string) => SelectedJunction[]
   isFetchedAsPrimary: (roadName: string) => boolean
+  isInCache: (roadName: string) => boolean
   reset: () => void
 }
 
@@ -60,10 +61,19 @@ export const useRoadGraph = (): RoadGraph => {
   const isFetchedAsPrimary = (roadName: string): boolean =>
     fetchedAsPrimaryRef.current.has(roadName)
 
+  const isInCache = (roadName: string): boolean =>
+    roadCacheRef.current.has(roadName)
+
   const reset = () => {
     roadCacheRef.current = new Map()
     fetchedAsPrimaryRef.current = new Set()
   }
 
-  return { fetchRoad, getJunctionsForRoad, isFetchedAsPrimary, reset }
+  return {
+    fetchRoad,
+    getJunctionsForRoad,
+    isFetchedAsPrimary,
+    isInCache,
+    reset,
+  }
 }
