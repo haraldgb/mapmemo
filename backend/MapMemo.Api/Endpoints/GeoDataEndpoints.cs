@@ -4,6 +4,7 @@ using MapMemo.Api.Models;
 using MapMemo.Api.Services;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
 
 namespace MapMemo.Api.Endpoints;
 
@@ -46,6 +47,51 @@ internal static class GeoDataEndpoints {
                     .ToList();
 
                 return Results.Json(new CityDetailDto(city.Id, city.Name, city.MinLat, city.MinLon, city.MaxLat, city.MaxLon, defaultAddresses));
+            });
+
+        app.MapPost("/api/cities/{cityId:long}/default-addresses", async (
+            HttpContext context,
+            MapMemoDbContext db,
+            IConfiguration config,
+            long cityId,
+            AddDefaultAddressRequest request) => {
+                string? adminApiKey = config["AdminApiKey"];
+                if (string.IsNullOrWhiteSpace(adminApiKey)) {
+                    return Results.StatusCode(503);
+                }
+
+                if (!context.Request.Headers.TryGetValue("X-Api-Key", out StringValues key)
+                    || key.ToString() != adminApiKey) {
+                    return Results.Unauthorized();
+                }
+
+                City? city = await db.Cities.FindAsync(cityId);
+                if (city is null) {
+                    return Results.NotFound(new { error = "City not found." });
+                }
+
+                if (city.MinLat is not null && city.MaxLat is not null
+                    && city.MinLon is not null && city.MaxLon is not null) {
+                    if (request.Lat < city.MinLat || request.Lat > city.MaxLat
+                        || request.Lng < city.MinLon || request.Lng > city.MaxLon) {
+                        return Results.BadRequest(new { error = "Address is outside city bounds." });
+                    }
+                }
+
+                var address = new DefaultAddress {
+                    CityId = cityId,
+                    Label = request.Label,
+                    StreetAddress = request.StreetAddress,
+                    RoadName = request.RoadName,
+                    Lat = request.Lat,
+                    Lng = request.Lng,
+                };
+
+                db.DefaultAddresses.Add(address);
+                await db.SaveChangesAsync();
+
+                var dto = new DefaultAddressDto(address.Id, address.Label, address.StreetAddress, address.RoadName, address.Lat, address.Lng);
+                return Results.Created($"/api/cities/{cityId}/default-addresses/{address.Id}", dto);
             });
 
         app.MapGet("/api/oslo-neighboorhoods", (
