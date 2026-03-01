@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
-import { mapmemoActions } from '../../duck/reducer'
+import { mapmemoActions, DEFAULT_GAME_SETTINGS } from '../../duck/reducer'
 import {
   AREA_COUNT_OPTIONS,
   AREA_SUB_MODE_DESCRIPTIONS,
@@ -15,6 +15,7 @@ import {
 import { ConfirmResetPopup } from '../../components/ConfirmResetPopup'
 import type { GameSettings as GameSettingsModel } from './settingsTypes'
 import { AreaDropdown } from './AreaDropdown'
+import { RouteAddressInput } from './RouteAddressInput'
 import { isValidSeed, randomSeed } from '../utils'
 
 const PRESET_SEEDS = ['dickbutt', 'kumquats', 'oslobest'] as const
@@ -39,7 +40,20 @@ export const GameSettings = ({
   const areaOptions = useSelector(
     (state: RootState) => state.mapmemo.areaOptions,
   )
+  const cityInfo = useSelector((state: RootState) => state.mapmemo.cityInfo)
   const containerRef = useRef<HTMLDivElement | null>(null)
+  const [addressError, setAddressError] = useState<string | null>(null)
+  const [addressErrorLevel, setAddressErrorLevel] = useState<
+    'warning' | 'error'
+  >('warning')
+
+  const handleAddressError = (
+    error: string | null,
+    level: 'warning' | 'error',
+  ) => {
+    setAddressError(error)
+    setAddressErrorLevel(level)
+  }
   const isRouteMode = draftSettings.mode === 'route'
   const isNameMode = draftSettings.mode === 'name'
   const showDifficulty = isNameMode
@@ -49,6 +63,8 @@ export const GameSettings = ({
     selectedAreaCount === 0 ? 'All areas' : `${selectedAreaCount} selected`
 
   const isSeedValid = isValidSeed(draftSettings.seed)
+  const isApplyEnabled =
+    isSeedValid && (!isRouteMode || draftSettings.routeAddresses.length >= 2)
 
   const handleSeedChange = (value: string) => {
     const filtered = value.replace(/[^a-z0-9]/gi, '').toLowerCase()
@@ -140,6 +156,32 @@ export const GameSettings = ({
           })}
         </div>
       </div>
+      {isRouteMode && (
+        <div className={s_section}>
+          <div className={s_addresses_header}>
+            <div className={s_label}>Addresses</div>
+            {addressError && (
+              <span className={sf_address_error(addressErrorLevel)}>
+                {addressError}
+              </span>
+            )}
+          </div>
+          <div className={s_addresses_input}>
+            <RouteAddressInput
+              addresses={draftSettings.routeAddresses}
+              defaultAddresses={DEFAULT_GAME_SETTINGS.routeAddresses}
+              cityInfo={cityInfo}
+              onAddressesChange={(routeAddresses) =>
+                setDraftSettings((prev) => ({ ...prev, routeAddresses }))
+              }
+              onValidationError={handleAddressError}
+            />
+          </div>
+          {draftSettings.routeAddresses.length < 2 && (
+            <p className={s_apply_hint}>Add at least 2 addresses to play.</p>
+          )}
+        </div>
+      )}
       {showDifficulty && (
         <div className={s_section}>
           <div className={s_label}>Difficulty</div>
@@ -279,8 +321,8 @@ export const GameSettings = ({
         <button
           type='button'
           onClick={handleApplyClick}
-          disabled={!isSeedValid}
-          className={sf_primary_button(isSeedValid)}
+          disabled={!isApplyEnabled}
+          className={sf_primary_button(isApplyEnabled)}
         >
           Apply
         </button>
@@ -290,9 +332,13 @@ export const GameSettings = ({
 }
 
 const s_container =
-  'flex h-[635px] max-h-[calc(100dvh-6rem)] w-[343px] flex-col overflow-y-auto rounded-xl border border-slate-200 bg-white p-4 text-left shadow-lg'
+  'flex h-[635px] max-h-[calc(100dvh-6rem)] w-[343px] flex-col rounded-xl border border-slate-200 bg-white p-4 text-left shadow-lg'
 const s_title = 'text-sm font-semibold text-slate-900'
 const s_section = 'mt-3'
+const s_addresses_header = 'flex items-baseline gap-2'
+const s_addresses_input = 'mt-2'
+const sf_address_error = (level: 'warning' | 'error') =>
+  `text-xs m-0 ${level === 'error' ? 'text-red-600' : 'text-amber-600'}`
 const s_label = 'text-xs font-semibold uppercase tracking-wide text-slate-500'
 const sf_option_group = (isDisabled: boolean) =>
   `mt-2 flex flex-wrap gap-2 ${isDisabled ? 'opacity-60' : ''}`
@@ -317,6 +363,7 @@ const sf_seed_input = (isValid: boolean) =>
       ? 'border-slate-300 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500'
       : 'border-amber-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500'
   }`
+const s_apply_hint = 'mt-2 text-center text-xs text-amber-600'
 const s_actions = 'mt-4 flex items-center justify-end gap-2'
 const sf_primary_button = (isEnabled: boolean) =>
   `rounded-md px-3 py-1.5 text-sm font-semibold text-white ${
