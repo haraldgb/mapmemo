@@ -151,7 +151,7 @@ export const GameSettings = ({
               <span className={s_address_error}>{addressError}</span>
             )}
           </div>
-          <div className='mt-2'>
+          <div className={s_addresses_input}>
             <RouteAddressInput
               addresses={draftSettings.routeAddresses}
               defaultAddresses={DEFAULT_GAME_SETTINGS.routeAddresses}
@@ -318,6 +318,7 @@ const s_container =
 const s_title = 'text-sm font-semibold text-slate-900'
 const s_section = 'mt-3'
 const s_addresses_header = 'flex items-baseline gap-2'
+const s_addresses_input = 'mt-2'
 const s_address_error = 'text-xs text-amber-600 m-0'
 const s_label = 'text-xs font-semibold uppercase tracking-wide text-slate-500'
 const sf_option_group = (isDisabled: boolean) =>
