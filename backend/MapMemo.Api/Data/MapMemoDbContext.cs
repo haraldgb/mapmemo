@@ -6,6 +6,7 @@ namespace MapMemo.Api.Data;
 
 public sealed class MapMemoDbContext(DbContextOptions<MapMemoDbContext> options) : DbContext(options) {
     public DbSet<City> Cities => Set<City>();
+    public DbSet<DefaultAddress> DefaultAddresses => Set<DefaultAddress>();
     public DbSet<Road> Roads => Set<Road>();
     public DbSet<OsmWay> OsmWays => Set<OsmWay>();
     public DbSet<Roundabout> Roundabouts => Set<Roundabout>();
@@ -61,6 +62,19 @@ public sealed class MapMemoDbContext(DbContextOptions<MapMemoDbContext> options)
             e.Property(j => j.RoundaboutId).HasColumnName("roundabout_id");
             e.HasOne(j => j.Roundabout).WithMany(r => r.Junctions).HasForeignKey(j => j.RoundaboutId).OnDelete(DeleteBehavior.SetNull);
             e.HasIndex(j => j.RoundaboutId).HasDatabaseName("idx_junction_roundabout_id");
+        });
+
+        modelBuilder.Entity<DefaultAddress>(e => {
+            e.ToTable("default_address");
+            e.Property(a => a.Id).HasColumnName("id");
+            e.Property(a => a.CityId).HasColumnName("city_id");
+            e.Property(a => a.Label).HasColumnName("label").HasMaxLength(200).IsRequired();
+            e.Property(a => a.StreetAddress).HasColumnName("street_address").HasMaxLength(500).IsRequired();
+            e.Property(a => a.RoadName).HasColumnName("road_name").HasMaxLength(200).IsRequired();
+            e.Property(a => a.Lat).HasColumnName("lat");
+            e.Property(a => a.Lng).HasColumnName("lng");
+            e.HasOne(a => a.City).WithMany(c => c.DefaultAddresses).HasForeignKey(a => a.CityId).OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(a => a.CityId).HasDatabaseName("idx_default_address_city_id");
         });
 
         modelBuilder.Entity<RoadJunction>(e => {
