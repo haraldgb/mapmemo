@@ -12,4 +12,5 @@ public sealed class City {
 
     public ICollection<Road> Roads { get; set; } = [];
     public ICollection<Roundabout> Roundabouts { get; set; } = [];
+    public ICollection<DefaultAddress> DefaultAddresses { get; set; } = [];
 }
