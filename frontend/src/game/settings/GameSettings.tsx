@@ -63,6 +63,8 @@ export const GameSettings = ({
     selectedAreaCount === 0 ? 'All areas' : `${selectedAreaCount} selected`
 
   const isSeedValid = isValidSeed(draftSettings.seed)
+  const isApplyEnabled =
+    isSeedValid && (!isRouteMode || draftSettings.routeAddresses.length >= 2)
 
   const handleSeedChange = (value: string) => {
     const filtered = value.replace(/[^a-z0-9]/gi, '').toLowerCase()
@@ -175,6 +177,9 @@ export const GameSettings = ({
               onValidationError={handleAddressError}
             />
           </div>
+          {draftSettings.routeAddresses.length < 2 && (
+            <p className={s_apply_hint}>Add at least 2 addresses to play.</p>
+          )}
         </div>
       )}
       {showDifficulty && (
@@ -316,8 +321,8 @@ export const GameSettings = ({
         <button
           type='button'
           onClick={handleApplyClick}
-          disabled={!isSeedValid}
-          className={sf_primary_button(isSeedValid)}
+          disabled={!isApplyEnabled}
+          className={sf_primary_button(isApplyEnabled)}
         >
           Apply
         </button>
@@ -358,6 +363,7 @@ const sf_seed_input = (isValid: boolean) =>
       ? 'border-slate-300 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500'
       : 'border-amber-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500'
   }`
+const s_apply_hint = 'mt-2 text-center text-xs text-amber-600'
 const s_actions = 'mt-4 flex items-center justify-end gap-2'
 const sf_primary_button = (isEnabled: boolean) =>
   `rounded-md px-3 py-1.5 text-sm font-semibold text-white ${
