@@ -13,10 +13,17 @@ import {
   SEED_LENGTH,
 } from '../consts'
 import { ConfirmResetPopup } from '../../components/ConfirmResetPopup'
-import type { GameSettings as GameSettingsModel } from './settingsTypes'
+import type {
+  GameSettings as GameSettingsModel,
+  SelectedCity,
+} from './settingsTypes'
 import { AreaDropdown } from './AreaDropdown'
 import { RouteAddressInput } from './RouteAddressInput'
+import { CityInput } from './CityInput'
 import { isValidSeed, randomSeed } from '../utils'
+import type { CityInfo } from '../../api/cityApi'
+import { fetchCityInfo } from '../../api/cityApi'
+import type { RouteAddress } from '../route/types'
 
 const PRESET_SEEDS = ['dickbutt', 'kumquats', 'oslobest'] as const
 
@@ -40,7 +47,12 @@ export const GameSettings = ({
   const areaOptions = useSelector(
     (state: RootState) => state.mapmemo.areaOptions,
   )
-  const cityInfo = useSelector((state: RootState) => state.mapmemo.cityInfo)
+  const reduxCityInfo = useSelector(
+    (state: RootState) => state.mapmemo.cityInfo,
+  )
+  const [draftCityInfo, setDraftCityInfo] = useState<CityInfo | null>(
+    reduxCityInfo,
+  )
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [addressError, setAddressError] = useState<string | null>(null)
   const [addressErrorLevel, setAddressErrorLevel] = useState<
@@ -93,8 +105,34 @@ export const GameSettings = ({
   // prompt user to confirm reset of active game
   const [isConfirming, setIsConfirming] = useState(false)
 
+  const handleCitySelect = (city: SelectedCity) => {
+    fetchCityInfo(city.id)
+      .then((info) => {
+        setDraftCityInfo(info)
+        setDraftSettings((prev) => {
+          const isNewCity = prev.selectedCity?.id !== city.id
+          const routeAddresses: RouteAddress[] = isNewCity
+            ? info.defaultAddresses.map((a) => ({
+                label: a.label,
+                streetAddress: a.streetAddress,
+                roadName: a.roadName,
+                lat: a.lat,
+                lng: a.lng,
+              }))
+            : prev.routeAddresses
+          return { ...prev, selectedCity: city, routeAddresses }
+        })
+      })
+      .catch(() => {
+        setDraftSettings((prev) => ({ ...prev, selectedCity: city }))
+      })
+  }
+
   const applySettings = () => {
     dispatch(mapmemoActions.setGameSettings(draftSettings))
+    if (draftCityInfo !== null) {
+      dispatch(mapmemoActions.setCityInfo(draftCityInfo))
+    }
     onClose()
   }
 
@@ -158,6 +196,15 @@ export const GameSettings = ({
       </div>
       {isRouteMode && (
         <div className={s_section}>
+          <div className={s_label}>City</div>
+          <CityInput
+            selectedCity={draftSettings.selectedCity}
+            onSelect={handleCitySelect}
+          />
+        </div>
+      )}
+      {isRouteMode && (
+        <div className={s_section}>
           <div className={s_addresses_header}>
             <div className={s_label}>Addresses</div>
             {addressError && (
@@ -170,7 +217,7 @@ export const GameSettings = ({
             <RouteAddressInput
               addresses={draftSettings.routeAddresses}
               defaultAddresses={DEFAULT_GAME_SETTINGS.routeAddresses}
-              cityInfo={cityInfo}
+              cityInfo={draftCityInfo}
               onAddressesChange={(routeAddresses) =>
                 setDraftSettings((prev) => ({ ...prev, routeAddresses }))
               }

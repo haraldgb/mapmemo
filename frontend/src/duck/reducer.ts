@@ -13,6 +13,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
   selectedAreas: [],
   seed: randomSeed(),
   routeAddresses: DEFAULT_ROUTE_ADDRESSES,
+  selectedCity: null,
 }
 export interface MapmemoState {
   gameSettings: GameSettings
