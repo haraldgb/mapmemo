@@ -1,15 +1,12 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace MapMemo.Api.Data.Migrations
-{
+namespace MapMemo.Api.Data.Migrations {
     /// <inheritdoc />
-    public partial class AddCityBounds : Migration
-    {
+    public partial class AddCityBounds : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.AddColumn<double>(
                 name: "max_lat",
                 table: "city",
@@ -43,8 +40,7 @@ namespace MapMemo.Api.Data.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropColumn(
                 name: "max_lat",
                 table: "city");
