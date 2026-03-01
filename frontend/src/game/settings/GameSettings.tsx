@@ -77,6 +77,17 @@ export const GameSettings = ({
   const isSeedValid = isValidSeed(draftSettings.seed)
   const isApplyEnabled =
     isSeedValid && (!isRouteMode || draftSettings.routeAddresses.length >= 2)
+  const hasCitySelected = draftSettings.selectedCity !== null
+  const cityDefaultAddresses: RouteAddress[] =
+    draftCityInfo !== null && draftCityInfo.defaultAddresses.length >= 2
+      ? draftCityInfo.defaultAddresses.map((a) => ({
+          label: a.label,
+          streetAddress: a.streetAddress,
+          roadName: a.roadName,
+          lat: a.lat,
+          lng: a.lng,
+        }))
+      : DEFAULT_GAME_SETTINGS.routeAddresses
 
   const handleSeedChange = (value: string) => {
     const filtered = value.replace(/[^a-z0-9]/gi, '').toLowerCase()
@@ -216,8 +227,9 @@ export const GameSettings = ({
           <div className={s_addresses_input}>
             <RouteAddressInput
               addresses={draftSettings.routeAddresses}
-              defaultAddresses={DEFAULT_GAME_SETTINGS.routeAddresses}
+              defaultAddresses={cityDefaultAddresses}
               cityInfo={draftCityInfo}
+              disabled={!hasCitySelected}
               onAddressesChange={(routeAddresses) =>
                 setDraftSettings((prev) => ({ ...prev, routeAddresses }))
               }
