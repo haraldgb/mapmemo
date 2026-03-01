@@ -37,7 +37,16 @@ export const useRouteMapRendering = ({
   const dotMarkersMapRef = useRef<
     Map<number, google.maps.marker.AdvancedMarkerElement>
   >(new Map())
-  const polylineRef = useRef<google.maps.Polyline | null>(null)
+  const pathDotMarkersMapRef = useRef<
+    Map<
+      number,
+      {
+        marker: google.maps.marker.AdvancedMarkerElement
+        element: HTMLElement
+        removeClickListener: (() => void) | null
+      }
+    >
+  >(new Map())
   const hasFittedRef = useRef(false)
   // useRef: keep latest callback without making it a dep of the diff effect,
   // so onJunctionClick identity changes don't trigger full marker re-creation.
@@ -140,6 +149,14 @@ export const useRouteMapRendering = ({
           marker.map = null
         }
         dotMarkersMapRef.current.clear()
+        for (const {
+          marker,
+          removeClickListener,
+        } of pathDotMarkersMapRef.current.values()) {
+          removeClickListener?.()
+          marker.map = null
+        }
+        pathDotMarkersMapRef.current.clear()
       }
     },
     [map],
@@ -155,9 +172,11 @@ export const useRouteMapRendering = ({
       const nextIds = new Set(availableJunctions.map((i) => i.id))
       const prevIds = new Set(dotMarkersMapRef.current.keys())
 
-      // Remove markers no longer in the list
+      const pathIds = new Set(pathDotMarkersMapRef.current.keys())
+
+      // Remove markers no longer in the list or now shown as numbered path dots
       for (const id of prevIds) {
-        if (!nextIds.has(id)) {
+        if (!nextIds.has(id) || pathIds.has(id)) {
           const marker = dotMarkersMapRef.current.get(id)
           if (marker) {
             marker.map = null
@@ -166,9 +185,12 @@ export const useRouteMapRendering = ({
         }
       }
 
-      // Add markers that are new
+      // Add markers that are new (skip junctions already shown as numbered path dots)
       for (const junction of availableJunctions) {
-        if (dotMarkersMapRef.current.has(junction.id)) {
+        if (
+          dotMarkersMapRef.current.has(junction.id) ||
+          pathIds.has(junction.id)
+        ) {
           continue
         }
 
@@ -201,42 +223,127 @@ export const useRouteMapRendering = ({
     [map, availableJunctions],
   )
 
-  // Draw route polyline through path
+  // Diff numbered path dots — update in-place when possible, only create/remove
+  // what changed. Same junction can appear multiple times (revisit); indices grouped
+  // and shown as "1·4" (two visits) or "..." (three or more).
+  // Path dots that are also in availableJunctions remain clickable; the unnumbered
+  // junction dot is suppressed for those junctions (see renderJunctionDots).
   useEffect(
-    function drawRoutePolyline() {
-      if (!map || !startAddress) {
+    function renderPathDots() {
+      if (!map) {
         return
       }
 
-      // Remove old polyline
-      if (polylineRef.current) {
-        polylineRef.current.setMap(null)
-      }
+      const availableIds = new Set(availableJunctions.map((j) => j.id))
 
-      if (path.length === 0) {
-        polylineRef.current = null
-        return
-      }
-
-      const points = [
-        { lat: startAddress.lat, lng: startAddress.lng },
-        ...path.map((p) => ({ lat: p.lat, lng: p.lng })),
-      ]
-
-      const polyline = new google.maps.Polyline({
-        path: points,
-        strokeColor: '#3b82f6',
-        strokeWeight: 4,
-        strokeOpacity: 0.8,
-        map,
+      // Group 1-based visit indices by junction ID
+      const indicesByJunctionId = new Map<number, number[]>()
+      path.forEach((junction, i) => {
+        const existing = indicesByJunctionId.get(junction.id) ?? []
+        existing.push(i + 1)
+        indicesByJunctionId.set(junction.id, existing)
       })
-      polylineRef.current = polyline
 
-      return () => {
-        polyline.setMap(null)
+      // One dot per unique junction (first occurrence determines position)
+      const uniqueJunctions = path.filter(
+        (j, i) => path.findIndex((p) => p.id === j.id) === i,
+      )
+      const nextIds = new Set(uniqueJunctions.map((j) => j.id))
+
+      // Remove path dots no longer in path
+      const prevPathIds = new Set(pathDotMarkersMapRef.current.keys())
+      for (const id of prevPathIds) {
+        if (!nextIds.has(id)) {
+          const entry = pathDotMarkersMapRef.current.get(id)
+          if (entry) {
+            entry.removeClickListener?.()
+            entry.marker.map = null
+          }
+          pathDotMarkersMapRef.current.delete(id)
+        }
+      }
+
+      for (const junction of uniqueJunctions) {
+        const indices = indicesByJunctionId.get(junction.id)!
+        const label =
+          indices.length === 1
+            ? String(indices[0])
+            : indices.length === 2
+              ? `${indices[0]}·${indices[1]}`
+              : '...'
+        const fontSize = indices.length === 2 ? '9px' : '11px'
+        const isClickable = availableIds.has(junction.id)
+        // Use the availableJunctions version — it has the correct roadName for
+        // the current traversal context, which handleJunctionClick needs for
+        // direction logic. The path version has the roadName from the original visit.
+        const availableJunction = isClickable
+          ? availableJunctions.find((j) => j.id === junction.id)!
+          : null
+
+        const existing = pathDotMarkersMapRef.current.get(junction.id)
+        if (existing) {
+          // Update in-place — no marker recreation
+          existing.element.textContent = label
+          existing.element.style.fontSize = fontSize
+          existing.element.style.background = isClickable
+            ? '#6f2dbd'
+            : '#3b82f6'
+          existing.element.style.cursor = isClickable ? 'pointer' : 'default'
+          existing.marker.gmpClickable = isClickable
+
+          existing.removeClickListener?.()
+          existing.removeClickListener = null
+          if (isClickable && availableJunction) {
+            const handleClick = () =>
+              onJunctionClickRef.current(availableJunction)
+            existing.marker.addEventListener('gmp-click', handleClick)
+            existing.removeClickListener = () =>
+              existing.marker.removeEventListener('gmp-click', handleClick)
+          }
+        } else {
+          // Create new marker
+          const element = document.createElement('div')
+          element.textContent = label
+          Object.assign(element.style, s_pathDot, {
+            fontSize,
+            cursor: isClickable ? 'pointer' : 'default',
+            background: isClickable ? '#6f2dbd' : '#3b82f6',
+          })
+          element.addEventListener('mouseenter', () => {
+            element.style.transform = 'scale(1.5)'
+            element.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)'
+          })
+          element.addEventListener('mouseleave', () => {
+            element.style.transform = 'scale(1)'
+            element.style.boxShadow = '0 1px 4px rgba(0,0,0,0.35)'
+          })
+
+          const marker = new google.maps.marker.AdvancedMarkerElement({
+            map,
+            position: { lat: junction.lat, lng: junction.lng },
+            content: element,
+            title: junction.connectedRoadNames.join(', '),
+            gmpClickable: isClickable,
+          })
+
+          let removeClickListener: (() => void) | null = null
+          if (isClickable && availableJunction) {
+            const handleClick = () =>
+              onJunctionClickRef.current(availableJunction)
+            marker.addEventListener('gmp-click', handleClick)
+            removeClickListener = () =>
+              marker.removeEventListener('gmp-click', handleClick)
+          }
+
+          pathDotMarkersMapRef.current.set(junction.id, {
+            marker,
+            element,
+            removeClickListener,
+          })
+        }
       }
     },
-    [map, startAddress, path],
+    [map, path, availableJunctions],
   )
 
   // Highlight B marker when destination is reachable, attach click handler
@@ -318,4 +425,20 @@ const s_junctionDot: Partial<CSSStyleDeclaration> = {
   boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
   cursor: 'pointer',
   transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+}
+
+const s_pathDot: Partial<CSSStyleDeclaration> = {
+  color: 'white',
+  fontWeight: '700',
+  width: '22px',
+  height: '22px',
+  borderRadius: '50%',
+  background: '#3b82f6',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: '2px solid white',
+  boxShadow: '0 1px 4px rgba(0,0,0,0.35)',
+  transition: 'transform 0.15s ease, box-shadow 0.15s ease',
+  cursor: 'default',
 }
