@@ -20,6 +20,7 @@ type Options = {
   cityInfo: CityInfo | null
   addresses: RouteAddress[]
   onAddressesChange: (addresses: RouteAddress[]) => void
+  disabled?: boolean
 }
 
 type Result = {
@@ -43,6 +44,7 @@ export const usePlaceAutocomplete = ({
   cityInfo,
   addresses,
   onAddressesChange,
+  disabled = false,
 }: Options): Result => {
   // stateRef keeps the latest addresses + callback so that event handlers
   // created inside the effect closure never stale-close over old values.
@@ -68,7 +70,7 @@ export const usePlaceAutocomplete = ({
 
   useEffect(
     function initAutocompleteElement() {
-      if (!placesLibrary || !containerRef.current) {
+      if (disabled || !placesLibrary || !containerRef.current) {
         return
       }
       // Safety: prevent double-mount if cleanup didn't clear the container
@@ -236,7 +238,7 @@ export const usePlaceAutocomplete = ({
         element.remove()
       }
     },
-    [placesLibrary, cityInfo, autocompleteKey, containerRef],
+    [disabled, placesLibrary, cityInfo, autocompleteKey, containerRef],
   )
 
   return { validationError, validationErrorLevel }

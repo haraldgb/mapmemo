@@ -10,6 +10,7 @@ type Props = {
   addresses: RouteAddress[]
   defaultAddresses: RouteAddress[]
   cityInfo: CityInfo | null
+  disabled?: boolean
   onAddressesChange: (addresses: RouteAddress[]) => void
   onValidationError: (error: string | null, level: 'warning' | 'error') => void
 }
@@ -18,6 +19,7 @@ export const RouteAddressInput = ({
   addresses,
   defaultAddresses,
   cityInfo,
+  disabled = false,
   onAddressesChange,
   onValidationError,
 }: Props) => {
@@ -31,6 +33,7 @@ export const RouteAddressInput = ({
     cityInfo,
     addresses,
     onAddressesChange,
+    disabled,
   })
 
   useEffect(
@@ -47,17 +50,22 @@ export const RouteAddressInput = ({
     )
 
   return (
-    <div className={s_root}>
-      <div
-        ref={containerRef}
-        className={s_autocomplete_container}
-      />
+    <div className={sf_root(disabled)}>
+      {disabled ? (
+        <div className={s_disabled_placeholder}>Select a city first</div>
+      ) : (
+        <div
+          ref={containerRef}
+          className={s_autocomplete_container}
+        />
+      )}
 
       <div className={s_accordion}>
         <button
           type='button'
+          disabled={disabled}
           onClick={() => setIsExpanded((v) => !v)}
-          className={s_toggle}
+          className={sf_toggle(disabled)}
         >
           <span className={s_toggle_label}>
             {addresses.length}{' '}
@@ -104,14 +112,17 @@ export const RouteAddressInput = ({
   )
 }
 
-const s_root = 'flex flex-col gap-1.5'
+const sf_root = (isDisabled: boolean) =>
+  `flex flex-col gap-1.5 ${isDisabled ? 'opacity-60' : ''}`
 const s_accordion = 'overflow-hidden rounded-md border border-slate-200'
-const s_toggle =
-  'flex w-full items-center justify-between bg-slate-50 px-3 py-1.5 text-left text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-800'
+const sf_toggle = (isDisabled: boolean) =>
+  `flex w-full items-center justify-between bg-slate-50 px-3 py-1.5 text-left text-xs font-medium text-slate-600 transition-colors ${isDisabled ? 'cursor-not-allowed' : 'hover:bg-slate-100 hover:text-slate-800'}`
 const s_toggle_label = 'select-none'
 const sf_chevron = (isOpen: boolean) =>
   `h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : 'rotate-0'}`
 const s_autocomplete_container = 'w-full rounded-md border border-slate-300'
+const s_disabled_placeholder =
+  'w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-400'
 const s_collapsible = 'border-t border-slate-200 bg-white'
 const s_list = 'overflow-auto max-h-40'
 const s_list_item =
