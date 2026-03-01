@@ -7,7 +7,7 @@ import type { RouteAddress } from './types'
 
 const makeAddress = (label: string): RouteAddress => ({
   label,
-  streetAddress: `${label}, Oslo`,
+  streetAddress: `${label}, Oslo, Norway`,
   roadName: label,
   lat: 59.9,
   lng: 10.7,
