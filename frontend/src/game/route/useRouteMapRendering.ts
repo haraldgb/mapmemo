@@ -37,6 +37,16 @@ export const useRouteMapRendering = ({
   const dotMarkersMapRef = useRef<
     Map<number, google.maps.marker.AdvancedMarkerElement>
   >(new Map())
+  const pathDotMarkersMapRef = useRef<
+    Map<
+      number,
+      {
+        marker: google.maps.marker.AdvancedMarkerElement
+        element: HTMLElement
+        removeClickListener: (() => void) | null
+      }
+    >
+  >(new Map())
   const hasFittedRef = useRef(false)
   // useRef: keep latest callback without making it a dep of the diff effect,
   // so onJunctionClick identity changes don't trigger full marker re-creation.
@@ -139,6 +149,14 @@ export const useRouteMapRendering = ({
           marker.map = null
         }
         dotMarkersMapRef.current.clear()
+        for (const {
+          marker,
+          removeClickListener,
+        } of pathDotMarkersMapRef.current.values()) {
+          removeClickListener?.()
+          marker.map = null
+        }
+        pathDotMarkersMapRef.current.clear()
       }
     },
     [map],
@@ -200,13 +218,13 @@ export const useRouteMapRendering = ({
     [map, availableJunctions],
   )
 
-  // Draw numbered path dots — full re-render on path or availableJunctions change.
-  // Same junction can appear multiple times (revisit); indices are grouped and
-  // shown as "1·4" (two visits) or "..." (three or more).
+  // Diff numbered path dots — update in-place when possible, only create/remove
+  // what changed. Same junction can appear multiple times (revisit); indices are
+  // grouped and shown as "1·4" (two visits) or "..." (three or more).
   // Path dots that are also in availableJunctions remain clickable.
   useEffect(
     function drawPathDots() {
-      if (!map || path.length === 0) {
+      if (!map) {
         return
       }
 
@@ -224,8 +242,22 @@ export const useRouteMapRendering = ({
       const uniqueJunctions = path.filter(
         (j, i) => path.findIndex((p) => p.id === j.id) === i,
       )
+      const nextIds = new Set(uniqueJunctions.map((j) => j.id))
 
-      const markers = uniqueJunctions.map((junction) => {
+      // Remove path dots no longer in path
+      const prevPathIds = new Set(pathDotMarkersMapRef.current.keys())
+      for (const id of prevPathIds) {
+        if (!nextIds.has(id)) {
+          const entry = pathDotMarkersMapRef.current.get(id)
+          if (entry) {
+            entry.removeClickListener?.()
+            entry.marker.map = null
+          }
+          pathDotMarkersMapRef.current.delete(id)
+        }
+      }
+
+      for (const junction of uniqueJunctions) {
         const indices = indicesByJunctionId.get(junction.id)!
         const label =
           indices.length === 1
@@ -235,50 +267,73 @@ export const useRouteMapRendering = ({
               : '...'
         const fontSize = indices.length === 2 ? '9px' : '11px'
         const isClickable = availableIds.has(junction.id)
+        // Use the availableJunctions version — it has the correct roadName for
+        // the current traversal context, which handleJunctionClick needs for
+        // direction logic. The path version has the roadName from the original visit.
+        const availableJunction = isClickable
+          ? availableJunctions.find((j) => j.id === junction.id)!
+          : null
 
-        const element = document.createElement('div')
-        element.textContent = label
-        Object.assign(element.style, s_pathDot, {
-          fontSize,
-          cursor: isClickable ? 'pointer' : 'default',
-          background: isClickable ? '#6f2dbd' : '#3b82f6',
-        })
+        const existing = pathDotMarkersMapRef.current.get(junction.id)
+        if (existing) {
+          // Update in-place — no marker recreation
+          existing.element.textContent = label
+          existing.element.style.fontSize = fontSize
+          existing.element.style.background = isClickable
+            ? '#6f2dbd'
+            : '#3b82f6'
+          existing.element.style.cursor = isClickable ? 'pointer' : 'default'
+          existing.marker.gmpClickable = isClickable
 
-        element.addEventListener('mouseenter', () => {
-          element.style.transform = 'scale(1.5)'
-          element.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)'
-        })
-        element.addEventListener('mouseleave', () => {
-          element.style.transform = 'scale(1)'
-          element.style.boxShadow = '0 1px 4px rgba(0,0,0,0.35)'
-        })
-
-        const marker = new google.maps.marker.AdvancedMarkerElement({
-          map,
-          position: { lat: junction.lat, lng: junction.lng },
-          content: element,
-          title: junction.connectedRoadNames.join(', '),
-          gmpClickable: isClickable,
-        })
-
-        if (isClickable) {
-          // Use the availableJunctions version — it has the correct roadName for
-          // the current traversal context, which handleJunctionClick needs for
-          // direction logic. The path version has the roadName from the original visit.
-          const availableJunction = availableJunctions.find(
-            (j) => j.id === junction.id,
-          )!
-          marker.addEventListener('gmp-click', () => {
-            onJunctionClickRef.current(availableJunction)
+          existing.removeClickListener?.()
+          existing.removeClickListener = null
+          if (isClickable && availableJunction) {
+            const handleClick = () =>
+              onJunctionClickRef.current(availableJunction)
+            existing.marker.addEventListener('gmp-click', handleClick)
+            existing.removeClickListener = () =>
+              existing.marker.removeEventListener('gmp-click', handleClick)
+          }
+        } else {
+          // Create new marker
+          const element = document.createElement('div')
+          element.textContent = label
+          Object.assign(element.style, s_pathDot, {
+            fontSize,
+            cursor: isClickable ? 'pointer' : 'default',
+            background: isClickable ? '#6f2dbd' : '#3b82f6',
           })
-        }
+          element.addEventListener('mouseenter', () => {
+            element.style.transform = 'scale(1.5)'
+            element.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)'
+          })
+          element.addEventListener('mouseleave', () => {
+            element.style.transform = 'scale(1)'
+            element.style.boxShadow = '0 1px 4px rgba(0,0,0,0.35)'
+          })
 
-        return marker
-      })
+          const marker = new google.maps.marker.AdvancedMarkerElement({
+            map,
+            position: { lat: junction.lat, lng: junction.lng },
+            content: element,
+            title: junction.connectedRoadNames.join(', '),
+            gmpClickable: isClickable,
+          })
 
-      return () => {
-        for (const marker of markers) {
-          marker.map = null
+          let removeClickListener: (() => void) | null = null
+          if (isClickable && availableJunction) {
+            const handleClick = () =>
+              onJunctionClickRef.current(availableJunction)
+            marker.addEventListener('gmp-click', handleClick)
+            removeClickListener = () =>
+              marker.removeEventListener('gmp-click', handleClick)
+          }
+
+          pathDotMarkersMapRef.current.set(junction.id, {
+            marker,
+            element,
+            removeClickListener,
+          })
         }
       }
     },
