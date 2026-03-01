@@ -11,7 +11,7 @@ type Props = {
   defaultAddresses: RouteAddress[]
   cityInfo: CityInfo | null
   onAddressesChange: (addresses: RouteAddress[]) => void
-  onValidationError: (error: string | null) => void
+  onValidationError: (error: string | null, level: 'warning' | 'error') => void
 }
 
 export const RouteAddressInput = ({
@@ -25,7 +25,7 @@ export const RouteAddressInput = ({
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [isExpanded, setIsExpanded] = useState(false)
 
-  const { validationError } = usePlaceAutocomplete({
+  const { validationError, validationErrorLevel } = usePlaceAutocomplete({
     containerRef,
     placesLibrary,
     cityInfo,
@@ -35,9 +35,9 @@ export const RouteAddressInput = ({
 
   useEffect(
     function syncValidationError() {
-      onValidationError(validationError)
+      onValidationError(validationError, validationErrorLevel)
     },
-    [validationError, onValidationError],
+    [validationError, validationErrorLevel, onValidationError],
   )
 
   const isDefaultList =

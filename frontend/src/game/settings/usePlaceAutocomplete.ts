@@ -24,6 +24,7 @@ type Options = {
 
 type Result = {
   validationError: string | null
+  validationErrorLevel: 'warning' | 'error'
 }
 
 /**
@@ -50,6 +51,9 @@ export const usePlaceAutocomplete = ({
   const stateRef = useRef({ addresses, onAddressesChange })
 
   const [validationError, setValidationError] = useState<string | null>(null)
+  const [validationErrorLevel, setValidationErrorLevel] = useState<
+    'warning' | 'error'
+  >('warning')
 
   // Incrementing this key is how we clear the autocomplete input after a
   // successful selection — it triggers cleanup + recreation of the element.
@@ -96,17 +100,9 @@ export const usePlaceAutocomplete = ({
       element.style.colorScheme = 'light'
       containerRef.current.appendChild(element)
 
-      // Tracks input value via the composed `input` event (bubbles out of shadow
-      // DOM), used by the Enter-key fallback path to know what to geocode.
-      let lastInputValue = ''
-
       // Prevents double-add when both gmp-select and the Enter fallback fire for
       // the same keypress (e.g. inline ghost-text selection with Enter).
       let gmpHandledCurrentEnter = false
-
-      const handleInput = (event: Event) => {
-        lastInputValue = (event.target as HTMLInputElement).value
-      }
 
       const addAddress = (
         lat: number,
@@ -117,9 +113,24 @@ export const usePlaceAutocomplete = ({
       ) => {
         if (!roadName) {
           setValidationError('Try selecting from the dropdown.')
+          setValidationErrorLevel('warning')
+          return
+        }
+        const { addresses: current, onAddressesChange: onChange } =
+          stateRef.current
+        if (current.some((a) => a.roadName === roadName)) {
+          setValidationError('Addresses on the same road cannot be added.')
+          setValidationErrorLevel('error')
+          const container = containerRef.current
+          if (container) {
+            container.classList.add('animate-shake')
+            setTimeout(() => container.classList.remove('animate-shake'), 400)
+          }
+          setAutocompleteKey((k) => k + 1)
           return
         }
         setValidationError(null)
+        setValidationErrorLevel('warning')
         const newAddress: RouteAddress = {
           label,
           streetAddress,
@@ -127,8 +138,6 @@ export const usePlaceAutocomplete = ({
           lat,
           lng,
         }
-        const { addresses: current, onAddressesChange: onChange } =
-          stateRef.current
         onChange([...current, newAddress])
         // Increment key to clear the input by destroying + recreating the element
         setAutocompleteKey((k) => k + 1)
@@ -181,7 +190,12 @@ export const usePlaceAutocomplete = ({
           if (gmpHandledCurrentEnter) {
             return
           }
-          const query = lastInputValue.trim()
+          // SAFETY: PlaceAutocompleteElement exposes `value` at runtime but
+          // @types/google.maps omits it. We use it here because the clear button
+          // clears the input without firing an `input` event, making any cached
+          // value stale. Reading element.value at timeout time is the only
+          // reliable way to know whether the input is still populated.
+          const query = (element as unknown as { value: string }).value.trim()
           if (!query) {
             return
           }
@@ -208,12 +222,10 @@ export const usePlaceAutocomplete = ({
       }
 
       element.addEventListener('gmp-select', handlePlaceChanged)
-      element.addEventListener('input', handleInput)
       element.addEventListener('keydown', handleKeyDown, { capture: true })
 
       return () => {
         element.removeEventListener('gmp-select', handlePlaceChanged)
-        element.removeEventListener('input', handleInput)
         element.removeEventListener('keydown', handleKeyDown, { capture: true })
         // React 19 sets refs to null before cleanup runs, so we cannot use
         // containerRef.current?.removeChild(element) — it would be a no-op and
@@ -224,5 +236,5 @@ export const usePlaceAutocomplete = ({
     [placesLibrary, cityInfo, autocompleteKey, containerRef],
   )
 
-  return { validationError }
+  return { validationError, validationErrorLevel }
 }

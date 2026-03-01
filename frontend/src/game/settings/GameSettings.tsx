@@ -43,6 +43,17 @@ export const GameSettings = ({
   const cityInfo = useSelector((state: RootState) => state.mapmemo.cityInfo)
   const containerRef = useRef<HTMLDivElement | null>(null)
   const [addressError, setAddressError] = useState<string | null>(null)
+  const [addressErrorLevel, setAddressErrorLevel] = useState<
+    'warning' | 'error'
+  >('warning')
+
+  const handleAddressError = (
+    error: string | null,
+    level: 'warning' | 'error',
+  ) => {
+    setAddressError(error)
+    setAddressErrorLevel(level)
+  }
   const isRouteMode = draftSettings.mode === 'route'
   const isNameMode = draftSettings.mode === 'name'
   const showDifficulty = isNameMode
@@ -148,7 +159,9 @@ export const GameSettings = ({
           <div className={s_addresses_header}>
             <div className={s_label}>Addresses</div>
             {addressError && (
-              <span className={s_address_error}>{addressError}</span>
+              <span className={sf_address_error(addressErrorLevel)}>
+                {addressError}
+              </span>
             )}
           </div>
           <div className={s_addresses_input}>
@@ -159,7 +172,7 @@ export const GameSettings = ({
               onAddressesChange={(routeAddresses) =>
                 setDraftSettings((prev) => ({ ...prev, routeAddresses }))
               }
-              onValidationError={setAddressError}
+              onValidationError={handleAddressError}
             />
           </div>
         </div>
@@ -319,7 +332,8 @@ const s_title = 'text-sm font-semibold text-slate-900'
 const s_section = 'mt-3'
 const s_addresses_header = 'flex items-baseline gap-2'
 const s_addresses_input = 'mt-2'
-const s_address_error = 'text-xs text-amber-600 m-0'
+const sf_address_error = (level: 'warning' | 'error') =>
+  `text-xs m-0 ${level === 'error' ? 'text-red-600' : 'text-amber-600'}`
 const s_label = 'text-xs font-semibold uppercase tracking-wide text-slate-500'
 const sf_option_group = (isDisabled: boolean) =>
   `mt-2 flex flex-wrap gap-2 ${isDisabled ? 'opacity-60' : ''}`
