@@ -4,8 +4,8 @@ import type { RootState } from '../../store'
 import { resolveAddress } from '../../api/snapToRoads'
 import { getRoutePair } from './routeAddresses'
 import { useRoadGraph } from './useRoadGraph'
-import type { RoadGraph } from './useRoadGraph'
 import type { RouteAddress, SelectedJunction } from './types'
+import { computeAvailableJunctions } from './routeUtils'
 
 export type RouteGameState = {
   mode: 'route'
@@ -25,53 +25,6 @@ export type RouteGameState = {
   handleDestinationClick: () => void
   canReachDestination: boolean
   reset: () => void
-}
-
-const computeAvailableJunctions = (
-  currentJunction: SelectedJunction,
-  prevJunction: SelectedJunction | null,
-  roadGraph: RoadGraph,
-): SelectedJunction[] => {
-  const roadsAtJunction = [
-    currentJunction.roadName,
-    ...currentJunction.connectedRoadNames,
-  ]
-
-  const previousOnCurrentRoad =
-    prevJunction !== null
-      ? (roadGraph
-          .getJunctionsForRoad(currentJunction.roadName)
-          .find((j) => j.id === prevJunction.id) ?? null)
-      : null
-
-  const isDirectionEstablished = previousOnCurrentRoad !== null
-  // SAFETY: guarded by isDirectionEstablished above
-  const isGoingForward =
-    isDirectionEstablished &&
-    currentJunction.nodeIndex > previousOnCurrentRoad!.nodeIndex
-
-  const combined = new Map<number, SelectedJunction>()
-  for (const road of roadsAtJunction) {
-    const isCurrentRoad = road === currentJunction.roadName
-    for (const junction of roadGraph.getJunctionsForRoad(road)) {
-      if (junction.id === currentJunction.id) {
-        continue
-      }
-      if (isCurrentRoad && isDirectionEstablished) {
-        if (isGoingForward && junction.nodeIndex <= currentJunction.nodeIndex) {
-          continue
-        }
-        if (
-          !isGoingForward &&
-          junction.nodeIndex >= currentJunction.nodeIndex
-        ) {
-          continue
-        }
-      }
-      combined.set(junction.id, junction)
-    }
-  }
-  return [...combined.values()]
 }
 
 /**
@@ -105,6 +58,8 @@ export const useRouteGameState = (): RouteGameState | null => {
   const pathRef = useRef<SelectedJunction[]>([])
   const isCompleteRef = useRef(false)
 
+  // No deps: must run after every render so async callbacks always read
+  // current state, not stale closures from the render that registered them.
   useEffect(function syncRefs() {
     pathRef.current = path
     isCompleteRef.current = isComplete
