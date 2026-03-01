@@ -10,6 +10,13 @@ internal sealed record DefaultAddressDto(
     double Lat,
     double Lng);
 
+internal sealed record AddDefaultAddressRequest(
+    string Label,
+    string StreetAddress,
+    string RoadName,
+    double Lat,
+    double Lng);
+
 internal sealed record CityDetailDto(
     long Id,
     string Name,
