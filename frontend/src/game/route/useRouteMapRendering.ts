@@ -172,9 +172,11 @@ export const useRouteMapRendering = ({
       const nextIds = new Set(availableJunctions.map((i) => i.id))
       const prevIds = new Set(dotMarkersMapRef.current.keys())
 
-      // Remove markers no longer in the list
+      const pathIds = new Set(pathDotMarkersMapRef.current.keys())
+
+      // Remove markers no longer in the list or now shown as numbered path dots
       for (const id of prevIds) {
-        if (!nextIds.has(id)) {
+        if (!nextIds.has(id) || pathIds.has(id)) {
           const marker = dotMarkersMapRef.current.get(id)
           if (marker) {
             marker.map = null
@@ -183,9 +185,12 @@ export const useRouteMapRendering = ({
         }
       }
 
-      // Add markers that are new
+      // Add markers that are new (skip junctions already shown as numbered path dots)
       for (const junction of availableJunctions) {
-        if (dotMarkersMapRef.current.has(junction.id)) {
+        if (
+          dotMarkersMapRef.current.has(junction.id) ||
+          pathIds.has(junction.id)
+        ) {
           continue
         }
 
@@ -219,11 +224,12 @@ export const useRouteMapRendering = ({
   )
 
   // Diff numbered path dots — update in-place when possible, only create/remove
-  // what changed. Same junction can appear multiple times (revisit); indices are
-  // grouped and shown as "1·4" (two visits) or "..." (three or more).
-  // Path dots that are also in availableJunctions remain clickable.
+  // what changed. Same junction can appear multiple times (revisit); indices grouped
+  // and shown as "1·4" (two visits) or "..." (three or more).
+  // Path dots that are also in availableJunctions remain clickable; the unnumbered
+  // junction dot is suppressed for those junctions (see renderJunctionDots).
   useEffect(
-    function drawPathDots() {
+    function renderPathDots() {
       if (!map) {
         return
       }
