@@ -1,20 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
+
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace MapMemo.Api.Data.Migrations
-{
+namespace MapMemo.Api.Data.Migrations {
     /// <inheritdoc />
-    public partial class AddDefaultAddress : Migration
-    {
+    public partial class AddDefaultAddress : Migration {
         /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
+        protected override void Up(MigrationBuilder migrationBuilder) {
             migrationBuilder.CreateTable(
                 name: "default_address",
-                columns: table => new
-                {
+                columns: table => new {
                     id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     city_id = table.Column<long>(type: "bigint", nullable: false),
@@ -24,8 +21,7 @@ namespace MapMemo.Api.Data.Migrations
                     lat = table.Column<double>(type: "double precision", nullable: false),
                     lng = table.Column<double>(type: "double precision", nullable: false)
                 },
-                constraints: table =>
-                {
+                constraints: table => {
                     table.PrimaryKey("PK_default_address", x => x.id);
                     table.ForeignKey(
                         name: "FK_default_address_city_city_id",
@@ -42,8 +38,7 @@ namespace MapMemo.Api.Data.Migrations
         }
 
         /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
+        protected override void Down(MigrationBuilder migrationBuilder) {
             migrationBuilder.DropTable(
                 name: "default_address");
         }

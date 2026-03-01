@@ -18,17 +18,19 @@ public sealed class CitiesEndpointTests(IntegrationTestFactory factory) : Integr
         return (db, scope);
     }
 
-    private async Task SeedCityAsync(string name, double? minLat = null, double? minLon = null, double? maxLat = null, double? maxLon = null) {
+    private async Task<long> SeedCityAsync(string name, double? minLat = null, double? minLon = null, double? maxLat = null, double? maxLon = null) {
         (MapMemoDbContext db, IServiceScope scope) = GetDb();
         using (scope) {
-            db.Cities.Add(new City {
+            var city = new City {
                 Name = name,
                 MinLat = minLat,
                 MinLon = minLon,
                 MaxLat = maxLat,
                 MaxLon = maxLon,
-            });
+            };
+            db.Cities.Add(city);
             await db.SaveChangesAsync();
+            return city.Id;
         }
     }
 
@@ -75,13 +77,13 @@ public sealed class CitiesEndpointTests(IntegrationTestFactory factory) : Integr
     }
 
     [Fact]
-    public async Task GetCityByName_returns_city_with_bounds() {
-        await SeedCityAsync("Oslo, Norway", minLat: 59.808, minLon: 10.489, maxLat: 59.971, maxLon: 10.944);
+    public async Task GetCityById_returns_city_with_bounds() {
+        var cityId = await SeedCityAsync("Oslo, Norway", minLat: 59.808, minLon: 10.489, maxLat: 59.971, maxLon: 10.944);
         var cookies = new CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
 
-        HttpResponseMessage response = await client.GetAsync("/api/cities/Oslo, Norway");
+        HttpResponseMessage response = await client.GetAsync($"/api/cities/{cityId}");
 
         response.EnsureSuccessStatusCode();
         CityDetailResponse? city = await response.Content.ReadFromJsonAsync<CityDetailResponse>();
@@ -94,13 +96,13 @@ public sealed class CitiesEndpointTests(IntegrationTestFactory factory) : Integr
     }
 
     [Fact]
-    public async Task GetCityByName_returns_city_with_null_bounds_when_not_set() {
-        await SeedCityAsync("Oslo, Norway");
+    public async Task GetCityById_returns_city_with_null_bounds_when_not_set() {
+        var cityId = await SeedCityAsync("Oslo, Norway");
         var cookies = new CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
 
-        HttpResponseMessage response = await client.GetAsync("/api/cities/Oslo, Norway");
+        HttpResponseMessage response = await client.GetAsync($"/api/cities/{cityId}");
 
         response.EnsureSuccessStatusCode();
         CityDetailResponse? city = await response.Content.ReadFromJsonAsync<CityDetailResponse>();
@@ -112,37 +114,52 @@ public sealed class CitiesEndpointTests(IntegrationTestFactory factory) : Integr
     }
 
     [Fact]
-    public async Task GetCityByName_is_case_insensitive() {
-        await SeedCityAsync("Oslo, Norway");
+    public async Task GetCityById_returns_city_with_default_addresses() {
+        var cityId = await SeedCityAsync("Oslo, Norway");
+        (MapMemoDbContext db, IServiceScope scope) = GetDb();
+        using (scope) {
+            db.DefaultAddresses.Add(new DefaultAddress {
+                CityId = cityId,
+                Label = "Rådhuset",
+                StreetAddress = "Rådhusplassen 1, Oslo",
+                RoadName = "Rådhusplassen",
+                Lat = 59.9112,
+                Lng = 10.7329,
+            });
+            await db.SaveChangesAsync();
+        }
+
         var cookies = new CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
 
-        HttpResponseMessage response = await client.GetAsync("/api/cities/oslo, norway");
+        HttpResponseMessage response = await client.GetAsync($"/api/cities/{cityId}");
 
         response.EnsureSuccessStatusCode();
         CityDetailResponse? city = await response.Content.ReadFromJsonAsync<CityDetailResponse>();
         Assert.NotNull(city);
-        Assert.Equal("Oslo, Norway", city!.Name);
+        Assert.Single(city!.DefaultAddresses);
+        Assert.Equal("Rådhuset", city.DefaultAddresses[0].Label);
+        Assert.Equal("Rådhusplassen", city.DefaultAddresses[0].RoadName);
     }
 
     [Fact]
-    public async Task GetCityByName_returns_404_for_unknown_city() {
+    public async Task GetCityById_returns_404_for_unknown_id() {
         var cookies = new CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
 
-        HttpResponseMessage response = await client.GetAsync("/api/cities/King's Landing");
+        HttpResponseMessage response = await client.GetAsync("/api/cities/99999");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
-    public async Task GetCityByName_returns_401_without_session() {
+    public async Task GetCityById_returns_401_without_session() {
         var cookies = new CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
 
-        HttpResponseMessage response = await client.GetAsync("/api/cities/Oslo, Norway");
+        HttpResponseMessage response = await client.GetAsync("/api/cities/1");
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
