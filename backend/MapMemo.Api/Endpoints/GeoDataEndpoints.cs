@@ -55,7 +55,7 @@ internal static class GeoDataEndpoints {
             IConfiguration config,
             long cityId,
             AddDefaultAddressRequest request) => {
-                string? adminApiKey = config["AdminApiKey"];
+                var adminApiKey = config["AdminApiKey"];
                 if (string.IsNullOrWhiteSpace(adminApiKey)) {
                     return Results.StatusCode(503);
                 }
