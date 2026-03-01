@@ -99,6 +99,9 @@ export const usePlaceAutocomplete = ({
       // page's color-scheme, so dark-mode systems would render it dark.
       element.style.colorScheme = 'light'
       containerRef.current.appendChild(element)
+      if (autocompleteKey > 0) {
+        setTimeout(() => element.focus(), 0)
+      }
 
       // Prevents double-add when both gmp-select and the Enter fallback fire for
       // the same keypress (e.g. inline ghost-text selection with Enter).
@@ -119,7 +122,7 @@ export const usePlaceAutocomplete = ({
         const { addresses: current, onAddressesChange: onChange } =
           stateRef.current
         if (current.some((a) => a.roadName === roadName)) {
-          setValidationError('Addresses on the same road cannot be added.')
+          setValidationError('Addresses sharing road cannot be added.')
           setValidationErrorLevel('error')
           const container = containerRef.current
           if (container) {
