@@ -5,7 +5,7 @@ import { resolveAddress } from '../../api/snapToRoads'
 import { getRoutePair } from './routeAddresses'
 import { useRoadGraph } from './useRoadGraph'
 import type { RouteAddress, SelectedJunction } from './types'
-import { computeAvailableJunctions } from './routeUtils'
+import { computeAvailableJunctions, canJunctionReachRoad } from './routeUtils'
 
 export type RouteGameState = {
   mode: 'route'
@@ -72,14 +72,10 @@ export const useRouteGameState = (): RouteGameState | null => {
   const isGameActive = path.length > 0 && !isComplete
 
   const lastJunction = path.at(-1) ?? null
-  const destRoadLower = endAddress?.roadName.toLowerCase() ?? null
-  const canReachDestination =
-    destRoadLower !== null &&
-    lastJunction !== null &&
-    (lastJunction.roadName.toLowerCase() === destRoadLower ||
-      lastJunction.connectedRoadNames.some(
-        (r) => r.toLowerCase() === destRoadLower,
-      ))
+  const canReachDestination = canJunctionReachRoad(
+    lastJunction,
+    endAddress?.roadName ?? null,
+  )
 
   // Init flow: resolve addresses, fetch starting road
   useEffect(
