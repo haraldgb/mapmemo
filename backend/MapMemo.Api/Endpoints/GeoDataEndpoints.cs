@@ -232,16 +232,16 @@ internal static class GeoDataEndpoints {
                     .Select(r => r.Name)
                     .ToListAsync();
 
-                string lowerInput = road_name.ToLower();
+                var lowerInput = road_name.ToLower();
 
-                string? exactMatch = allRoadNames
+                var exactMatch = allRoadNames
                     .FirstOrDefault(n => n.ToLower() == lowerInput);
 
                 if (exactMatch is not null) {
                     return Results.Json(new CheckRoadResponseDto(true, exactMatch, []));
                 }
 
-                List<RoadSuggestionDto> suggestions = allRoadNames
+                var suggestions = allRoadNames
                     .Select(n => new RoadSuggestionDto(n, ComputeSimilarity(lowerInput, n.ToLower())))
                     .Where(s => s.Score >= 0.70)
                     .OrderByDescending(s => s.Score)
@@ -257,17 +257,18 @@ internal static class GeoDataEndpoints {
         int la = a.Length, lb = b.Length;
         if (la == 0 || lb == 0) return 0.0;
 
-        int[] prev = new int[lb + 1];
-        int[] curr = new int[lb + 1];
+        var prev = new int[lb + 1];
+        var curr = new int[lb + 1];
 
-        for (int j = 0; j <= lb; j++) prev[j] = j;
+        for (var j = 0; j <= lb; j++) prev[j] = j;
 
-        for (int i = 1; i <= la; i++) {
+        for (var i = 1; i <= la; i++) {
             curr[0] = i;
-            for (int j = 1; j <= lb; j++) {
-                int cost = a[i - 1] == b[j - 1] ? 0 : 1;
+            for (var j = 1; j <= lb; j++) {
+                var cost = a[i - 1] == b[j - 1] ? 0 : 1;
                 curr[j] = Math.Min(Math.Min(curr[j - 1] + 1, prev[j] + 1), prev[j - 1] + cost);
             }
+
             (prev, curr) = (curr, prev);
         }
 

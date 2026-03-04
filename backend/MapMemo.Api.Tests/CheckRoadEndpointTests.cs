@@ -38,7 +38,7 @@ public sealed class CheckRoadEndpointTests(IntegrationTestFactory factory) : Int
 
     [Fact]
     public async Task CheckRoad_exact_match_returns_found_true() {
-        long cityId = await SeedCityAndRoadsAsync();
+        var cityId = await SeedCityAndRoadsAsync();
         var cookies = new System.Net.CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
@@ -47,14 +47,14 @@ public sealed class CheckRoadEndpointTests(IntegrationTestFactory factory) : Int
             $"/api/roads/check?city_id={cityId}&road_name=Karl Johans gate");
 
         response.EnsureSuccessStatusCode();
-        var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        JsonElement json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
         Assert.True(json.GetProperty("found").GetBoolean());
         Assert.Equal("Karl Johans gate", json.GetProperty("canonicalName").GetString());
     }
 
     [Fact]
     public async Task CheckRoad_case_insensitive_match_returns_found_true() {
-        long cityId = await SeedCityAndRoadsAsync();
+        var cityId = await SeedCityAndRoadsAsync();
         var cookies = new System.Net.CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
@@ -63,14 +63,14 @@ public sealed class CheckRoadEndpointTests(IntegrationTestFactory factory) : Int
             $"/api/roads/check?city_id={cityId}&road_name=ELGESETER GATE");
 
         response.EnsureSuccessStatusCode();
-        var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        JsonElement json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
         Assert.True(json.GetProperty("found").GetBoolean());
         Assert.Equal("Elgeseter gate", json.GetProperty("canonicalName").GetString());
     }
 
     [Fact]
     public async Task CheckRoad_near_match_returns_found_false_with_suggestions() {
-        long cityId = await SeedCityAndRoadsAsync();
+        var cityId = await SeedCityAndRoadsAsync();
         var cookies = new System.Net.CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
@@ -80,7 +80,7 @@ public sealed class CheckRoadEndpointTests(IntegrationTestFactory factory) : Int
             $"/api/roads/check?city_id={cityId}&road_name=Elgesetergate");
 
         response.EnsureSuccessStatusCode();
-        var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        JsonElement json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
         Assert.False(json.GetProperty("found").GetBoolean());
         var suggestions = json.GetProperty("suggestions").EnumerateArray().ToList();
         Assert.NotEmpty(suggestions);
@@ -90,7 +90,7 @@ public sealed class CheckRoadEndpointTests(IntegrationTestFactory factory) : Int
 
     [Fact]
     public async Task CheckRoad_no_similar_roads_returns_empty_suggestions() {
-        long cityId = await SeedCityAndRoadsAsync();
+        var cityId = await SeedCityAndRoadsAsync();
         var cookies = new System.Net.CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
@@ -99,14 +99,14 @@ public sealed class CheckRoadEndpointTests(IntegrationTestFactory factory) : Int
             $"/api/roads/check?city_id={cityId}&road_name=Diagon Alley");
 
         response.EnsureSuccessStatusCode();
-        var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
+        JsonElement json = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement;
         Assert.False(json.GetProperty("found").GetBoolean());
         Assert.Empty(json.GetProperty("suggestions").EnumerateArray());
     }
 
     [Fact]
     public async Task CheckRoad_missing_params_returns_400() {
-        long cityId = await SeedCityAndRoadsAsync();
+        var cityId = await SeedCityAndRoadsAsync();
         var cookies = new System.Net.CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");

@@ -49,7 +49,7 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
 
     [Fact]
     public async Task Roads_returns_road_data_with_junctions() {
-        long cityId = await SeedCityAndRoadsAsync();
+        var cityId = await SeedCityAndRoadsAsync();
         var cookies = new System.Net.CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
 
@@ -68,7 +68,7 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
 
     [Fact]
     public async Task Roads_missing_params_returns_400() {
-        long cityId = await SeedCityAndRoadsAsync();
+        var cityId = await SeedCityAndRoadsAsync();
         var cookies = new System.Net.CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
@@ -82,7 +82,7 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
 
     [Fact]
     public async Task Roads_unknown_city_or_road_returns_404() {
-        long cityId = await SeedCityAndRoadsAsync();
+        var cityId = await SeedCityAndRoadsAsync();
         var cookies = new System.Net.CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
