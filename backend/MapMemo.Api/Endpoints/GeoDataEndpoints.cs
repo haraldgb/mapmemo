@@ -252,6 +252,10 @@ internal static class GeoDataEndpoints {
             });
     }
 
+    /// <summary>
+    /// Returns a similarity score in [0, 1]: <c>1 - levenshteinDistance / max(|a|, |b|)</c>.
+    /// Example: "akersgata" - "akersgate": 2 char diff → 1 - 2/9 ≈ 0.78
+    /// </summary>
     private static double ComputeSimilarity(string a, string b) {
         if (a == b) return 1.0;
         int la = a.Length, lb = b.Length;
