@@ -9,6 +9,16 @@ const extractRouteComponent = (
 
 const AUTO_ACCEPT_THRESHOLD = 0.85
 
+// All props stored in a ref so async handlers always see current values.
+// Kept at module scope so its shape is visible to the module-level helpers below.
+type StateRef = {
+  addresses: RouteAddress[]
+  onAddressesChange: (addresses: RouteAddress[]) => void
+  cityInfo: CityInfo | null
+  placesLibrary: google.maps.PlacesLibrary | null
+  disabled: boolean
+}
+
 type Options = {
   placesLibrary: google.maps.PlacesLibrary | null
   cityInfo: CityInfo | null
@@ -98,7 +108,7 @@ export const usePlaceAutocomplete = ({
     if (!roadName) {
       setValidationError('Try selecting from the dropdown.')
       setValidationErrorLevel('warning')
-      return
+      return false
     }
     const { addresses: current, onAddressesChange: onChange } = stateRef.current
     if (
@@ -108,12 +118,13 @@ export const usePlaceAutocomplete = ({
       setValidationErrorLevel('error')
       triggerShake()
       clearInput()
-      return
+      return false
     }
     setValidationError(null)
     setValidationErrorLevel('warning')
     onChange([...current, { label, streetAddress, roadName, lat, lng }])
     clearInput()
+    return true
   }
 
   const handleInputChange = (value: string) => {
@@ -169,16 +180,6 @@ export const usePlaceAutocomplete = ({
   }
 }
 
-// All props stored in a ref so async handlers always see current values.
-// Kept at module scope so its shape is visible to the module-level helpers below.
-type StateRef = {
-  addresses: RouteAddress[]
-  onAddressesChange: (addresses: RouteAddress[]) => void
-  cityInfo: CityInfo | null
-  placesLibrary: google.maps.PlacesLibrary | null
-  disabled: boolean
-}
-
 type SelectHandlers = {
   setValidationError: (e: string | null) => void
   setValidationErrorLevel: (l: 'warning' | 'error') => void
@@ -189,7 +190,7 @@ type SelectHandlers = {
     roadName: string,
     label: string,
     streetAddress: string,
-  ) => void
+  ) => boolean
   triggerShake: () => void
   clearInput: () => void
 }
@@ -316,11 +317,19 @@ const runSelect = async (
       const best = topSuggestions[0]
 
       if (best && best.score >= AUTO_ACCEPT_THRESHOLD) {
-        addAddress(lat, lng, best.name, displayLabel, streetAddress)
-        setValidationError(
-          `Used closest OSM name match: \n"${roadName}" - ${best.name}(${Math.round(best.score * 100)}%)`,
+        const didAddAddress = addAddress(
+          lat,
+          lng,
+          best.name,
+          displayLabel,
+          streetAddress,
         )
-        setValidationErrorLevel('warning')
+        if (!didAddAddress) {
+          setValidationError(
+            `Used closest OSM name match: \n"${roadName}" - ${best.name} (${Math.round(best.score * 100)}%)`,
+          )
+          setValidationErrorLevel('warning')
+        }
         return
       }
 
