@@ -23,6 +23,7 @@ export const RouteResults = ({
   const map = useMap()
   const [result, setResult] = useState<RouteResult | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
   // useRef: imperative polyline objects that need manual cleanup
   const playerPolylineRef = useRef<google.maps.Polyline | null>(null)
@@ -85,7 +86,7 @@ export const RouteResults = ({
       })
       playerPolylineRef.current = playerPolyline
 
-      // Fit bounds to show both routes
+      // Fit bounds to show both routes; extra top padding for the results panel
       const bounds = new google.maps.LatLngBounds()
       for (const pt of playerPath) {
         bounds.extend(pt)
@@ -93,7 +94,7 @@ export const RouteResults = ({
       for (const pt of optimalPath) {
         bounds.extend(pt)
       }
-      map.fitBounds(bounds, { top: 80, right: 40, bottom: 40, left: 40 })
+      map.fitBounds(bounds, { top: 260, right: 40, bottom: 40, left: 40 })
 
       return () => {
         playerPolyline.setMap(null)
@@ -103,11 +104,15 @@ export const RouteResults = ({
     [map, result],
   )
 
+  const handleCollapseToggle = () => {
+    setIsCollapsed((prev) => !prev)
+  }
+
   if (error) {
     return (
       <div className={s_overlay}>
         <div className={s_panel}>
-          <div className={s_error}>Failed to load results: {error}</div>
+          <div className={s_error_text}>Failed to load results: {error}</div>
           <button
             type='button'
             onClick={onPlayAgain}
@@ -134,47 +139,71 @@ export const RouteResults = ({
   return (
     <div className={s_overlay}>
       <div className={s_results_panel}>
-        <h2 className={s_title}>Route Complete!</h2>
-        <div className={s_stats_grid}>
-          <div className={s_stat}>
-            <div className={s_stat_label}>Your time</div>
-            <div className={s_stat_value}>{formattedTime}</div>
-          </div>
-          <div className={s_stat}>
-            <div className={s_stat_label}>Your route</div>
-            <div className={s_stat_value_blue}>
-              {formatDuration(result.playerDurationSec)}
-            </div>
-          </div>
-          <div className={s_stat}>
-            <div className={s_stat_label}>Optimal route</div>
-            <div className={s_stat_value_green}>
-              {formatDuration(result.optimalDurationSec)}
-            </div>
-          </div>
-          <div className={s_stat}>
-            <div className={s_stat_label}>Difference</div>
-            <div className={s_stat_value}>
-              {result.differencePercent > 0 ? '+' : ''}
-              {result.differencePercent}%
-            </div>
-          </div>
+        <div className={s_panel_header}>
+          {isCollapsed ? (
+            <button
+              type='button'
+              onClick={onPlayAgain}
+              className={s_play_again}
+            >
+              Play again
+            </button>
+          ) : (
+            <h2 className={s_title}>Route Complete!</h2>
+          )}
+          <button
+            type='button'
+            onClick={handleCollapseToggle}
+            className={s_collapse_btn}
+            aria-label={isCollapsed ? 'Expand results' : 'Collapse results'}
+          >
+            {isCollapsed ? '▼' : '▲'}
+          </button>
         </div>
-        <div className={s_legend}>
-          <span className={s_legend_player}>
-            <span className={s_dot_blue} /> Your route
-          </span>
-          <span className={s_legend_optimal}>
-            <span className={s_dot_green} /> Optimal route
-          </span>
-        </div>
-        <button
-          type='button'
-          onClick={onPlayAgain}
-          className={s_play_again}
-        >
-          Play again
-        </button>
+        {!isCollapsed && (
+          <>
+            <div className={s_stats_grid}>
+              <div className={s_stat}>
+                <div className={s_stat_label}>Your time</div>
+                <div className={s_stat_value}>{formattedTime}</div>
+              </div>
+              <div className={s_stat}>
+                <div className={s_stat_label}>Your route</div>
+                <div className={s_stat_value_blue}>
+                  {formatDuration(result.playerDurationSec)}
+                </div>
+              </div>
+              <div className={s_stat}>
+                <div className={s_stat_label}>Optimal route</div>
+                <div className={s_stat_value_green}>
+                  {formatDuration(result.optimalDurationSec)}
+                </div>
+              </div>
+              <div className={s_stat}>
+                <div className={s_stat_label}>Difference</div>
+                <div className={s_stat_value}>
+                  {result.differencePercent > 0 ? '+' : ''}
+                  {result.differencePercent}%
+                </div>
+              </div>
+            </div>
+            <div className={s_legend}>
+              <span className={s_legend_player}>
+                <span className={s_dot_blue} /> Your route
+              </span>
+              <span className={s_legend_optimal}>
+                <span className={s_dot_green} /> Optimal route
+              </span>
+            </div>
+            <button
+              type='button'
+              onClick={onPlayAgain}
+              className={s_play_again}
+            >
+              Play again
+            </button>
+          </>
+        )}
       </div>
     </div>
   )
@@ -187,12 +216,15 @@ const formatDuration = (sec: number): string => {
 }
 
 const s_overlay =
-  'pointer-events-auto absolute inset-0 z-20 flex items-end justify-center p-4 sm:items-center'
+  'pointer-events-none absolute inset-0 z-20 flex items-start justify-center p-4'
 const s_panel =
-  'flex flex-col items-center gap-3 rounded-2xl bg-white p-6 shadow-xl'
+  'pointer-events-auto flex flex-col items-center gap-3 rounded-2xl border border-white/60 bg-transparent px-6 py-2 shadow-sm backdrop-blur-sm'
 const s_results_panel =
-  'flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl bg-white p-6 shadow-xl'
+  'pointer-events-auto flex w-full max-w-sm flex-col items-center gap-3 rounded-2xl border border-white/60 bg-transparent px-6 py-2 shadow-sm backdrop-blur-sm'
+const s_panel_header = 'flex w-full items-center justify-between'
 const s_title = 'text-lg font-bold text-slate-900'
+const s_collapse_btn =
+  'flex h-7 w-7 items-center justify-center rounded-full text-xs text-slate-500 transition hover:bg-slate-100 hover:text-slate-700'
 const s_stats_grid = 'grid w-full grid-cols-2 gap-3'
 const s_stat = 'rounded-xl bg-slate-50 p-3 text-center'
 const s_stat_label =
@@ -205,7 +237,7 @@ const s_legend_player = 'flex items-center gap-1.5'
 const s_legend_optimal = 'flex items-center gap-1.5'
 const s_dot_blue = 'inline-block h-3 w-3 rounded-full bg-blue-500'
 const s_dot_green = 'inline-block h-3 w-3 rounded-full bg-green-500'
-const s_error = 'text-sm text-red-600'
+const s_error_text = 'text-sm text-red-600'
 const s_loading_text = 'text-sm text-slate-600'
 const s_play_again =
   'rounded-xl bg-purple-600 px-8 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-purple-700 hover:shadow-xl active:scale-95'
