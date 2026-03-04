@@ -17,7 +17,7 @@ export type RoadGraph = {
 // Keys are always lowercased so lookups are case-insensitive
 const normalize = (name: string) => name.toLowerCase()
 
-export const useRoadGraph = (cityName: string): RoadGraph => {
+export const useRoadGraph = (cityId: number): RoadGraph => {
   // useRef: mutable cache across renders, no re-render needed on updates
   const roadCacheRef = useRef<Map<string, RoadInfo>>(new Map())
   const fetchedAsPrimaryRef = useRef<Set<string>>(new Set())
@@ -27,16 +27,19 @@ export const useRoadGraph = (cityName: string): RoadGraph => {
       roadCacheRef.current = new Map()
       fetchedAsPrimaryRef.current = new Set()
     },
-    [cityName],
+    [cityId],
   )
 
   const fetchRoad = async (roadName: string): Promise<RoadInfo | null> => {
+    if (cityId === 0) {
+      return null
+    }
     const key = normalize(roadName)
     if (fetchedAsPrimaryRef.current.has(key)) {
       return roadCacheRef.current.get(key) ?? null
     }
 
-    const response = await fetchRoadWithJunctions(cityName, roadName)
+    const response = await fetchRoadWithJunctions(cityId, roadName)
     // Response is a Record<string, RoadInfo> — primary road + branch roads
     for (const [name, info] of Object.entries(response)) {
       const cacheKey = normalize(name)
