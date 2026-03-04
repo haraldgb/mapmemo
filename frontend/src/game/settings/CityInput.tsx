@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AutoCompleteInput } from '../../components/AutoCompleteInput'
-import type { AutoCompleteInputHandle } from '../../components/AutoCompleteInput'
 import type { CityListItem } from '../../api/cityApi'
 import { fetchCities } from '../../api/cityApi'
 import type { SelectedCity } from './settingsTypes'
@@ -14,8 +13,6 @@ export const CityInput = ({ selectedCity, onSelect }: Props) => {
   const [cities, setCities] = useState<CityListItem[]>([])
   const [typedValue, setTypedValue] = useState(selectedCity?.name ?? '')
   const [shake, setShake] = useState(false)
-  const inputRef = useRef<AutoCompleteInputHandle>(null)
-
   const triggerShake = () => {
     setShake(true)
     setTimeout(() => setShake(false), 400)
@@ -47,7 +44,6 @@ export const CityInput = ({ selectedCity, onSelect }: Props) => {
   return (
     <div className={s_container}>
       <AutoCompleteInput
-        ref={inputRef}
         suggestions={filteredSuggestions}
         value={typedValue}
         onChange={setTypedValue}
