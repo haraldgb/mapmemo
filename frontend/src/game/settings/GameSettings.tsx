@@ -243,6 +243,7 @@ export const GameSettings = ({
           </div>
           <div className={s_addresses_input}>
             <RouteAddressInput
+              key={draftCityInfo?.id ?? 'no-city'}
               addresses={draftSettings.routeAddresses}
               defaultAddresses={cityDefaultAddresses}
               cityInfo={draftCityInfo}
