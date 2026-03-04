@@ -17,7 +17,7 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
         return (db, scope);
     }
 
-    private async Task SeedCityAndRoadsAsync() {
+    private async Task<long> SeedCityAndRoadsAsync() {
         (MapMemoDbContext? db, IServiceScope? scope) = GetDb();
         using (scope) {
             City city = new() { Name = "Oslo, Norway" };
@@ -42,12 +42,14 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
                 new RoadJunction { JunctionId = junction.Id, RoadId = crossRoad.Id, NodeIndex = 0 }
             );
             await db.SaveChangesAsync();
+
+            return city.Id;
         }
     }
 
     [Fact]
     public async Task Roads_returns_road_data_with_junctions() {
-        await SeedCityAndRoadsAsync();
+        long cityId = await SeedCityAndRoadsAsync();
         var cookies = new System.Net.CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
 
@@ -55,7 +57,7 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
         await client.GetAsync("/api/health");
 
         HttpResponseMessage response = await client.GetAsync(
-            "/api/roads?city_name=Oslo, Norway&road_name=Karl Johans gate");
+            $"/api/roads?city_id={cityId}&road_name=Karl Johans gate");
 
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
@@ -66,28 +68,29 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
 
     [Fact]
     public async Task Roads_missing_params_returns_400() {
+        long cityId = await SeedCityAndRoadsAsync();
         var cookies = new System.Net.CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
 
-        HttpResponseMessage missingRoadName = await client.GetAsync("/api/roads?city_name=Oslo, Norway");
-        HttpResponseMessage missingCityName = await client.GetAsync("/api/roads?road_name=Karl Johans gate");
+        HttpResponseMessage missingRoadName = await client.GetAsync($"/api/roads?city_id={cityId}");
+        HttpResponseMessage missingCityId = await client.GetAsync("/api/roads?road_name=Karl Johans gate");
 
         Assert.Equal(HttpStatusCode.BadRequest, missingRoadName.StatusCode);
-        Assert.Equal(HttpStatusCode.BadRequest, missingCityName.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, missingCityId.StatusCode);
     }
 
     [Fact]
     public async Task Roads_unknown_city_or_road_returns_404() {
-        await SeedCityAndRoadsAsync();
+        long cityId = await SeedCityAndRoadsAsync();
         var cookies = new System.Net.CookieContainer();
         using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
         await client.GetAsync("/api/health");
 
         HttpResponseMessage unknownCity = await client.GetAsync(
-            "/api/roads?city_name=King's Landing, Westeros&road_name=Karl Johans gate");
+            "/api/roads?city_id=99999&road_name=Karl Johans gate");
         HttpResponseMessage unknownRoad = await client.GetAsync(
-            "/api/roads?city_name=Oslo, Norway&road_name=Diagon Alley");
+            $"/api/roads?city_id={cityId}&road_name=Diagon Alley");
 
         Assert.Equal(HttpStatusCode.NotFound, unknownCity.StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, unknownRoad.StatusCode);
