@@ -36,7 +36,10 @@ export const useRouteGameState = (): RouteGameState | null => {
   const { seed, mode, routeAddresses } = useSelector(
     (state: RootState) => state.mapmemo.gameSettings,
   )
-  const roadGraph = useRoadGraph()
+  const cityName = useSelector(
+    (state: RootState) => state.mapmemo.cityInfo?.name ?? '',
+  )
+  const roadGraph = useRoadGraph(cityName)
 
   const [startAddress, setStartAddress] = useState<RouteAddress | null>(null)
   const [endAddress, setEndAddress] = useState<RouteAddress | null>(null)

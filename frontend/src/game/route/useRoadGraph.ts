@@ -1,12 +1,10 @@
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import {
   fetchRoadWithJunctions,
   type RoadInfo,
   type RoadJunction,
 } from '../../api/roadData'
 import type { SelectedJunction } from './types'
-
-const CITY_NAME = 'Oslo, Norway'
 
 export type RoadGraph = {
   fetchRoad: (roadName: string) => Promise<RoadInfo | null>
@@ -16,17 +14,25 @@ export type RoadGraph = {
   reset: () => void
 }
 
-export const useRoadGraph = (): RoadGraph => {
+export const useRoadGraph = (cityName: string): RoadGraph => {
   // useRef: mutable cache across renders, no re-render needed on updates
   const roadCacheRef = useRef<Map<string, RoadInfo>>(new Map())
   const fetchedAsPrimaryRef = useRef<Set<string>>(new Set())
+
+  useEffect(
+    function resetCacheOnCityChange() {
+      roadCacheRef.current = new Map()
+      fetchedAsPrimaryRef.current = new Set()
+    },
+    [cityName],
+  )
 
   const fetchRoad = async (roadName: string): Promise<RoadInfo | null> => {
     if (fetchedAsPrimaryRef.current.has(roadName)) {
       return roadCacheRef.current.get(roadName) ?? null
     }
 
-    const response = await fetchRoadWithJunctions(CITY_NAME, roadName)
+    const response = await fetchRoadWithJunctions(cityName, roadName)
     // Response is a Record<string, RoadInfo> — primary road + branch roads
     for (const [name, info] of Object.entries(response)) {
       const existing = roadCacheRef.current.get(name)
