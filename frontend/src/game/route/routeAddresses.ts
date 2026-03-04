@@ -1,23 +1,6 @@
 import { createSeededRng } from '../utils'
 import type { RouteAddress } from './types'
 
-export const DEFAULT_ROUTE_ADDRESSES: RouteAddress[] = [
-  {
-    label: 'Jacob Aalls gate 32',
-    streetAddress: 'Jacob Aalls gate 32, Oslo',
-    roadName: 'Jacob Aalls gate',
-    lat: 59.9295,
-    lng: 10.719,
-  },
-  {
-    label: 'Thereses gate 33B',
-    streetAddress: 'Thereses gate 33B, Oslo',
-    roadName: 'Thereses gate',
-    lat: 59.9278,
-    lng: 10.7318,
-  },
-]
-
 export const selectRoutePair = (
   addresses: RouteAddress[],
   rng: () => number,
