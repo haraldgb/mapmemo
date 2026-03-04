@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useMapsLibrary } from '@vis.gl/react-google-maps'
 import type { RouteAddress } from '../route/types'
 import type { CityInfo } from '../../api/cityApi'
+import { AutoCompleteInput } from '../../components/AutoCompleteInput'
+import type { AutoCompleteInputHandle } from '../../components/AutoCompleteInput'
 import { ChevronIcon } from '../../components/icons/ChevronIcon'
 import { TrashIcon } from '../../components/icons/TrashIcon'
 import { usePlaceAutocomplete } from './usePlaceAutocomplete'
@@ -24,11 +26,19 @@ export const RouteAddressInput = ({
   onValidationError,
 }: Props) => {
   const placesLibrary = useMapsLibrary('places')
-  const containerRef = useRef<HTMLDivElement | null>(null)
+  const inputRef = useRef<AutoCompleteInputHandle>(null)
+  const isFirstRender = useRef(true)
   const [isExpanded, setIsExpanded] = useState(false)
 
-  const { validationError, validationErrorLevel } = usePlaceAutocomplete({
-    containerRef,
+  const {
+    inputValue,
+    suggestions,
+    handleInputChange,
+    handleSelect,
+    validationError,
+    validationErrorLevel,
+    shake,
+  } = usePlaceAutocomplete({
     placesLibrary,
     cityInfo,
     addresses,
@@ -43,6 +53,17 @@ export const RouteAddressInput = ({
     [validationError, validationErrorLevel, onValidationError],
   )
 
+  useEffect(
+    function refocusAfterAddressAdded() {
+      if (isFirstRender.current) {
+        isFirstRender.current = false
+        return
+      }
+      inputRef.current?.focus()
+    },
+    [addresses.length],
+  )
+
   const isDefaultList =
     addresses.length === defaultAddresses.length &&
     addresses.every(
@@ -54,9 +75,15 @@ export const RouteAddressInput = ({
       {disabled ? (
         <div className={s_disabled_placeholder}>Select a city first</div>
       ) : (
-        <div
-          ref={containerRef}
-          className={s_autocomplete_container}
+        <AutoCompleteInput
+          ref={inputRef}
+          value={inputValue}
+          suggestions={suggestions}
+          onChange={handleInputChange}
+          onSelect={handleSelect}
+          placeholder='Search for a place'
+          containerClassName={sf_autocomplete_container(shake)}
+          inputClassName={s_autocomplete_input}
         />
       )}
 
@@ -120,7 +147,10 @@ const sf_toggle = (isDisabled: boolean) =>
 const s_toggle_label = 'select-none'
 const sf_chevron = (isOpen: boolean) =>
   `h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : 'rotate-0'}`
-const s_autocomplete_container = 'w-full rounded-md border border-slate-300'
+const sf_autocomplete_container = (isShaking: boolean) =>
+  `relative w-full rounded-md border border-slate-300 ${isShaking ? 'animate-shake' : ''}`
+const s_autocomplete_input =
+  'w-full rounded-md px-3 py-1.5 text-sm outline-none bg-transparent'
 const s_disabled_placeholder =
   'w-full rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-400'
 const s_collapsible = 'border-t border-slate-200 bg-white'
