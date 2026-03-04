@@ -7,7 +7,7 @@ const extractRouteComponent = (
   components: google.maps.places.AddressComponent[],
 ): string => components.find((c) => c.types.includes('route'))?.longText ?? ''
 
-const AUTO_ACCEPT_THRESHOLD = 0.9
+const AUTO_ACCEPT_THRESHOLD = 0.85
 
 type Options = {
   placesLibrary: google.maps.PlacesLibrary | null
@@ -26,6 +26,7 @@ type Result = {
   validationErrorLevel: 'warning' | 'error'
   shake: boolean
   isValidatingRoadName: boolean
+  clearValidationError: () => void
 }
 
 export const usePlaceAutocomplete = ({
@@ -200,10 +201,11 @@ export const usePlaceAutocomplete = ({
           return
         }
 
-        // Skip OSM check if no city is selected — add as-is
+        // Guard: city must be selected before OSM check can run
         const cityId = cityInfo?.id
         if (!cityId) {
-          addAddress(lat, lng, roadName, displayLabel, streetAddress)
+          setValidationError('Select a city first.')
+          setValidationErrorLevel('error')
           return
         }
 
@@ -227,21 +229,21 @@ export const usePlaceAutocomplete = ({
 
           // Best fuzzy match is close enough — silently correct to OSM name
           if (best && best.score >= AUTO_ACCEPT_THRESHOLD) {
-            const suggestionLines = topSuggestions
-              .map((s) => `- ${s.name} (${Math.round(s.score * 100)}%)`)
-              .join('\n')
+            addAddress(lat, lng, best.name, displayLabel, streetAddress)
             setValidationError(
-              `Used OSM name: ${best.name}\n${suggestionLines}`,
+              `Used closest OSM name match: \n"${roadName}" - ${best.name}(${Math.round(best.score * 100)}%)`,
             )
             setValidationErrorLevel('warning')
-            addAddress(lat, lng, best.name, displayLabel, streetAddress)
             return
           }
 
           // Fuzzy matches exist but none are close enough — show suggestions, reject
           if (topSuggestions.length > 0) {
             const suggestionLines = topSuggestions
-              .map((s) => `- ${s.name} (${Math.round(s.score * 100)}%)`)
+              .map(
+                (s) =>
+                  `${roadName} - ${s.name} (${Math.round(s.score * 100)}%)`,
+              )
               .join('\n')
             setValidationError(
               `Road name not found in OSM data\n${suggestionLines}`,
@@ -260,14 +262,19 @@ export const usePlaceAutocomplete = ({
         } catch {
           // Check failed (network/server error) — add as-is rather than blocking user
           addAddress(lat, lng, roadName, displayLabel, streetAddress)
-        } finally {
-          setIsValidatingRoadName(false)
         }
       } catch {
         setValidationError('Try selecting from the dropdown.')
         setValidationErrorLevel('warning')
+      } finally {
+        setIsValidatingRoadName(false)
       }
     })()
+  }
+
+  const clearValidationError = () => {
+    setValidationError(null)
+    setValidationErrorLevel('warning')
   }
 
   return {
@@ -279,5 +286,6 @@ export const usePlaceAutocomplete = ({
     validationErrorLevel,
     shake,
     isValidatingRoadName,
+    clearValidationError,
   }
 }

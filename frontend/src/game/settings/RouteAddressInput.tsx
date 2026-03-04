@@ -42,6 +42,7 @@ export const RouteAddressInput = ({
     validationErrorLevel,
     shake,
     isValidatingRoadName,
+    clearValidationError,
   } = usePlaceAutocomplete({
     placesLibrary,
     cityInfo,
@@ -74,7 +75,10 @@ export const RouteAddressInput = ({
       (a, i) => a.streetAddress === defaultAddresses[i]?.streetAddress,
     )
 
-  const cityDefaultLabel = isDefaultList && cityInfo ? ` (default)` : ''
+  const cityDefaultLabel =
+    isDefaultList && cityInfo && defaultAddresses.length >= 2
+      ? ` (default)`
+      : ''
 
   return (
     <div className={sf_root(disabled)}>
@@ -140,15 +144,20 @@ export const RouteAddressInput = ({
                 </div>
               ))}
             </div>
-            {!isDefaultList && !isValidatingRoadName && (
-              <button
-                type='button'
-                onClick={() => onAddressesChange(defaultAddresses)}
-                className={s_use_defaults}
-              >
-                Reset to defaults
-              </button>
-            )}
+            {!isDefaultList &&
+              !isValidatingRoadName &&
+              defaultAddresses.length >= 2 && (
+                <button
+                  type='button'
+                  onClick={() => {
+                    onAddressesChange(defaultAddresses)
+                    clearValidationError()
+                  }}
+                  className={s_use_defaults}
+                >
+                  Reset to defaults
+                </button>
+              )}
           </div>
         )}
       </div>
