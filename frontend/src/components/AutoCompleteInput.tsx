@@ -17,6 +17,7 @@ type Props = {
   value: string
   onChange: (value: string) => void
   onSelect: (value: string) => void
+  onBlur?: () => void
   placeholder?: string
   inputClassName?: string
   containerClassName?: string
@@ -32,6 +33,7 @@ export const AutoCompleteInput = forwardRef<AutoCompleteInputHandle, Props>(
       value,
       onChange,
       onSelect,
+      onBlur,
       placeholder,
       inputClassName,
       containerClassName,
@@ -101,10 +103,11 @@ export const AutoCompleteInput = forwardRef<AutoCompleteInputHandle, Props>(
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
       if (e.key === 'Tab') {
-        e.preventDefault()
         if (shouldShowDropdown) {
+          e.preventDefault()
           confirmSelection(suggestions[0])
         }
+        // No suggestions — let Tab/Shift+Tab bubble for natural focus traversal
         return
       }
 
@@ -138,6 +141,13 @@ export const AutoCompleteInput = forwardRef<AutoCompleteInputHandle, Props>(
       }
     }
 
+    const handleBlur = () => {
+      setIsOpen(false)
+      setHighlightedIndex(-1)
+      setPreviewValue('')
+      onBlur?.()
+    }
+
     return (
       <div
         ref={containerRef}
@@ -150,6 +160,7 @@ export const AutoCompleteInput = forwardRef<AutoCompleteInputHandle, Props>(
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
+          onBlur={handleBlur}
           placeholder={placeholder}
           autoFocus={autoFocus}
           autoComplete='off'
