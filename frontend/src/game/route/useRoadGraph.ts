@@ -14,6 +14,9 @@ export type RoadGraph = {
   reset: () => void
 }
 
+// Keys are always lowercased so lookups are case-insensitive
+const normalize = (name: string) => name.toLowerCase()
+
 export const useRoadGraph = (cityName: string): RoadGraph => {
   // useRef: mutable cache across renders, no re-render needed on updates
   const roadCacheRef = useRef<Map<string, RoadInfo>>(new Map())
@@ -28,20 +31,21 @@ export const useRoadGraph = (cityName: string): RoadGraph => {
   )
 
   const fetchRoad = async (roadName: string): Promise<RoadInfo | null> => {
-    if (fetchedAsPrimaryRef.current.has(roadName)) {
-      return roadCacheRef.current.get(roadName) ?? null
+    const key = normalize(roadName)
+    if (fetchedAsPrimaryRef.current.has(key)) {
+      return roadCacheRef.current.get(key) ?? null
     }
 
     const response = await fetchRoadWithJunctions(cityName, roadName)
     // Response is a Record<string, RoadInfo> — primary road + branch roads
     for (const [name, info] of Object.entries(response)) {
-      const existing = roadCacheRef.current.get(name)
-      if (!existing) {
-        roadCacheRef.current.set(name, info)
+      const cacheKey = normalize(name)
+      if (!roadCacheRef.current.has(cacheKey)) {
+        roadCacheRef.current.set(cacheKey, info)
       }
     }
-    fetchedAsPrimaryRef.current.add(roadName)
-    return roadCacheRef.current.get(roadName) ?? null
+    fetchedAsPrimaryRef.current.add(key)
+    return roadCacheRef.current.get(key) ?? null
   }
 
   const toSelectedJunction = (
@@ -57,18 +61,19 @@ export const useRoadGraph = (cityName: string): RoadGraph => {
   })
 
   const getJunctionsForRoad = (roadName: string): SelectedJunction[] => {
-    const road = roadCacheRef.current.get(roadName)
+    const road = roadCacheRef.current.get(normalize(roadName))
     if (!road) {
       return []
     }
-    return road.junctions.map((jx) => toSelectedJunction(jx, roadName))
+    // Use road.name (OSM canonical) so junction roadName is properly capitalised
+    return road.junctions.map((jx) => toSelectedJunction(jx, road.name))
   }
 
   const isFetchedAsPrimary = (roadName: string): boolean =>
-    fetchedAsPrimaryRef.current.has(roadName)
+    fetchedAsPrimaryRef.current.has(normalize(roadName))
 
   const isInCache = (roadName: string): boolean =>
-    roadCacheRef.current.has(roadName)
+    roadCacheRef.current.has(normalize(roadName))
 
   const reset = () => {
     roadCacheRef.current = new Map()

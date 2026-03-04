@@ -72,11 +72,14 @@ export const useRouteGameState = (): RouteGameState | null => {
   const isGameActive = path.length > 0 && !isComplete
 
   const lastJunction = path.at(-1) ?? null
+  const destRoadLower = endAddress?.roadName.toLowerCase() ?? null
   const canReachDestination =
-    endAddress !== null &&
+    destRoadLower !== null &&
     lastJunction !== null &&
-    (lastJunction.roadName === endAddress.roadName ||
-      lastJunction.connectedRoadNames.includes(endAddress.roadName))
+    (lastJunction.roadName.toLowerCase() === destRoadLower ||
+      lastJunction.connectedRoadNames.some(
+        (r) => r.toLowerCase() === destRoadLower,
+      ))
 
   // Init flow: resolve addresses, fetch starting road
   useEffect(
@@ -108,13 +111,14 @@ export const useRouteGameState = (): RouteGameState | null => {
         setEndAddress(resolvedEnd)
 
         // Fetch the starting road
-        await roadGraph.fetchRoad(resolvedStart.roadName)
+        const startRoad = await roadGraph.fetchRoad(resolvedStart.roadName)
         if (!isActive) {
           return
         }
 
         const junctions = roadGraph.getJunctionsForRoad(resolvedStart.roadName)
-        setCurrentRoadName(resolvedStart.roadName)
+        // Use OSM canonical name for display (may differ in capitalisation from Google Maps)
+        setCurrentRoadName(startRoad?.name ?? resolvedStart.roadName)
         setAvailableJunctions(junctions)
         setIsLoading(false)
       }
