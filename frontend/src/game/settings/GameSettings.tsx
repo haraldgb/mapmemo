@@ -135,7 +135,11 @@ export const GameSettings = ({
         })
       })
       .catch(() => {
-        setDraftSettings((prev) => ({ ...prev, selectedCity: city }))
+        setDraftSettings((prev) => ({
+          ...prev,
+          selectedCity: city,
+          routeAddresses: [],
+        }))
       })
   }
 
