@@ -7,6 +7,20 @@ import type { RoadGraph } from './useRoadGraph'
  * On the current road, once direction is established via `prevJunction`, only
  * junctions of the same road in that direction (by `nodeIndex`) are included.
  */
+export const canJunctionReachRoad = (
+  junction: SelectedJunction | null,
+  roadName: string | null,
+): boolean => {
+  if (junction === null || roadName === null) {
+    return false
+  }
+  const lower = roadName.toLowerCase()
+  return (
+    junction.roadName.toLowerCase() === lower ||
+    junction.connectedRoadNames.some((r: string) => r.toLowerCase() === lower)
+  )
+}
+
 export const computeAvailableJunctions = (
   currentJunction: SelectedJunction,
   prevJunction: SelectedJunction | null,
