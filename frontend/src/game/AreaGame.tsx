@@ -9,6 +9,7 @@ import { useAreaGameStyling } from './hooks/useAreaGameStyling'
 import { useFeatureLabels } from './hooks/useFeatureLabels'
 import { GameUI } from './GameUI.tsx'
 import type { MapContext } from './types.ts'
+import { AREA_MODE_MAP_ID } from './consts.ts'
 
 export const AreaGame = () => {
   const { areaSubMode, areaCount, selectedAreas, mode } = useSelector(
@@ -55,6 +56,7 @@ export const AreaGame = () => {
         }
         onFeatureHover={gameStyling.registerFeatureHover}
         onMapReady={handleMapReady}
+        mapId={AREA_MODE_MAP_ID}
       >
         {isGMapReady && (
           <>

@@ -120,3 +120,8 @@ export const AREA_COUNT_OPTIONS = [
   { label: '25', value: 25 },
   { label: 'Alle (99)', value: 99 },
 ] as const
+
+// Map IDs: different maps have different pre-set styling.
+// Styling determines what features are shown in the map - roads, churches, area names, etc.
+export const AREA_MODE_MAP_ID = '5da3993597ca412079e99b4c'
+export const ROUTE_MODE_MAP_ID = '5da3993597ca4120f086cda2'

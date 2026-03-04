@@ -15,6 +15,7 @@ type GMapProps = {
     AdvancedMarkerElement: typeof google.maps.marker.AdvancedMarkerElement
   }) => void
   children?: ReactNode
+  mapId: string
 }
 
 export const GMap = ({
@@ -24,6 +25,7 @@ export const GMap = ({
   onFeatureHover,
   onMapReady,
   children,
+  mapId,
 }: GMapProps) => {
   const map = useMap()
   const markerLibrary = useMapsLibrary('marker')
@@ -159,7 +161,7 @@ export const GMap = ({
       aria-live='polite'
     >
       <Map
-        mapId='5da3993597ca412079e99b4c'
+        mapId={mapId}
         defaultCenter={{ lat: 59.91, lng: 10.73 }}
         defaultZoom={11}
         mapTypeControl={false}

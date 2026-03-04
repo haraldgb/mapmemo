@@ -6,6 +6,7 @@ import { GameUI } from '../GameUI'
 import { useGameState } from '../hooks/useGameState'
 import { useRouteMapRendering } from './useRouteMapRendering'
 import { RouteResults } from './RouteResults'
+import { ROUTE_MODE_MAP_ID } from '../consts'
 
 const EMPTY_FEATURES: google.maps.Data.Feature[] = []
 
@@ -44,6 +45,7 @@ export const RouteGame = () => {
         spinUntilReady
         features={EMPTY_FEATURES}
         onMapReady={handleMapReady}
+        mapId={ROUTE_MODE_MAP_ID}
       >
         {isGMapReady && (
           <>
