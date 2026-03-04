@@ -67,8 +67,8 @@ internal static class GoogleProxyEndpoints {
                 var googleBody = new Dictionary<string, object> {
                     ["origin"] = ToWaypoint(request.Origin),
                     ["destination"] = ToWaypoint(request.Destination),
-                    ["travelMode"] = "WALK",
-                    ["routingPreference"] = "ROUTING_PREFERENCE_UNSPECIFIED",
+                    ["travelMode"] = "DRIVE",
+                    ["routingPreference"] = "TRAFFIC_UNAWARE",
                 };
 
                 if (request.Intermediates is { Length: > 0 }) {
