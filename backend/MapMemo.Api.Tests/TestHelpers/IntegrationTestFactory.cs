@@ -58,7 +58,8 @@ public sealed class IntegrationTestFactory : WebApplicationFactory<Program>, IAs
         builder.ConfigureAppConfiguration(config => {
             var settings = new Dictionary<string, string?> {
                 ["GoogleMaps:ApiKey"] = "test-google-maps-key",
-                ["GoogleMaps:ServerApiKey"] = "test-google-maps-server-key"
+                ["GoogleMaps:ServerApiKey"] = "test-google-maps-server-key",
+                ["AdminApiKey"] = "test-admin-key"
             };
             config.AddInMemoryCollection(settings);
         });

@@ -80,4 +80,19 @@ public sealed class EndpointsTests {
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact]
+    public async Task PostDefaultAddress_returns_503_when_admin_key_not_configured() {
+        using var factory = new MapMemoApiFactory();
+        using HttpClient client = factory.CreateClient();
+
+        var body = new { Label = "Test", StreetAddress = "Test 1", RoadName = "Test", Lat = 59.9, Lng = 10.7 };
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/cities/1/default-addresses");
+        request.Headers.Add("X-Api-Key", "any-key");
+        request.Content = JsonContent.Create(body);
+
+        HttpResponseMessage response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
 }
