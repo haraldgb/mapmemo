@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
-import { mapmemoActions, DEFAULT_GAME_SETTINGS } from '../../duck/reducer'
+import { mapmemoActions } from '../../duck/reducer'
 import {
   AREA_COUNT_OPTIONS,
   AREA_SUB_MODE_DESCRIPTIONS,
@@ -87,7 +87,7 @@ export const GameSettings = ({
           lat: a.lat,
           lng: a.lng,
         }))
-      : DEFAULT_GAME_SETTINGS.routeAddresses
+      : []
 
   const handleSeedChange = (value: string) => {
     const filtered = value.replace(/[^a-z0-9]/gi, '').toLowerCase()

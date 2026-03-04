@@ -1,8 +1,4 @@
-import {
-  selectRoutePair,
-  getRoutePair,
-  DEFAULT_ROUTE_ADDRESSES,
-} from './routeAddresses'
+import { selectRoutePair, getRoutePair } from './routeAddresses'
 import type { RouteAddress } from './types'
 
 const makeAddress = (label: string): RouteAddress => ({
@@ -63,16 +59,5 @@ describe('getRoutePair', () => {
     // Very unlikely to be equal with two different seeds
     const same = pair1[0] === pair2[0] && pair1[1] === pair2[1]
     expect(same).toBe(false)
-  })
-
-  test('DEFAULT_ROUTE_ADDRESSES has at least 2 entries', () => {
-    expect(DEFAULT_ROUTE_ADDRESSES.length).toBeGreaterThanOrEqual(2)
-  })
-
-  test('works with DEFAULT_ROUTE_ADDRESSES', () => {
-    const [start, end] = getRoutePair('abcd1234', DEFAULT_ROUTE_ADDRESSES)
-    expect(start).not.toBe(end)
-    expect(DEFAULT_ROUTE_ADDRESSES).toContain(start)
-    expect(DEFAULT_ROUTE_ADDRESSES).toContain(end)
   })
 })

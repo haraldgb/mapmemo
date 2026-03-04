@@ -1,5 +1,4 @@
 import { loadGameSettings, saveGameSettings } from './sagaUtils'
-import { DEFAULT_ROUTE_ADDRESSES } from '../game/route/routeAddresses'
 
 // sagaUtils uses window.localStorage — mock both in the node jest environment
 const localStorageMock = (() => {
@@ -105,23 +104,23 @@ describe('routeAddresses persistence', () => {
     expect(loaded!.routeAddresses[0].label).toBe('Test street 1')
   })
 
-  test('falls back to defaults when routeAddresses has fewer than 2 valid entries', () => {
+  test('preserves single valid entry when routeAddresses has fewer than 2', () => {
     const settings = {
       ...baseSettings,
       routeAddresses: [validAddress], // only 1
     }
     saveGameSettings(settings as Parameters<typeof saveGameSettings>[0])
     const loaded = loadGameSettings()
-    expect(loaded!.routeAddresses).toEqual(DEFAULT_ROUTE_ADDRESSES)
+    expect(loaded!.routeAddresses).toEqual([validAddress])
   })
 
-  test('falls back to defaults when routeAddresses is not an array', () => {
+  test('returns empty array when routeAddresses is not an array', () => {
     localStorage.setItem(
       'mapmemo.gameSettings',
       JSON.stringify({ ...baseSettings, routeAddresses: 'bad' }),
     )
     const loaded = loadGameSettings()
-    expect(loaded!.routeAddresses).toEqual(DEFAULT_ROUTE_ADDRESSES)
+    expect(loaded!.routeAddresses).toEqual([])
   })
 
   test('filters out invalid entries within array', () => {
@@ -139,7 +138,7 @@ describe('routeAddresses persistence', () => {
     expect(loaded!.routeAddresses).toHaveLength(2)
   })
 
-  test('falls back to defaults when all array entries are invalid', () => {
+  test('returns empty array when all array entries are invalid', () => {
     localStorage.setItem(
       'mapmemo.gameSettings',
       JSON.stringify({
@@ -148,6 +147,6 @@ describe('routeAddresses persistence', () => {
       }),
     )
     const loaded = loadGameSettings()
-    expect(loaded!.routeAddresses).toEqual(DEFAULT_ROUTE_ADDRESSES)
+    expect(loaded!.routeAddresses).toEqual([])
   })
 })
