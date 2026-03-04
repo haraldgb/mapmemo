@@ -169,6 +169,7 @@ public sealed class CitiesEndpointTests(IntegrationTestFactory factory) : Integr
         if (apiKey is not null) {
             request.Headers.Add("X-Api-Key", apiKey);
         }
+
         request.Content = JsonContent.Create(body);
         return request;
     }
