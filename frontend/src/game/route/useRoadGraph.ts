@@ -15,17 +15,16 @@ export type RoadGraph = {
 }
 
 // Keys are always lowercased so lookups are case-insensitive
-const normalize = (name: string) => name.toLowerCase()
+const normalizeRoadName = (name: string) => name.toLowerCase()
 
 export const useRoadGraph = (cityId: number): RoadGraph => {
-  // useRef: mutable cache across renders, no re-render needed on updates
-  const roadCacheRef = useRef<Map<string, RoadInfo>>(new Map())
-  const fetchedAsPrimaryRef = useRef<Set<string>>(new Set())
+  const normalizedRoadCacheRef = useRef<Map<string, RoadInfo>>(new Map())
+  const normalizedFetchedAsPrimaryRef = useRef<Set<string>>(new Set())
 
   useEffect(
     function resetCacheOnCityChange() {
-      roadCacheRef.current = new Map()
-      fetchedAsPrimaryRef.current = new Set()
+      normalizedRoadCacheRef.current = new Map()
+      normalizedFetchedAsPrimaryRef.current = new Set()
     },
     [cityId],
   )
@@ -34,21 +33,21 @@ export const useRoadGraph = (cityId: number): RoadGraph => {
     if (cityId === 0) {
       return null
     }
-    const key = normalize(roadName)
-    if (fetchedAsPrimaryRef.current.has(key)) {
-      return roadCacheRef.current.get(key) ?? null
+    const key = normalizeRoadName(roadName)
+    if (normalizedFetchedAsPrimaryRef.current.has(key)) {
+      return normalizedRoadCacheRef.current.get(key) ?? null
     }
 
     const response = await fetchRoadWithJunctions(cityId, roadName)
     // Response is a Record<string, RoadInfo> — primary road + branch roads
     for (const [name, info] of Object.entries(response)) {
-      const cacheKey = normalize(name)
-      if (!roadCacheRef.current.has(cacheKey)) {
-        roadCacheRef.current.set(cacheKey, info)
+      const cacheKey = normalizeRoadName(name)
+      if (!normalizedRoadCacheRef.current.has(cacheKey)) {
+        normalizedRoadCacheRef.current.set(cacheKey, info)
       }
     }
-    fetchedAsPrimaryRef.current.add(key)
-    return roadCacheRef.current.get(key) ?? null
+    normalizedFetchedAsPrimaryRef.current.add(key)
+    return normalizedRoadCacheRef.current.get(key) ?? null
   }
 
   const toSelectedJunction = (
@@ -64,7 +63,7 @@ export const useRoadGraph = (cityId: number): RoadGraph => {
   })
 
   const getJunctionsForRoad = (roadName: string): SelectedJunction[] => {
-    const road = roadCacheRef.current.get(normalize(roadName))
+    const road = normalizedRoadCacheRef.current.get(normalizeRoadName(roadName))
     if (!road) {
       return []
     }
@@ -73,14 +72,14 @@ export const useRoadGraph = (cityId: number): RoadGraph => {
   }
 
   const isFetchedAsPrimary = (roadName: string): boolean =>
-    fetchedAsPrimaryRef.current.has(normalize(roadName))
+    normalizedFetchedAsPrimaryRef.current.has(normalizeRoadName(roadName))
 
   const isInCache = (roadName: string): boolean =>
-    roadCacheRef.current.has(normalize(roadName))
+    normalizedRoadCacheRef.current.has(normalizeRoadName(roadName))
 
   const reset = () => {
-    roadCacheRef.current = new Map()
-    fetchedAsPrimaryRef.current = new Set()
+    normalizedRoadCacheRef.current = new Map()
+    normalizedFetchedAsPrimaryRef.current = new Set()
   }
 
   return {
