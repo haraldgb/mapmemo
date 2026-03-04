@@ -12,7 +12,6 @@ import type {
   SelectedCity,
 } from '../game/settings/settingsTypes'
 import type { RouteAddress } from '../game/route/types'
-import { DEFAULT_ROUTE_ADDRESSES } from '../game/route/routeAddresses'
 import { isValidSeed, randomSeed } from '../game/utils'
 
 const SETTINGS_STORAGE_KEY = 'mapmemo.gameSettings'
@@ -43,10 +42,9 @@ const isRouteAddress = (value: unknown): value is RouteAddress =>
 
 const normalizeRouteAddresses = (value: unknown): RouteAddress[] => {
   if (!Array.isArray(value)) {
-    return DEFAULT_ROUTE_ADDRESSES
+    return []
   }
-  const valid = value.filter(isRouteAddress)
-  return valid.length >= 2 ? valid : DEFAULT_ROUTE_ADDRESSES
+  return value.filter(isRouteAddress)
 }
 
 const normalizeSelectedCity = (value: unknown): SelectedCity | null => {

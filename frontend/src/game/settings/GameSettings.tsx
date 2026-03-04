@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
-import { mapmemoActions, DEFAULT_GAME_SETTINGS } from '../../duck/reducer'
+import { mapmemoActions } from '../../duck/reducer'
 import {
   AREA_COUNT_OPTIONS,
   AREA_SUB_MODE_DESCRIPTIONS,
@@ -87,7 +87,7 @@ export const GameSettings = ({
           lat: a.lat,
           lng: a.lng,
         }))
-      : DEFAULT_GAME_SETTINGS.routeAddresses
+      : []
 
   const handleSeedChange = (value: string) => {
     const filtered = value.replace(/[^a-z0-9]/gi, '').toLowerCase()
@@ -135,7 +135,11 @@ export const GameSettings = ({
         })
       })
       .catch(() => {
-        setDraftSettings((prev) => ({ ...prev, selectedCity: city }))
+        setDraftSettings((prev) => ({
+          ...prev,
+          selectedCity: city,
+          routeAddresses: [],
+        }))
       })
   }
 
@@ -205,27 +209,41 @@ export const GameSettings = ({
           })}
         </div>
       </div>
-      {isRouteMode && (
-        <div className={s_section}>
-          <div className={s_label}>City</div>
+      <div className={s_section}>
+        <div className={s_label}>City</div>
+        {isRouteMode ? (
           <CityInput
             selectedCity={draftSettings.selectedCity}
             onSelect={handleCitySelect}
           />
-        </div>
-      )}
+        ) : (
+          <div className={s_city_disabled_wrapper}>
+            <input
+              type='text'
+              disabled
+              value='Oslo, Norway'
+              title={`In ${draftSettings.mode} mode, city selection is currently only available for Oslo, Norway`}
+              className={s_city_disabled_input}
+            />
+          </div>
+        )}
+      </div>
       {isRouteMode && (
         <div className={s_section}>
           <div className={s_addresses_header}>
             <div className={s_label}>Addresses</div>
             {addressError && (
-              <span className={sf_address_error(addressErrorLevel)}>
+              <span
+                className={sf_address_error(addressErrorLevel)}
+                title={addressError}
+              >
                 {addressError}
               </span>
             )}
           </div>
           <div className={s_addresses_input}>
             <RouteAddressInput
+              key={draftCityInfo?.id ?? 'no-city'}
               addresses={draftSettings.routeAddresses}
               defaultAddresses={cityDefaultAddresses}
               cityInfo={draftCityInfo}
@@ -397,7 +415,7 @@ const s_section = 'mt-3'
 const s_addresses_header = 'flex items-baseline gap-2'
 const s_addresses_input = 'mt-2'
 const sf_address_error = (level: 'warning' | 'error') =>
-  `text-xs m-0 ${level === 'error' ? 'text-red-600' : 'text-amber-600'}`
+  `min-w-0 flex-1 truncate text-xs m-0 ${level === 'error' ? 'text-red-600' : 'text-amber-600'}`
 const s_label = 'text-xs font-semibold uppercase tracking-wide text-slate-500'
 const sf_option_group = (isDisabled: boolean) =>
   `mt-2 flex flex-wrap gap-2 ${isDisabled ? 'opacity-60' : ''}`
@@ -432,3 +450,6 @@ const sf_primary_button = (isEnabled: boolean) =>
   }`
 const s_secondary_button =
   'rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-slate-400 hover:bg-slate-50'
+const s_city_disabled_wrapper = 'mt-2'
+const s_city_disabled_input =
+  'w-full cursor-not-allowed rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-400'

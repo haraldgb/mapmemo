@@ -163,4 +163,92 @@ public sealed class CitiesEndpointTests(IntegrationTestFactory factory) : Integr
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
+    private HttpRequestMessage PostDefaultAddress(long cityId, object body, string? apiKey = "test-admin-key") {
+        var request = new HttpRequestMessage(HttpMethod.Post, $"/api/cities/{cityId}/default-addresses");
+        if (apiKey is not null) {
+            request.Headers.Add("X-Api-Key", apiKey);
+        }
+
+        request.Content = JsonContent.Create(body);
+        return request;
+    }
+
+    private static object DefaultBody(double lat = 59.92, double lng = 10.75) =>
+        new { Label = "Rådhuset", StreetAddress = "Rådhusplassen 1, Oslo", RoadName = "Rådhusplassen", Lat = lat, Lng = lng };
+
+    [Fact]
+    public async Task PostDefaultAddress_returns_401_without_api_key() {
+        var cityId = await SeedCityAsync("Oslo, Norway");
+        var cookies = new CookieContainer();
+        using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
+
+        HttpResponseMessage response = await client.SendAsync(PostDefaultAddress(cityId, DefaultBody(), apiKey: null));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostDefaultAddress_returns_401_with_wrong_api_key() {
+        var cityId = await SeedCityAsync("Oslo, Norway");
+        var cookies = new CookieContainer();
+        using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
+
+        HttpResponseMessage response = await client.SendAsync(PostDefaultAddress(cityId, DefaultBody(), apiKey: "wrong-key"));
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostDefaultAddress_returns_404_for_unknown_city() {
+        var cookies = new CookieContainer();
+        using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
+
+        HttpResponseMessage response = await client.SendAsync(PostDefaultAddress(99999, DefaultBody()));
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostDefaultAddress_returns_400_when_outside_city_bounds() {
+        var cityId = await SeedCityAsync("Oslo, Norway", minLat: 59.8, minLon: 10.4, maxLat: 59.97, maxLon: 10.94);
+        var cookies = new CookieContainer();
+        using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
+
+        // Lat/Lng clearly outside Oslo bounds
+        HttpResponseMessage response = await client.SendAsync(PostDefaultAddress(cityId, DefaultBody(lat: 60.5, lng: 11.5)));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task PostDefaultAddress_returns_201_and_persists_address() {
+        var cityId = await SeedCityAsync("Oslo, Norway", minLat: 59.8, minLon: 10.4, maxLat: 59.97, maxLon: 10.94);
+        var cookies = new CookieContainer();
+        using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
+
+        HttpResponseMessage response = await client.SendAsync(PostDefaultAddress(cityId, DefaultBody(lat: 59.92, lng: 10.75)));
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        DefaultAddressResponse? body = await response.Content.ReadFromJsonAsync<DefaultAddressResponse>();
+        Assert.NotNull(body);
+        Assert.Equal("Rådhuset", body!.Label);
+        Assert.Equal("Rådhusplassen", body.RoadName);
+        Assert.Equal(59.92, body.Lat);
+        Assert.Equal(10.75, body.Lng);
+        Assert.NotEqual(0, body.Id);
+        Assert.Contains($"/api/cities/{cityId}/default-addresses/{body.Id}", response.Headers.Location?.ToString());
+    }
+
+    [Fact]
+    public async Task PostDefaultAddress_returns_201_when_city_has_no_bounds() {
+        var cityId = await SeedCityAsync("Oslo, Norway"); // no bounds
+        var cookies = new CookieContainer();
+        using HttpClient client = TestHttpClientFactory.CreateClientWithCookies(Factory, cookies);
+
+        // Any lat/lng is accepted when no bounds are set
+        HttpResponseMessage response = await client.SendAsync(PostDefaultAddress(cityId, DefaultBody(lat: 0.0, lng: 0.0)));
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
 }

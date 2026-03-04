@@ -5,7 +5,7 @@ import { resolveAddress } from '../../api/snapToRoads'
 import { getRoutePair } from './routeAddresses'
 import { useRoadGraph } from './useRoadGraph'
 import type { RouteAddress, SelectedJunction } from './types'
-import { computeAvailableJunctions } from './routeUtils'
+import { computeAvailableJunctions, canJunctionReachRoad } from './routeUtils'
 
 export type RouteGameState = {
   mode: 'route'
@@ -36,7 +36,10 @@ export const useRouteGameState = (): RouteGameState | null => {
   const { seed, mode, routeAddresses } = useSelector(
     (state: RootState) => state.mapmemo.gameSettings,
   )
-  const roadGraph = useRoadGraph()
+  const cityId = useSelector(
+    (state: RootState) => state.mapmemo.cityInfo?.id ?? 0,
+  )
+  const roadGraph = useRoadGraph(cityId)
 
   const [startAddress, setStartAddress] = useState<RouteAddress | null>(null)
   const [endAddress, setEndAddress] = useState<RouteAddress | null>(null)
@@ -69,11 +72,10 @@ export const useRouteGameState = (): RouteGameState | null => {
   const isGameActive = path.length > 0 && !isComplete
 
   const lastJunction = path.at(-1) ?? null
-  const canReachDestination =
-    endAddress !== null &&
-    lastJunction !== null &&
-    (lastJunction.roadName === endAddress.roadName ||
-      lastJunction.connectedRoadNames.includes(endAddress.roadName))
+  const canReachDestination = canJunctionReachRoad(
+    lastJunction,
+    endAddress?.roadName ?? null,
+  )
 
   // Init flow: resolve addresses, fetch starting road
   useEffect(
@@ -105,13 +107,14 @@ export const useRouteGameState = (): RouteGameState | null => {
         setEndAddress(resolvedEnd)
 
         // Fetch the starting road
-        await roadGraph.fetchRoad(resolvedStart.roadName)
+        const startRoad = await roadGraph.fetchRoad(resolvedStart.roadName)
         if (!isActive) {
           return
         }
 
         const junctions = roadGraph.getJunctionsForRoad(resolvedStart.roadName)
-        setCurrentRoadName(resolvedStart.roadName)
+        // Use OSM canonical name for display (may differ in capitalisation from Google Maps)
+        setCurrentRoadName(startRoad?.name ?? resolvedStart.roadName)
         setAvailableJunctions(junctions)
         setIsLoading(false)
       }

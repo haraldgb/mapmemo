@@ -118,18 +118,17 @@ internal static class GeoDataEndpoints {
             HttpContext context,
             MapMemoDbContext db,
             ISessionService sessionService,
-            string? city_name,
+            long? city_id,
             string? road_name) => {
                 if (!sessionService.HasValidSession(context)) {
                     return Results.Unauthorized();
                 }
 
-                if (string.IsNullOrWhiteSpace(city_name) || string.IsNullOrWhiteSpace(road_name)) {
-                    return Results.BadRequest(new { error = "city_name and road_name are required." });
+                if (city_id is null || string.IsNullOrWhiteSpace(road_name)) {
+                    return Results.BadRequest(new { error = "city_id and road_name are required." });
                 }
 
-                City? city = await db.Cities
-                    .FirstOrDefaultAsync(c => c.Name.ToLower() == city_name.ToLower());
+                City? city = await db.Cities.FindAsync(city_id.Value);
 
                 if (city is null) {
                     return Results.NotFound(new { error = "City not found." });
@@ -208,5 +207,75 @@ internal static class GeoDataEndpoints {
 
                 return Results.Json(response);
             });
+
+        app.MapGet("/api/roads/check", async (
+            HttpContext context,
+            MapMemoDbContext db,
+            ISessionService sessionService,
+            long? city_id,
+            string? road_name) => {
+                if (!sessionService.HasValidSession(context)) {
+                    return Results.Unauthorized();
+                }
+
+                if (city_id is null || string.IsNullOrWhiteSpace(road_name)) {
+                    return Results.BadRequest(new { error = "city_id and road_name are required." });
+                }
+
+                City? city = await db.Cities.FindAsync(city_id.Value);
+                if (city is null) {
+                    return Results.NotFound(new { error = "City not found." });
+                }
+
+                List<string> allRoadNames = await db.Roads
+                    .Where(r => r.CityId == city.Id)
+                    .Select(r => r.Name)
+                    .ToListAsync();
+
+                var lowerInput = road_name.ToLower();
+
+                var exactMatch = allRoadNames
+                    .FirstOrDefault(n => n.ToLower() == lowerInput);
+
+                if (exactMatch is not null) {
+                    return Results.Json(new CheckRoadResponseDto(true, exactMatch, []));
+                }
+
+                var suggestions = allRoadNames
+                    .Select(n => new RoadSuggestionDto(n, ComputeSimilarity(lowerInput, n.ToLower())))
+                    .Where(s => s.Score >= 0.70)
+                    .OrderByDescending(s => s.Score)
+                    .Take(5)
+                    .ToList();
+
+                return Results.Json(new CheckRoadResponseDto(false, null, suggestions));
+            });
+    }
+
+    /// <summary>
+    /// Returns a similarity score in [0, 1]: <c>1 - levenshteinDistance / max(|a|, |b|)</c>.
+    /// Example: "akersgata" - "akersgate": 2 char diff → 1 - 2/9 ≈ 0.78
+    /// </summary>
+    private static double ComputeSimilarity(string a, string b) {
+        if (a == b) return 1.0;
+        int la = a.Length, lb = b.Length;
+        if (la == 0 || lb == 0) return 0.0;
+
+        var prev = new int[lb + 1];
+        var curr = new int[lb + 1];
+
+        for (var j = 0; j <= lb; j++) prev[j] = j;
+
+        for (var i = 1; i <= la; i++) {
+            curr[0] = i;
+            for (var j = 1; j <= lb; j++) {
+                var cost = a[i - 1] == b[j - 1] ? 0 : 1;
+                curr[j] = Math.Min(Math.Min(curr[j - 1] + 1, prev[j] + 1), prev[j - 1] + cost);
+            }
+
+            (prev, curr) = (curr, prev);
+        }
+
+        return 1.0 - (double)prev[lb] / Math.Max(la, lb);
     }
 }
