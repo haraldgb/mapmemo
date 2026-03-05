@@ -26,10 +26,10 @@ export const AppFooter = ({ version, isGameRoute }: AppFooterProps) => {
 
   return (
     <footer className={sf_footer(isGameRoute, isVisible)}>
-      <div className={s_footer_inner}>
+      <div className={sf_footer_inner(isGameRoute)}>
         <a
           href={url}
-          className={s_repo_link}
+          className={sf_repo_link(isGameRoute)}
           rel='noreferrer'
           target='_blank'
         >
@@ -38,13 +38,13 @@ export const AppFooter = ({ version, isGameRoute }: AppFooterProps) => {
         <div className={s_footer_links}>
           <Link
             to='/privacy'
-            className={s_repo_link}
+            className={sf_repo_link(isGameRoute)}
           >
             Privacy
           </Link>
           <a
             href='https://github.com/haraldgb/mapmemo'
-            className={s_repo_link}
+            className={sf_repo_link(isGameRoute)}
             rel='noreferrer'
             target='_blank'
           >
@@ -65,19 +65,23 @@ export const AppFooter = ({ version, isGameRoute }: AppFooterProps) => {
 }
 
 const sf_footer = (isGameRoute: boolean, isVisible: boolean) => {
-  const base =
-    'border-t border-slate-200 bg-white transition-all duration-300 ease-in-out'
   if (!isGameRoute) {
-    return base
+    return 'border-t border-slate-200 bg-white transition-all duration-300 ease-in-out'
   }
-  const gamePosition = `absolute inset-x-0 bottom-0 z-40`
+  const gameBase =
+    'border-t border-slate-200 bg-white transition-all duration-300 ease-in-out'
+  const gamePosition = 'absolute inset-x-0 bottom-0 z-40'
   const visibility = isVisible
     ? '[clip-path:inset(0)] opacity-100'
     : '[clip-path:inset(100%_0_0_0)] opacity-0 pointer-events-none'
-  return `${base} ${gamePosition} ${visibility}`
+  return `${gameBase} ${gamePosition} ${visibility}`
 }
-const s_footer_inner =
-  'flex flex-row w-full gap-1 px-4 py-1.5 text-xs text-slate-500 sm:items-center justify-between'
+const sf_footer_inner = (isGameRoute: boolean) =>
+  `flex flex-row w-full gap-1 px-4 py-1.5 text-xs sm:items-center justify-between ${
+    isGameRoute ? 'text-slate-500' : 'text-slate-500'
+  }`
 const s_footer_links = 'flex items-center gap-4'
-const s_repo_link =
-  'inline-flex items-center gap-1.5 text-slate-500 transition hover:text-slate-900'
+const sf_repo_link = (isGameRoute: boolean) =>
+  isGameRoute
+    ? 'inline-flex items-center gap-1.5 text-slate-500 transition hover:text-slate-900'
+    : 'inline-flex items-center gap-1.5 text-slate-500 transition hover:text-slate-900'

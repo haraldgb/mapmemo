@@ -66,6 +66,8 @@ export const AppLayout = () => {
 const sf_outer_container = (isGameRoute: boolean) =>
   isGameRoute
     ? 'flex h-screen flex-col bg-slate-50'
-    : 'flex min-h-screen flex-col bg-slate-50'
+    : 'flex h-screen flex-col bg-slate-100'
 const sf_body = (isGameRoute: boolean) =>
-  `${isGameRoute ? 'flex min-h-0 w-full flex-1 flex-col overflow-hidden' : 'mx-auto flex w-full max-w6xl flex-1 flex-col px-6 py-8'}`
+  isGameRoute
+    ? 'flex min-h-0 w-full flex-1 flex-col overflow-hidden'
+    : 'mx-auto w-full max-w6xl flex-1 overflow-y-auto'
