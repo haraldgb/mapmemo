@@ -1,6 +1,9 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://api.mapmemo.app/api/:path*" },
+    {
+      "source": "/api/:path*",
+      "destination": "https://api.mapmemo.app/api/:path*"
+    },
     { "source": "/(.*)", "destination": "/" }
   ]
 }

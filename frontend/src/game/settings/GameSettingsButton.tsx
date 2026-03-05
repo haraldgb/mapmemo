@@ -1,8 +1,10 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
+import { useSelector } from 'react-redux'
 import { SettingsCogIcon } from '../../components/icons/SettingsCogIcon'
 import { GameSettings } from './GameSettings'
 import { useSettingsOpen } from './SettingsOpenContext'
+import type { RootState } from '../../store'
 
 type Props = {
   isGameActive: boolean
@@ -11,12 +13,20 @@ type Props = {
 
 export const GameSettingsButton = ({ isGameActive, resetGameState }: Props) => {
   const { isSettingsOpen, setIsSettingsOpen } = useSettingsOpen()
+  const gameSettings = useSelector(
+    (state: RootState) => state.mapmemo.gameSettings,
+  )
 
   useEffect(
-    function openOnMountEffect() {
-      setIsSettingsOpen(true)
+    function openIfInvalidSettingsEffect() {
+      const isRouteMode = gameSettings.mode === 'route'
+      const hasInvalidSettings =
+        isRouteMode && gameSettings.routeAddresses.length < 2
+      if (hasInvalidSettings) {
+        setIsSettingsOpen(true)
+      }
     },
-    [setIsSettingsOpen],
+    [gameSettings, setIsSettingsOpen],
   )
 
   const handleBackdropClick = (event: React.MouseEvent) => {
