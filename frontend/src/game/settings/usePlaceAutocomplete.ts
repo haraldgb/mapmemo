@@ -293,7 +293,7 @@ const runSelect = async (
     const streetAddress = place.formattedAddress ?? displayLabel
 
     if (!roadName) {
-      setValidationError('Try selecting from the dropdown.')
+      setValidationError('The address needs a valid road name.')
       setValidationErrorLevel('warning')
       return
     }
