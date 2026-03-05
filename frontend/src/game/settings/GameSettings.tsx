@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
 import { mapmemoActions } from '../../duck/reducer'
@@ -47,6 +47,9 @@ export const GameSettings = ({
   const areaOptions = useSelector(
     (state: RootState) => state.mapmemo.areaOptions,
   )
+  const isAreaOptionsLoading = useSelector(
+    (state: RootState) => state.mapmemo.isAreaOptionsLoading,
+  )
   const reduxCityInfo = useSelector(
     (state: RootState) => state.mapmemo.cityInfo,
   )
@@ -70,6 +73,19 @@ export const GameSettings = ({
   const isNameMode = draftSettings.mode === 'name'
   const showDifficulty = isNameMode
   const showAreaSettings = !isRouteMode
+
+  useEffect(
+    function loadAreaOptionsWhenNeeded() {
+      if (
+        showAreaSettings &&
+        areaOptions.length === 0 &&
+        !isAreaOptionsLoading
+      ) {
+        dispatch(mapmemoActions.loadAreaOptions())
+      }
+    },
+    [showAreaSettings, areaOptions.length, isAreaOptionsLoading, dispatch],
+  )
   const selectedAreaCount = draftSettings.selectedAreas.length
   const areaButtonLabel =
     selectedAreaCount === 0 ? 'All areas' : `${selectedAreaCount} selected`
@@ -342,6 +358,7 @@ export const GameSettings = ({
           <AreaDropdown
             label={areaButtonLabel}
             options={areaOptions}
+            isLoading={isAreaOptionsLoading}
             selectedIds={draftSettings.selectedAreas}
             onToggleSelection={toggleAreaSelection}
             outsideClickRef={containerRef}
