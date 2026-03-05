@@ -3,3 +3,4 @@ pnpm-lock.yaml
 .beads/
 **.md
 .claude/
+*.json
