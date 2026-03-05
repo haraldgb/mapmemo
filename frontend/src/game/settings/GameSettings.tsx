@@ -50,6 +50,9 @@ export const GameSettings = ({
   const isAreaOptionsLoading = useSelector(
     (state: RootState) => state.mapmemo.isAreaOptionsLoading,
   )
+  const isAreaOptionsLoadFailed = useSelector(
+    (state: RootState) => state.mapmemo.isAreaOptionsLoadFailed,
+  )
   const reduxCityInfo = useSelector(
     (state: RootState) => state.mapmemo.cityInfo,
   )
@@ -62,6 +65,27 @@ export const GameSettings = ({
     'warning' | 'error'
   >('warning')
 
+  useEffect(
+    function loadAreaOptionsWhenNeeded() {
+      const showAreaSettings = draftSettings.mode !== 'route'
+      if (
+        showAreaSettings &&
+        areaOptions.length === 0 &&
+        !isAreaOptionsLoading &&
+        !isAreaOptionsLoadFailed
+      ) {
+        dispatch(mapmemoActions.loadAreaOptions())
+      }
+    },
+    [
+      draftSettings.mode,
+      areaOptions.length,
+      isAreaOptionsLoading,
+      isAreaOptionsLoadFailed,
+      dispatch,
+    ],
+  )
+
   const handleAddressError = (
     error: string | null,
     level: 'warning' | 'error',
@@ -73,19 +97,6 @@ export const GameSettings = ({
   const isNameMode = draftSettings.mode === 'name'
   const showDifficulty = isNameMode
   const showAreaSettings = !isRouteMode
-
-  useEffect(
-    function loadAreaOptionsWhenNeeded() {
-      if (
-        showAreaSettings &&
-        areaOptions.length === 0 &&
-        !isAreaOptionsLoading
-      ) {
-        dispatch(mapmemoActions.loadAreaOptions())
-      }
-    },
-    [showAreaSettings, areaOptions.length, isAreaOptionsLoading, dispatch],
-  )
   const selectedAreaCount = draftSettings.selectedAreas.length
   const areaButtonLabel =
     selectedAreaCount === 0 ? 'All areas' : `${selectedAreaCount} selected`

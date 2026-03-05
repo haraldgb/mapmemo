@@ -37,7 +37,8 @@ function* handleLoadAreaOptions() {
     yield put(mapmemoActions.setAreaOptionsLoading(true))
     const response: Response = yield call(fetch, DELBYDELER_GEOJSON_URL)
     if (!response.ok) {
-      throw new Error('Failed to load Oslo GeoJSON, response: ' + response.text)
+      const text: string = yield call([response, response.text])
+      throw new Error('Failed to load Oslo GeoJSON, response: ' + text)
     }
     // SAFETY: Oslo-specific cast until multi-city GeoJSON support is added.
     const geojson = (yield call([response, response.json])) as OsloGeoJson
@@ -47,6 +48,7 @@ function* handleLoadAreaOptions() {
     yield put(mapmemoActions.setAllSubAreaNames(allSubAreaNames))
   } catch {
     // TODO: add silent error logging to sentry/similar
+    yield put(mapmemoActions.setAreaOptionsLoadFailed(true))
   } finally {
     yield put(mapmemoActions.setAreaOptionsLoading(false))
   }

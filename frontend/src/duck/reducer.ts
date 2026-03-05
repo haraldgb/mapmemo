@@ -19,6 +19,7 @@ export interface MapmemoState {
   areaOptions: AreaOption[]
   allSubAreaNames: string[]
   isAreaOptionsLoading: boolean
+  isAreaOptionsLoadFailed: boolean
   isAppInitialized: boolean
   cityInfo: CityInfo | null
 }
@@ -28,6 +29,7 @@ export const initialMapmemoState: MapmemoState = {
   areaOptions: [],
   allSubAreaNames: [],
   isAreaOptionsLoading: false,
+  isAreaOptionsLoadFailed: false,
   isAppInitialized: false,
   cityInfo: null,
 }
@@ -42,6 +44,9 @@ const mapmemoSlice = createSlice({
     loadAreaOptions() {},
     setAreaOptionsLoading(state, action: PayloadAction<boolean>) {
       state.isAreaOptionsLoading = action.payload
+    },
+    setAreaOptionsLoadFailed(state, action: PayloadAction<boolean>) {
+      state.isAreaOptionsLoadFailed = action.payload
     },
     setAreaOptions(state, action: PayloadAction<AreaOption[]>) {
       state.areaOptions = action.payload
