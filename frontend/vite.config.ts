@@ -1,12 +1,20 @@
+import { execSync } from 'child_process'
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
-import { googleMapsSecretPlugin } from './plugins/googleMapsSecretPlugin'
+
+const appVersion = (() => {
+  try {
+    return execSync('git describe --tags --always').toString().trim()
+  } catch {
+    return 'unknown'
+  }
+})()
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const googleMapsApiKey: string | undefined = env.GOOGLE_MAPS_API_KEY
-  const googleMapsSecretName = env.GOOGLE_MAPS_API_KEY_SECRET
+  const backendUrl =
+    mode === 'production' ? env.VITE_BACKEND_URL : 'http://localhost:5243'
 
   return {
     plugins: [
@@ -16,7 +24,14 @@ export default defineConfig(({ mode }) => {
           plugins: ['babel-plugin-react-compiler'],
         },
       }),
-      googleMapsSecretPlugin(googleMapsSecretName, googleMapsApiKey),
     ],
+    define: {
+      __APP_VERSION__: JSON.stringify(appVersion),
+    },
+    server: {
+      proxy: {
+        '/api': `${backendUrl}`,
+      },
+    },
   }
 })

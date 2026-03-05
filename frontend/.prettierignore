@@ -1,2 +1,5 @@
 public/
 pnpm-lock.yaml
+.beads/
+**.md
+.claude/

@@ -1,17 +1,87 @@
-import { MODE_OPTIONS } from '../game/consts'
-import type { GameSettings } from '../game/settings/settingsTypes'
+import {
+  AREA_COUNT_OPTIONS,
+  AREA_SUB_MODE_OPTIONS,
+  DIFFICULTY_OPTIONS,
+  MODE_OPTIONS,
+} from '../game/consts'
+import type {
+  AreaSubMode,
+  GameDifficulty,
+  GameMode,
+  GameSettings,
+  SelectedCity,
+} from '../game/settings/settingsTypes'
+import type { RouteAddress } from '../game/route/types'
+import { isValidSeed, randomSeed } from '../game/utils'
 
-const STORAGE_KEY = 'mapmemo.gameSettings'
-const isValidModeCount = (value: unknown): value is number =>
-  typeof value === 'number' &&
+const SETTINGS_STORAGE_KEY = 'mapmemo.gameSettings'
+const isValidMode = (value: unknown): value is GameMode =>
+  typeof value === 'string' &&
   MODE_OPTIONS.some((option) => option.value === value)
+
+const isValidDifficulty = (value: unknown): value is GameDifficulty =>
+  typeof value === 'string' &&
+  DIFFICULTY_OPTIONS.some((option) => option.value === value)
+
+const isValidAreaSubMode = (value: unknown): value is AreaSubMode =>
+  typeof value === 'string' &&
+  AREA_SUB_MODE_OPTIONS.some((option) => option.value === value)
+
+const isValidAreaCount = (value: unknown): value is number =>
+  typeof value === 'number' &&
+  AREA_COUNT_OPTIONS.some((option) => option.value === value)
+
+const isRouteAddress = (value: unknown): value is RouteAddress =>
+  value !== null &&
+  typeof value === 'object' &&
+  typeof (value as RouteAddress).label === 'string' &&
+  typeof (value as RouteAddress).streetAddress === 'string' &&
+  typeof (value as RouteAddress).roadName === 'string' &&
+  typeof (value as RouteAddress).lat === 'number' &&
+  typeof (value as RouteAddress).lng === 'number'
+
+const normalizeRouteAddresses = (value: unknown): RouteAddress[] => {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return value.filter(isRouteAddress)
+}
+
+const normalizeSelectedCity = (value: unknown): SelectedCity | null => {
+  if (
+    value !== null &&
+    typeof value === 'object' &&
+    typeof (value as SelectedCity).id === 'number' &&
+    typeof (value as SelectedCity).name === 'string'
+  ) {
+    return {
+      id: (value as SelectedCity).id,
+      name: (value as SelectedCity).name,
+    }
+  }
+  return null
+}
+
+const normalizeSelectedAreas = (value: unknown): string[] => {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return value
+    .filter((item): item is string => typeof item === 'string')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+}
 
 const isValidSettings = (value: unknown): value is GameSettings => {
   if (!value || typeof value !== 'object') {
     return false
   }
   const candidate = value as Partial<GameSettings>
-  return isValidModeCount(candidate.modeCount)
+  return (
+    isValidAreaCount(candidate.areaCount) &&
+    isValidMode(candidate.mode) &&
+    isValidDifficulty(candidate.difficulty)
+  )
 }
 
 // TODO: move into generic utility that takes isValidCheck, storage key
@@ -20,7 +90,7 @@ export const loadGameSettings = (): GameSettings | null => {
     return null
   }
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
+    const raw = window.localStorage.getItem(SETTINGS_STORAGE_KEY)
     if (!raw) {
       return null
     }
@@ -28,7 +98,23 @@ export const loadGameSettings = (): GameSettings | null => {
     if (!isValidSettings(parsed)) {
       return null
     }
-    return parsed
+    const candidate = parsed as Partial<GameSettings>
+    const seedValue =
+      typeof candidate.seed === 'string' && isValidSeed(candidate.seed)
+        ? candidate.seed
+        : randomSeed()
+    return {
+      mode: candidate.mode ?? 'click',
+      difficulty: candidate.difficulty ?? 'easy',
+      areaSubMode: isValidAreaSubMode(candidate.areaSubMode)
+        ? candidate.areaSubMode
+        : 'areaCount',
+      areaCount: candidate.areaCount ?? AREA_COUNT_OPTIONS[0]?.value ?? 10,
+      selectedAreas: normalizeSelectedAreas(candidate.selectedAreas),
+      seed: seedValue,
+      routeAddresses: normalizeRouteAddresses(candidate.routeAddresses),
+      selectedCity: normalizeSelectedCity(candidate.selectedCity),
+    }
   } catch {
     return null
   }
@@ -40,7 +126,17 @@ export const saveGameSettings = (settings: GameSettings) => {
     return
   }
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    const payload = {
+      mode: settings.mode,
+      difficulty: settings.difficulty,
+      areaSubMode: settings.areaSubMode,
+      areaCount: settings.areaCount,
+      selectedAreas: settings.selectedAreas,
+      seed: settings.seed,
+      routeAddresses: settings.routeAddresses,
+      selectedCity: settings.selectedCity,
+    }
+    window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload))
   } catch {
     // Ignore storage failures (private mode, quota, etc.)
   }

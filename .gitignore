@@ -2,6 +2,8 @@
 tanker.txt
 .secrets
 .env
+osm/
+.claude/worktrees
 
 # Editor directories and files
 .vscode/*
@@ -14,3 +16,4 @@ tanker.txt
 *.njsproj
 *.sln
 *.sw?
+**/settings.local.json

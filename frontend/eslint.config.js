@@ -47,6 +47,11 @@ export default defineConfig([
           message:
             'Use an explicit function body with return for PascalCase component arrow functions.',
         },
+        {
+          selector: 'CallExpression[callee.name="useWhyDidYouUpdate"]',
+          message:
+            'useWhyDidYouUpdate is a dev-only debugging util - remove before committing.',
+        },
       ],
       'no-restricted-imports': [
         'error',
@@ -55,6 +60,12 @@ export default defineConfig([
         },
       ],
       'react-hooks/exhaustive-deps': 'off',
+    },
+  },
+  {
+    files: ['**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    languageOptions: {
+      globals: globals.jest,
     },
   },
   {

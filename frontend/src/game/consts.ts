@@ -1,11 +1,25 @@
-import type { GameSettings } from './settings/settingsTypes'
+export const SEED_LENGTH = 8
+// lowercase alphanumeric
+export const SEED_REGEX = /^[a-z0-9]+$/
 
 export const OSLO_CENTER = { lat: 59.91, lng: 10.73 }
 
-export const DELBYDELER_GEOJSON_URL = '/Delbydeler_1854838652447253595.geojson'
+export const DELBYDELER_GEOJSON_URL = '/api/oslo-neighboorhoods'
 
-// Key for the sub-district label property in the GeoJSON data for Oslo.
-export const SUB_DISTRICT_KEY = 'DELBYDELSN'
+// properties names of Oslo GeoJSON.
+export const ID_KEY = 'FID'
+export const MUNICIPALITY_KEY = 'kommunenum'
+export const SUB_AREA_KEY = 'DELBYDEL'
+export const SUB_AREA_NAME_KEY = 'DELBYDELSN'
+export const AREA_KEY = 'BYDEL'
+export const AREA_NAME_KEY = 'BYDELSNAVN'
+export type OsloGeoJsonPropertyKey =
+  | typeof ID_KEY
+  | typeof MUNICIPALITY_KEY
+  | typeof SUB_AREA_KEY
+  | typeof SUB_AREA_NAME_KEY
+  | typeof AREA_KEY
+  | typeof AREA_NAME_KEY
 
 export const OUTLINE_STYLE: google.maps.Data.StyleOptions = {
   strokeColor: '#6f2dbd',
@@ -42,12 +56,72 @@ export const FLASH_STYLE: google.maps.Data.StyleOptions = {
   fillOpacity: 0.55,
 }
 
+export const TARGET_STYLE_DIM: google.maps.Data.StyleOptions = {
+  ...OUTLINE_STYLE,
+  strokeColor: '#3b82f6',
+  strokeWeight: 2.5,
+  fillColor: '#3b82f6',
+  fillOpacity: 0.1,
+}
+
+export const TARGET_STYLE_BRIGHT: google.maps.Data.StyleOptions = {
+  ...OUTLINE_STYLE,
+  strokeColor: '#3b82f6',
+  strokeWeight: 2.5,
+  fillColor: '#3b82f6',
+  fillOpacity: 0.3,
+}
+
+export const INCORRECT_FLASH_STYLE: google.maps.Data.StyleOptions = {
+  ...OUTLINE_STYLE,
+  strokeColor: '#ef4444',
+  fillColor: '#ef4444',
+  fillOpacity: 0.4,
+}
+
 export const MODE_OPTIONS = [
+  { label: 'Click', value: 'click' },
+  { label: 'Name', value: 'name' },
+  { label: 'Route', value: 'route' },
+] as const
+
+export const MODE_DESCRIPTIONS: Record<string, string> = {
+  click: 'Find and click the named area on the map.',
+  name: 'Type the name of the highlighted area.',
+  route: 'Navigate from A to B through junctions.',
+}
+
+export const DIFFICULTY_OPTIONS = [
+  { label: 'Beginner', value: 'beginner' },
+  { label: 'Easy', value: 'easy' },
+  { label: 'Medium', value: 'medium' },
+  { label: 'Hard', value: 'hard' },
+] as const
+
+export const DIFFICULTY_DESCRIPTIONS: Record<string, string> = {
+  beginner: 'Suggests only areas in play. Shows before first input',
+  easy: 'Suggests only areas in play. Shows after first input.',
+  medium: 'Suggests all areas, not only those in play.',
+  hard: 'No suggestions',
+}
+
+export const AREA_SUB_MODE_OPTIONS = [
+  { label: 'Full pool', value: 'areaCount' },
+  { label: 'Pick areas', value: 'areaPick' },
+] as const
+
+export const AREA_SUB_MODE_DESCRIPTIONS: Record<string, string> = {
+  areaCount: 'Play a set number of areas from the full pool.',
+  areaPick: 'Choose specific areas to play.',
+}
+
+export const AREA_COUNT_OPTIONS = [
   { label: '10', value: 10 },
   { label: '25', value: 25 },
   { label: 'Alle (99)', value: 99 },
 ] as const
 
-export const DEFAULT_GAME_SETTINGS: GameSettings = {
-  modeCount: MODE_OPTIONS[0]?.value ?? 10,
-}
+// Map IDs: different maps have different pre-set styling.
+// Styling determines what features are shown in the map - roads, churches, area names, etc.
+export const AREA_MODE_MAP_ID = '5da3993597ca412079e99b4c'
+export const ROUTE_MODE_MAP_ID = '5da3993597ca4120f086cda2'

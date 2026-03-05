@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
 
-interface IProps {
+type Props = {
   to: string
   label: string
 }
 
-export const LinkButton = (props: IProps) => {
+export const LinkButton = (props: Props) => {
   return (
     <div className='flex flex-wrap gap-3'>
       <Link

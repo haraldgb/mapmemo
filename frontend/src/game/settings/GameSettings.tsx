@@ -1,29 +1,153 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
 import { mapmemoActions } from '../../duck/reducer'
-import { MODE_OPTIONS } from '../consts'
+import {
+  AREA_COUNT_OPTIONS,
+  AREA_SUB_MODE_DESCRIPTIONS,
+  AREA_SUB_MODE_OPTIONS,
+  DIFFICULTY_DESCRIPTIONS,
+  DIFFICULTY_OPTIONS,
+  MODE_DESCRIPTIONS,
+  MODE_OPTIONS,
+  SEED_LENGTH,
+} from '../consts'
 import { ConfirmResetPopup } from '../../components/ConfirmResetPopup'
-import type { GameSettings as GameSettingsModel } from './settingsTypes'
+import type {
+  GameSettings as GameSettingsModel,
+  SelectedCity,
+} from './settingsTypes'
+import { AreaDropdown } from './AreaDropdown'
+import { RouteAddressInput } from './RouteAddressInput'
+import { CityInput } from './CityInput'
+import { isValidSeed, randomSeed } from '../utils'
+import type { CityInfo } from '../../api/cityApi'
+import { fetchCityInfo } from '../../api/cityApi'
+import type { RouteAddress } from '../route/types'
 
-interface IProps {
+const PRESET_SEEDS = ['dickbutt', 'kumquats', 'oslobest'] as const
+
+type Props = {
   isGameActive: boolean
   onClose: () => void
+  resetGameState: () => void
 }
 
-export const GameSettings = ({ isGameActive, onClose }: IProps) => {
+export const GameSettings = ({
+  isGameActive,
+  onClose,
+  resetGameState,
+}: Props) => {
   const dispatch = useDispatch<AppDispatch>()
   const currentSettings = useSelector(
     (state: RootState) => state.mapmemo.gameSettings,
   )
   const [draftSettings, setDraftSettings] =
     useState<GameSettingsModel>(currentSettings)
+  const areaOptions = useSelector(
+    (state: RootState) => state.mapmemo.areaOptions,
+  )
+  const reduxCityInfo = useSelector(
+    (state: RootState) => state.mapmemo.cityInfo,
+  )
+  const [draftCityInfo, setDraftCityInfo] = useState<CityInfo | null>(
+    reduxCityInfo,
+  )
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const [addressError, setAddressError] = useState<string | null>(null)
+  const [addressErrorLevel, setAddressErrorLevel] = useState<
+    'warning' | 'error'
+  >('warning')
+
+  const handleAddressError = (
+    error: string | null,
+    level: 'warning' | 'error',
+  ) => {
+    setAddressError(error)
+    setAddressErrorLevel(level)
+  }
+  const isRouteMode = draftSettings.mode === 'route'
+  const isNameMode = draftSettings.mode === 'name'
+  const showDifficulty = isNameMode
+  const showAreaSettings = !isRouteMode
+  const selectedAreaCount = draftSettings.selectedAreas.length
+  const areaButtonLabel =
+    selectedAreaCount === 0 ? 'All areas' : `${selectedAreaCount} selected`
+
+  const isSeedValid = isValidSeed(draftSettings.seed)
+  const isApplyEnabled =
+    isSeedValid && (!isRouteMode || draftSettings.routeAddresses.length >= 2)
+  const hasCitySelected = draftSettings.selectedCity !== null
+  const cityDefaultAddresses: RouteAddress[] =
+    draftCityInfo !== null && draftCityInfo.defaultAddresses.length >= 2
+      ? draftCityInfo.defaultAddresses.map((a) => ({
+          label: a.label,
+          streetAddress: a.streetAddress,
+          roadName: a.roadName,
+          lat: a.lat,
+          lng: a.lng,
+        }))
+      : []
+
+  const handleSeedChange = (value: string) => {
+    const filtered = value.replace(/[^a-z0-9]/gi, '').toLowerCase()
+    setDraftSettings((prev) => ({ ...prev, seed: filtered }))
+  }
+
+  const handleRandomizeSeed = () => {
+    setDraftSettings((prev) => ({ ...prev, seed: randomSeed() }))
+  }
+
+  const toggleAreaSelection = (areaId: string) => {
+    setDraftSettings((prev) => {
+      const nextSelected = new Set(prev.selectedAreas)
+      if (nextSelected.has(areaId)) {
+        nextSelected.delete(areaId)
+      } else {
+        nextSelected.add(areaId)
+      }
+      return {
+        ...prev,
+        selectedAreas: Array.from(nextSelected),
+      }
+    })
+  }
 
   // prompt user to confirm reset of active game
   const [isConfirming, setIsConfirming] = useState(false)
 
+  const handleCitySelect = (city: SelectedCity) => {
+    fetchCityInfo(city.id)
+      .then((info) => {
+        setDraftCityInfo(info)
+        setDraftSettings((prev) => {
+          const isNewCity = prev.selectedCity?.id !== city.id
+          const routeAddresses: RouteAddress[] = isNewCity
+            ? info.defaultAddresses.map((a) => ({
+                label: a.label,
+                streetAddress: a.streetAddress,
+                roadName: a.roadName,
+                lat: a.lat,
+                lng: a.lng,
+              }))
+            : prev.routeAddresses
+          return { ...prev, selectedCity: city, routeAddresses }
+        })
+      })
+      .catch(() => {
+        setDraftSettings((prev) => ({
+          ...prev,
+          selectedCity: city,
+          routeAddresses: [],
+        }))
+      })
+  }
+
   const applySettings = () => {
     dispatch(mapmemoActions.setGameSettings(draftSettings))
+    if (draftCityInfo !== null) {
+      dispatch(mapmemoActions.setCityInfo(draftCityInfo))
+    }
     onClose()
   }
 
@@ -33,11 +157,13 @@ export const GameSettings = ({ isGameActive, onClose }: IProps) => {
       return
     }
     applySettings()
+    resetGameState()
   }
 
   const handleConfirmApply = () => {
     setIsConfirming(false)
     applySettings()
+    resetGameState()
   }
 
   const handleConfirmReset = (confirm: boolean) => {
@@ -54,29 +180,205 @@ export const GameSettings = ({ isGameActive, onClose }: IProps) => {
   }
 
   return (
-    <div className={s_popover}>
+    <div
+      ref={containerRef}
+      className={s_container}
+    >
       <div className={s_title}>Game settings</div>
       <div className={s_section}>
         <div className={s_label}>Mode</div>
-        <div className={s_option_group}>
-          {MODE_OPTIONS.map((mode) => {
-            const isSelected = draftSettings.modeCount === mode.value
+        <div className={sf_option_group(false)}>
+          {MODE_OPTIONS.map((option) => {
+            const isSelected = draftSettings.mode === option.value
             return (
               <button
-                key={mode.value}
+                key={option.value}
                 type='button'
+                title={MODE_DESCRIPTIONS[option.value]}
                 onClick={() =>
                   setDraftSettings((prev) => ({
                     ...prev,
-                    modeCount: mode.value,
+                    mode: option.value,
                   }))
                 }
-                className={sf_option_button(isSelected)}
+                className={sf_option_button(isSelected, false)}
               >
-                {mode.label}
+                {option.label}
               </button>
             )
           })}
+        </div>
+      </div>
+      <div className={s_section}>
+        <div className={s_label}>City</div>
+        {isRouteMode ? (
+          <CityInput
+            selectedCity={draftSettings.selectedCity}
+            onSelect={handleCitySelect}
+          />
+        ) : (
+          <div className={s_city_disabled_wrapper}>
+            <input
+              type='text'
+              disabled
+              value='Oslo, Norway'
+              title={`In ${draftSettings.mode} mode, city selection is currently only available for Oslo, Norway`}
+              className={s_city_disabled_input}
+            />
+          </div>
+        )}
+      </div>
+      {isRouteMode && (
+        <div className={s_section}>
+          <div className={s_addresses_header}>
+            <div className={s_label}>Addresses</div>
+            {addressError && (
+              <span
+                className={sf_address_error(addressErrorLevel)}
+                title={addressError}
+              >
+                {addressError}
+              </span>
+            )}
+          </div>
+          <div className={s_addresses_input}>
+            <RouteAddressInput
+              key={draftCityInfo?.id ?? 'no-city'}
+              addresses={draftSettings.routeAddresses}
+              defaultAddresses={cityDefaultAddresses}
+              cityInfo={draftCityInfo}
+              disabled={!hasCitySelected}
+              onAddressesChange={(routeAddresses) =>
+                setDraftSettings((prev) => ({ ...prev, routeAddresses }))
+              }
+              onValidationError={handleAddressError}
+            />
+          </div>
+          {draftSettings.routeAddresses.length < 2 && (
+            <p className={s_apply_hint}>Add at least 2 addresses to play.</p>
+          )}
+        </div>
+      )}
+      {showDifficulty && (
+        <div className={s_section}>
+          <div className={s_label}>Difficulty</div>
+          <div className={sf_option_group(false)}>
+            {DIFFICULTY_OPTIONS.map((option) => {
+              const isSelected = draftSettings.difficulty === option.value
+              return (
+                <button
+                  key={option.value}
+                  type='button'
+                  title={DIFFICULTY_DESCRIPTIONS[option.value]}
+                  onClick={() =>
+                    setDraftSettings((prev) => ({
+                      ...prev,
+                      difficulty: option.value,
+                    }))
+                  }
+                  className={sf_option_button(isSelected, false)}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+      {showAreaSettings && (
+        <div className={s_section}>
+          <div className={s_label}>Areas</div>
+          <div className={sf_option_group(false)}>
+            {AREA_SUB_MODE_OPTIONS.map((option) => {
+              const isSelected = draftSettings.areaSubMode === option.value
+              return (
+                <button
+                  key={option.value}
+                  type='button'
+                  title={AREA_SUB_MODE_DESCRIPTIONS[option.value]}
+                  onClick={() =>
+                    setDraftSettings((prev) => ({
+                      ...prev,
+                      areaSubMode: option.value,
+                    }))
+                  }
+                  className={sf_option_button(isSelected, false)}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+      {showAreaSettings && draftSettings.areaSubMode === 'areaCount' && (
+        <div className={s_section}>
+          <div className={s_label}>Area count</div>
+          <div className={sf_option_group(false)}>
+            {AREA_COUNT_OPTIONS.map((option) => {
+              const isSelected = draftSettings.areaCount === option.value
+              return (
+                <button
+                  key={option.value}
+                  type='button'
+                  onClick={() =>
+                    setDraftSettings((prev) => ({
+                      ...prev,
+                      areaCount: option.value,
+                    }))
+                  }
+                  className={sf_option_button(isSelected, false)}
+                >
+                  {option.label}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+      {showAreaSettings && draftSettings.areaSubMode === 'areaPick' && (
+        <div className={s_section}>
+          <div className={s_label}>Select areas</div>
+          <AreaDropdown
+            label={areaButtonLabel}
+            options={areaOptions}
+            selectedIds={draftSettings.selectedAreas}
+            onToggleSelection={toggleAreaSelection}
+            outsideClickRef={containerRef}
+          />
+        </div>
+      )}
+      <div className={s_seed_section}>
+        <div className={s_label}>Seed</div>
+        <div className={s_seed_row}>
+          <input
+            type='text'
+            value={draftSettings.seed}
+            onChange={(e) => handleSeedChange(e.target.value)}
+            maxLength={SEED_LENGTH}
+            className={sf_seed_input(isSeedValid)}
+          />
+          <button
+            type='button'
+            onClick={handleRandomizeSeed}
+            className={s_secondary_button}
+          >
+            Randomize
+          </button>
+        </div>
+        <div className={s_preset_row}>
+          {PRESET_SEEDS.map((preset) => (
+            <button
+              key={preset}
+              type='button'
+              onClick={() =>
+                setDraftSettings((prev) => ({ ...prev, seed: preset }))
+              }
+              className={sf_preset_button(draftSettings.seed === preset)}
+            >
+              {preset}
+            </button>
+          ))}
         </div>
       </div>
       {isConfirming && (
@@ -96,7 +398,8 @@ export const GameSettings = ({ isGameActive, onClose }: IProps) => {
         <button
           type='button'
           onClick={handleApplyClick}
-          className={s_primary_button}
+          disabled={!isApplyEnabled}
+          className={sf_primary_button(isApplyEnabled)}
         >
           Apply
         </button>
@@ -105,20 +408,48 @@ export const GameSettings = ({ isGameActive, onClose }: IProps) => {
   )
 }
 
-const s_popover =
-  'absolute left-1/2 top-full z-30 mt-2 w-72 -translate-x-1/2 rounded-xl border border-slate-200 bg-white p-4 text-left shadow-lg'
+const s_container =
+  'flex h-[635px] max-h-[calc(100dvh-6rem)] w-[343px] flex-col rounded-xl border border-slate-200 bg-white p-4 text-left shadow-lg'
 const s_title = 'text-sm font-semibold text-slate-900'
 const s_section = 'mt-3'
+const s_addresses_header = 'flex items-baseline gap-2'
+const s_addresses_input = 'mt-2'
+const sf_address_error = (level: 'warning' | 'error') =>
+  `min-w-0 flex-1 truncate text-xs m-0 ${level === 'error' ? 'text-red-600' : 'text-amber-600'}`
 const s_label = 'text-xs font-semibold uppercase tracking-wide text-slate-500'
-const s_option_group = 'mt-2 flex flex-wrap gap-2'
-const sf_option_button = (isSelected: boolean) =>
+const sf_option_group = (isDisabled: boolean) =>
+  `mt-2 flex flex-wrap gap-2 ${isDisabled ? 'opacity-60' : ''}`
+const sf_option_button = (isSelected: boolean, isDisabled: boolean) =>
   `rounded-full border px-3 py-1.5 text-sm font-semibold ${
     isSelected
       ? 'border-purple-600 bg-purple-600 text-white'
-      : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400'
+      : 'border-slate-300 bg-white text-slate-700'
+  } ${isDisabled ? 'cursor-not-allowed' : 'hover:border-slate-400'}`
+const s_seed_section = 'mt-auto'
+const s_seed_row = 'mt-2 flex items-center gap-2'
+const s_preset_row = 'mt-1.5 flex flex-wrap gap-1.5'
+const sf_preset_button = (isActive: boolean) =>
+  `rounded-full border px-2.5 py-0.5 font-mono text-xs ${
+    isActive
+      ? 'border-purple-600 bg-purple-50 text-purple-700'
+      : 'border-slate-200 text-slate-500 hover:border-slate-400'
   }`
+const sf_seed_input = (isValid: boolean) =>
+  `w-full rounded-md border px-3 py-1.5 font-mono text-sm tracking-widest ${
+    isValid
+      ? 'border-slate-300 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500'
+      : 'border-amber-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500'
+  }`
+const s_apply_hint = 'mt-2 text-center text-xs text-amber-600'
 const s_actions = 'mt-4 flex items-center justify-end gap-2'
-const s_primary_button =
-  'rounded-md bg-purple-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-purple-700'
+const sf_primary_button = (isEnabled: boolean) =>
+  `rounded-md px-3 py-1.5 text-sm font-semibold text-white ${
+    isEnabled
+      ? 'bg-purple-600 hover:bg-purple-700'
+      : 'cursor-not-allowed bg-purple-300'
+  }`
 const s_secondary_button =
   'rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-slate-400 hover:bg-slate-50'
+const s_city_disabled_wrapper = 'mt-2'
+const s_city_disabled_input =
+  'w-full cursor-not-allowed rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm text-slate-400'

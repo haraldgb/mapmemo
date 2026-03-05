@@ -11,6 +11,7 @@ export const fetchGoogleMapsApiKey = async () => {
 
   googleMapsApiKeyPromise = (async () => {
     const response = await fetch('/api/google-maps-key', {
+      credentials: 'include',
       headers: { Accept: 'application/json' },
     })
     if (!response.ok) {
