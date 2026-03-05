@@ -70,9 +70,9 @@ export const UserCard = ({ name, role }: UserCardProps) => {
 **Rules:**
 
 - Named export. No `export default` unless required by framework (Next.js pages/layouts).
-- **Prefer arrow functions** over `function` declarations — for components, handlers, helpers, and all other functions.
+- **Prefer arrow functions** over `function` declarations — for components, handlers, helpers, and all other functions. The exception is for hook arguments (described below).
 - Props destructured in the function signature, not inside the body.
-- No inline function definitions in JSX (extract to named handlers).
+- No inline function definitions as hook arguments. E.g. NOT OK: `useEffect(() => {})`, OK: `useEffect(function emptyFunction(){})`
 
 ## TypeScript Patterns
 
