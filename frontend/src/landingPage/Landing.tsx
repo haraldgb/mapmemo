@@ -43,4 +43,5 @@ const s_headline_accent = 'text-purple-700'
 
 const s_subheading = 'max-w-lg text-[15px] leading-relaxed text-slate-500'
 
-const s_carousel_wrapper = 'flex flex-col gap-4 px-5 pb-10 sm:px-14'
+const s_carousel_wrapper =
+  'relative z-10 flex flex-col gap-4 px-5 pb-10 sm:px-14'

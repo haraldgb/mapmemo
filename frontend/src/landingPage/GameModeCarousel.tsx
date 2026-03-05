@@ -237,7 +237,7 @@ const sf_tab = (isActive: boolean) =>
   }`
 
 const s_slide =
-  'overflow-hidden rounded-xl border border-slate-200 animate-slide-in'
+  'overflow-hidden rounded-xl border-2 border-slate-300 bg-white animate-slide-in'
 
 const s_image_area =
   'group relative aspect-[3/4] w-full overflow-hidden bg-slate-100 sm:aspect-video'
@@ -259,7 +259,7 @@ const sf_arrow_btn = (side: 'left' | 'right') =>
   `absolute ${side === 'left' ? 'left-3' : 'right-3'} top-1/2 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-2xl font-light text-slate-600 shadow-sm backdrop-blur-sm transition hover:bg-white hover:text-slate-900 sm:flex sm:opacity-0 sm:group-hover:opacity-100`
 
 const s_footer =
-  'flex items-center justify-between gap-4 border-t border-slate-100 bg-slate-50 px-5 py-4'
+  'flex items-center justify-between gap-4 border-t border-slate-200 bg-white px-5 py-4'
 
 const s_description = 'min-w-0 flex-1 text-sm leading-relaxed text-slate-500'
 
