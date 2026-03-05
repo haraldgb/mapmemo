@@ -2,7 +2,11 @@ CREATE TABLE city (
   id BIGSERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   added TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated TIMESTAMPTZ NOT NULL DEFAULT now(),
+  min_lat DOUBLE PRECISION,
+  min_lon DOUBLE PRECISION,
+  max_lat DOUBLE PRECISION,
+  max_lon DOUBLE PRECISION
 );
 
 CREATE OR REPLACE FUNCTION set_updated_at()
@@ -57,3 +61,15 @@ CREATE INDEX idx_roundabout_city_id ON roundabout(city_id);
 CREATE INDEX idx_junction_roundabout_id ON junction(roundabout_id);
 CREATE INDEX idx_road_junction_junction_id ON road_junction(junction_id);
 CREATE INDEX idx_road_junction_road_id ON road_junction(road_id);
+
+CREATE TABLE default_address (
+  id BIGSERIAL PRIMARY KEY,
+  city_id BIGINT NOT NULL REFERENCES city(id) ON DELETE CASCADE,
+  label VARCHAR(200) NOT NULL,
+  street_address VARCHAR(500) NOT NULL,
+  road_name VARCHAR(200) NOT NULL,
+  lat DOUBLE PRECISION NOT NULL,
+  lng DOUBLE PRECISION NOT NULL
+);
+
+CREATE INDEX idx_default_address_city_id ON default_address(city_id);

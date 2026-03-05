@@ -9,7 +9,9 @@ import type {
   GameDifficulty,
   GameMode,
   GameSettings,
+  SelectedCity,
 } from '../game/settings/settingsTypes'
+import type { RouteAddress } from '../game/route/types'
 import { isValidSeed, randomSeed } from '../game/utils'
 
 const SETTINGS_STORAGE_KEY = 'mapmemo.gameSettings'
@@ -28,6 +30,37 @@ const isValidAreaSubMode = (value: unknown): value is AreaSubMode =>
 const isValidAreaCount = (value: unknown): value is number =>
   typeof value === 'number' &&
   AREA_COUNT_OPTIONS.some((option) => option.value === value)
+
+const isRouteAddress = (value: unknown): value is RouteAddress =>
+  value !== null &&
+  typeof value === 'object' &&
+  typeof (value as RouteAddress).label === 'string' &&
+  typeof (value as RouteAddress).streetAddress === 'string' &&
+  typeof (value as RouteAddress).roadName === 'string' &&
+  typeof (value as RouteAddress).lat === 'number' &&
+  typeof (value as RouteAddress).lng === 'number'
+
+const normalizeRouteAddresses = (value: unknown): RouteAddress[] => {
+  if (!Array.isArray(value)) {
+    return []
+  }
+  return value.filter(isRouteAddress)
+}
+
+const normalizeSelectedCity = (value: unknown): SelectedCity | null => {
+  if (
+    value !== null &&
+    typeof value === 'object' &&
+    typeof (value as SelectedCity).id === 'number' &&
+    typeof (value as SelectedCity).name === 'string'
+  ) {
+    return {
+      id: (value as SelectedCity).id,
+      name: (value as SelectedCity).name,
+    }
+  }
+  return null
+}
 
 const normalizeSelectedAreas = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
@@ -79,6 +112,8 @@ export const loadGameSettings = (): GameSettings | null => {
       areaCount: candidate.areaCount ?? AREA_COUNT_OPTIONS[0]?.value ?? 10,
       selectedAreas: normalizeSelectedAreas(candidate.selectedAreas),
       seed: seedValue,
+      routeAddresses: normalizeRouteAddresses(candidate.routeAddresses),
+      selectedCity: normalizeSelectedCity(candidate.selectedCity),
     }
   } catch {
     return null
@@ -98,6 +133,8 @@ export const saveGameSettings = (settings: GameSettings) => {
       areaCount: settings.areaCount,
       selectedAreas: settings.selectedAreas,
       seed: settings.seed,
+      routeAddresses: settings.routeAddresses,
+      selectedCity: settings.selectedCity,
     }
     window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(payload))
   } catch {

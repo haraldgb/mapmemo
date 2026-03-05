@@ -19,13 +19,24 @@ export type RoadInfo = {
 
 export type RoadWithJunctionsResponse = Record<string, RoadInfo>
 
-const ROADS_BY_NAME_URL = '/api/roads'
+export type RoadSuggestion = {
+  name: string
+  score: number
+}
+
+export type CheckRoadResponse = {
+  found: boolean
+  canonicalName: string | null
+  suggestions: RoadSuggestion[]
+}
+
+const ROADS_URL = '/api/roads'
 
 export const fetchRoadWithJunctions = async (
-  cityName: string,
+  cityId: number,
   roadName: string,
 ): Promise<RoadWithJunctionsResponse> => {
-  const url = `${ROADS_BY_NAME_URL}?city_name=${encodeURIComponent(cityName)}&road_name=${encodeURIComponent(roadName)}`
+  const url = `${ROADS_URL}?city_id=${cityId}&road_name=${encodeURIComponent(roadName)}`
   const response = await fetchWithSessionRetry(url, {
     credentials: 'include',
     headers: { Accept: 'application/json' },
@@ -33,6 +44,20 @@ export const fetchRoadWithJunctions = async (
   if (!response.ok) {
     throw new Error('Failed to fetch road with junctions')
   }
-  const data = (await response.json()) as RoadWithJunctionsResponse
-  return data
+  return (await response.json()) as RoadWithJunctionsResponse
+}
+
+export const checkRoad = async (
+  cityId: number,
+  roadName: string,
+): Promise<CheckRoadResponse> => {
+  const url = `${ROADS_URL}/check?city_id=${cityId}&road_name=${encodeURIComponent(roadName)}`
+  const response = await fetchWithSessionRetry(url, {
+    credentials: 'include',
+    headers: { Accept: 'application/json' },
+  })
+  if (!response.ok) {
+    throw new Error('Failed to check road')
+  }
+  return (await response.json()) as CheckRoadResponse
 }

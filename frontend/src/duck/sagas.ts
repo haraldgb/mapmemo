@@ -1,27 +1,9 @@
 import { all, call, put, takeLatest } from 'redux-saga/effects'
-import { mapmemoActions } from './reducer'
+import { mapmemoActions, DEFAULT_GAME_SETTINGS } from './reducer'
 import type { GameSettings } from '../game/settings/settingsTypes'
+import type { CityInfo } from '../api/cityApi'
+import { fetchCityInfo } from '../api/cityApi'
 import { loadGameSettings, saveGameSettings } from './sagaUtils'
-import { DELBYDELER_GEOJSON_URL } from '../game/consts'
-import {
-  buildAllSubAreaNames,
-  buildAreaOptionsFromGeoJson,
-  type OsloGeoJson,
-} from '../game/utils'
-
-function* loadAreaOptionsFromOsloGeoJson() {
-  // TODO: move Oslo specific stuff to their own file / areas of files.
-  const response: Response = yield call(fetch, DELBYDELER_GEOJSON_URL)
-  if (!response.ok) {
-    throw new Error('Failed to load Oslo GeoJSON, response: ' + response.text)
-  }
-  // TODO: Disallow casting as soon as more geojson data is added.
-  const geojson = (yield call([response, response.json])) as OsloGeoJson
-  const areaOptions = buildAreaOptionsFromGeoJson(geojson)
-  const allSubAreaNames = buildAllSubAreaNames(geojson)
-  yield put(mapmemoActions.setAreaOptions(areaOptions))
-  yield put(mapmemoActions.setAllSubAreaNames(allSubAreaNames))
-}
 
 function* handleInitializeApp() {
   try {
@@ -29,8 +11,16 @@ function* handleInitializeApp() {
     if (storedSettings) {
       // reducer has default values if none are found.
       yield put(mapmemoActions.setGameSettings(storedSettings))
+      if (storedSettings.selectedCity !== null) {
+        const cityInfo: CityInfo = yield call(
+          fetchCityInfo,
+          storedSettings.selectedCity.id,
+        )
+        yield put(mapmemoActions.setCityInfo(cityInfo))
+      }
     }
-    yield call(loadAreaOptionsFromOsloGeoJson)
+  } catch {
+    yield put(mapmemoActions.setGameSettings(DEFAULT_GAME_SETTINGS))
   } finally {
     yield put(mapmemoActions.setAppInitialized(true))
   }

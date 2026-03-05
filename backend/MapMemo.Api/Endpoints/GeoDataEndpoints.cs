@@ -4,11 +4,96 @@ using MapMemo.Api.Models;
 using MapMemo.Api.Services;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Primitives;
 
 namespace MapMemo.Api.Endpoints;
 
 internal static class GeoDataEndpoints {
     public static void MapGeoDataEndpoints(this IEndpointRouteBuilder app) {
+        app.MapGet("/api/cities", async (
+            HttpContext context,
+            MapMemoDbContext db,
+            ISessionService sessionService) => {
+                if (!sessionService.HasValidSession(context)) {
+                    return Results.Unauthorized();
+                }
+
+                List<CityListItemDto> cities = await db.Cities
+                    .Select(c => new CityListItemDto(c.Id, c.Name))
+                    .ToListAsync();
+
+                return Results.Json(cities);
+            });
+
+        app.MapGet("/api/cities/{cityId:long}", async (
+            HttpContext context,
+            MapMemoDbContext db,
+            ISessionService sessionService,
+            long cityId) => {
+                if (!sessionService.HasValidSession(context)) {
+                    return Results.Unauthorized();
+                }
+
+                City? city = await db.Cities
+                    .Include(c => c.DefaultAddresses)
+                    .FirstOrDefaultAsync(c => c.Id == cityId);
+
+                if (city is null) {
+                    return Results.NotFound(new { error = "City not found." });
+                }
+
+                var defaultAddresses = city.DefaultAddresses
+                    .Select(a => new DefaultAddressDto(a.Id, a.Label, a.StreetAddress, a.RoadName, a.Lat, a.Lng))
+                    .ToList();
+
+                return Results.Json(new CityDetailDto(city.Id, city.Name, city.MinLat, city.MinLon, city.MaxLat, city.MaxLon, defaultAddresses));
+            });
+
+        app.MapPost("/api/cities/{cityId:long}/default-addresses", async (
+            HttpContext context,
+            MapMemoDbContext db,
+            IConfiguration config,
+            long cityId,
+            AddDefaultAddressRequest request) => {
+                var adminApiKey = config["AdminApiKey"];
+                if (string.IsNullOrWhiteSpace(adminApiKey)) {
+                    return Results.StatusCode(503);
+                }
+
+                if (!context.Request.Headers.TryGetValue("X-Api-Key", out StringValues key)
+                    || key.ToString() != adminApiKey) {
+                    return Results.Unauthorized();
+                }
+
+                City? city = await db.Cities.FindAsync(cityId);
+                if (city is null) {
+                    return Results.NotFound(new { error = "City not found." });
+                }
+
+                if (city.MinLat is not null && city.MaxLat is not null
+                    && city.MinLon is not null && city.MaxLon is not null) {
+                    if (request.Lat < city.MinLat || request.Lat > city.MaxLat
+                        || request.Lng < city.MinLon || request.Lng > city.MaxLon) {
+                        return Results.BadRequest(new { error = "Address is outside city bounds." });
+                    }
+                }
+
+                var address = new DefaultAddress {
+                    CityId = cityId,
+                    Label = request.Label,
+                    StreetAddress = request.StreetAddress,
+                    RoadName = request.RoadName,
+                    Lat = request.Lat,
+                    Lng = request.Lng,
+                };
+
+                db.DefaultAddresses.Add(address);
+                await db.SaveChangesAsync();
+
+                var dto = new DefaultAddressDto(address.Id, address.Label, address.StreetAddress, address.RoadName, address.Lat, address.Lng);
+                return Results.Created($"/api/cities/{cityId}/default-addresses/{address.Id}", dto);
+            });
+
         app.MapGet("/api/oslo-neighboorhoods", (
             HttpContext context,
             IWebHostEnvironment env,
@@ -33,18 +118,17 @@ internal static class GeoDataEndpoints {
             HttpContext context,
             MapMemoDbContext db,
             ISessionService sessionService,
-            string? city_name,
+            long? city_id,
             string? road_name) => {
                 if (!sessionService.HasValidSession(context)) {
                     return Results.Unauthorized();
                 }
 
-                if (string.IsNullOrWhiteSpace(city_name) || string.IsNullOrWhiteSpace(road_name)) {
-                    return Results.BadRequest(new { error = "city_name and road_name are required." });
+                if (city_id is null || string.IsNullOrWhiteSpace(road_name)) {
+                    return Results.BadRequest(new { error = "city_id and road_name are required." });
                 }
 
-                City? city = await db.Cities
-                    .FirstOrDefaultAsync(c => c.Name.ToLower() == city_name.ToLower());
+                City? city = await db.Cities.FindAsync(city_id.Value);
 
                 if (city is null) {
                     return Results.NotFound(new { error = "City not found." });
@@ -123,5 +207,75 @@ internal static class GeoDataEndpoints {
 
                 return Results.Json(response);
             });
+
+        app.MapGet("/api/roads/check", async (
+            HttpContext context,
+            MapMemoDbContext db,
+            ISessionService sessionService,
+            long? city_id,
+            string? road_name) => {
+                if (!sessionService.HasValidSession(context)) {
+                    return Results.Unauthorized();
+                }
+
+                if (city_id is null || string.IsNullOrWhiteSpace(road_name)) {
+                    return Results.BadRequest(new { error = "city_id and road_name are required." });
+                }
+
+                City? city = await db.Cities.FindAsync(city_id.Value);
+                if (city is null) {
+                    return Results.NotFound(new { error = "City not found." });
+                }
+
+                List<string> allRoadNames = await db.Roads
+                    .Where(r => r.CityId == city.Id)
+                    .Select(r => r.Name)
+                    .ToListAsync();
+
+                var lowerInput = road_name.ToLower();
+
+                var exactMatch = allRoadNames
+                    .FirstOrDefault(n => n.ToLower() == lowerInput);
+
+                if (exactMatch is not null) {
+                    return Results.Json(new CheckRoadResponseDto(true, exactMatch, []));
+                }
+
+                var suggestions = allRoadNames
+                    .Select(n => new RoadSuggestionDto(n, ComputeSimilarity(lowerInput, n.ToLower())))
+                    .Where(s => s.Score >= 0.70)
+                    .OrderByDescending(s => s.Score)
+                    .Take(5)
+                    .ToList();
+
+                return Results.Json(new CheckRoadResponseDto(false, null, suggestions));
+            });
+    }
+
+    /// <summary>
+    /// Returns a similarity score in [0, 1]: <c>1 - levenshteinDistance / max(|a|, |b|)</c>.
+    /// Example: "akersgata" - "akersgate": 2 char diff → 1 - 2/9 ≈ 0.78
+    /// </summary>
+    private static double ComputeSimilarity(string a, string b) {
+        if (a == b) return 1.0;
+        int la = a.Length, lb = b.Length;
+        if (la == 0 || lb == 0) return 0.0;
+
+        var prev = new int[lb + 1];
+        var curr = new int[lb + 1];
+
+        for (var j = 0; j <= lb; j++) prev[j] = j;
+
+        for (var i = 1; i <= la; i++) {
+            curr[0] = i;
+            for (var j = 1; j <= lb; j++) {
+                var cost = a[i - 1] == b[j - 1] ? 0 : 1;
+                curr[j] = Math.Min(Math.Min(curr[j - 1] + 1, prev[j] + 1), prev[j - 1] + cost);
+            }
+
+            (prev, curr) = (curr, prev);
+        }
+
+        return 1.0 - (double)prev[lb] / Math.Max(la, lb);
     }
 }

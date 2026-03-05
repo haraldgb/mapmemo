@@ -3,6 +3,7 @@ using System;
 using MapMemo.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace MapMemo.Api.Data.Migrations
 {
     [DbContext(typeof(MapMemoDbContext))]
-    partial class MapMemoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260228091503_AddCityBounds")]
+    partial class AddCityBounds
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -68,53 +71,6 @@ namespace MapMemo.Api.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("city", (string)null);
-                });
-
-            modelBuilder.Entity("MapMemo.Api.Data.Entities.DefaultAddress", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<long>("CityId")
-                        .HasColumnType("bigint")
-                        .HasColumnName("city_id");
-
-                    b.Property<string>("Label")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("label");
-
-                    b.Property<double>("Lat")
-                        .HasColumnType("double precision")
-                        .HasColumnName("lat");
-
-                    b.Property<double>("Lng")
-                        .HasColumnType("double precision")
-                        .HasColumnName("lng");
-
-                    b.Property<string>("RoadName")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)")
-                        .HasColumnName("road_name");
-
-                    b.Property<string>("StreetAddress")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("street_address");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CityId")
-                        .HasDatabaseName("idx_default_address_city_id");
-
-                    b.ToTable("default_address", (string)null);
                 });
 
             modelBuilder.Entity("MapMemo.Api.Data.Entities.Junction", b =>
@@ -260,17 +216,6 @@ namespace MapMemo.Api.Data.Migrations
                     b.ToTable("roundabout", (string)null);
                 });
 
-            modelBuilder.Entity("MapMemo.Api.Data.Entities.DefaultAddress", b =>
-                {
-                    b.HasOne("MapMemo.Api.Data.Entities.City", "City")
-                        .WithMany("DefaultAddresses")
-                        .HasForeignKey("CityId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("City");
-                });
-
             modelBuilder.Entity("MapMemo.Api.Data.Entities.Junction", b =>
                 {
                     b.HasOne("MapMemo.Api.Data.Entities.Roundabout", "Roundabout")
@@ -335,8 +280,6 @@ namespace MapMemo.Api.Data.Migrations
 
             modelBuilder.Entity("MapMemo.Api.Data.Entities.City", b =>
                 {
-                    b.Navigation("DefaultAddresses");
-
                     b.Navigation("Roads");
 
                     b.Navigation("Roundabouts");
