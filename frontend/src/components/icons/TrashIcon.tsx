@@ -1,8 +1,8 @@
-type TrashIconProps = {
+type Props = {
   className?: string
 }
 
-export const TrashIcon = ({ className }: TrashIconProps) => {
+export const TrashIcon = ({ className }: Props) => {
   return (
     <svg
       viewBox='0 0 24 24'

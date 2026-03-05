@@ -73,7 +73,7 @@ export const NameModeInput = ({ areaGameState }: NameModeInputProps) => {
       className={s_name_form}
     >
       <AutoCompleteInput
-        ref={inputRef}
+        focusHandleRef={inputRef}
         suggestions={filteredSuggestions}
         value={typedValue}
         onChange={setTypedValue}

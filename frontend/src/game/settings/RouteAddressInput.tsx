@@ -87,7 +87,7 @@ export const RouteAddressInput = ({
       ) : (
         <div title={isValidatingRoadName ? VALIDATING_TOOLTIP : undefined}>
           <AutoCompleteInput
-            ref={inputRef}
+            focusHandleRef={inputRef}
             value={inputValue}
             suggestions={suggestions}
             onChange={handleInputChange}

@@ -1,8 +1,8 @@
-type ChevronIconProps = {
+type Props = {
   className?: string
 }
 
-export const ChevronIcon = ({ className }: ChevronIconProps) => {
+export const ChevronIcon = ({ className }: Props) => {
   return (
     <svg
       viewBox='0 0 24 24'
