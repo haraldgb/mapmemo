@@ -12,5 +12,6 @@ export const Game = () => {
     return <RouteGame />
   }
 
+  // add test
   return <AreaGame />
 }
