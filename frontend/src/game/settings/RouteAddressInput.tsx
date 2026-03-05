@@ -69,6 +69,11 @@ export const RouteAddressInput = ({
     [addresses.length],
   )
 
+  const handleRemoveAddress = (index: number) => {
+    onAddressesChange(addresses.filter((_, i) => i !== index))
+    clearValidationError()
+  }
+
   const isDefaultList =
     addresses.length === defaultAddresses.length &&
     addresses.every(
@@ -133,9 +138,7 @@ export const RouteAddressInput = ({
                   <button
                     type='button'
                     disabled={isValidatingRoadName}
-                    onClick={() =>
-                      onAddressesChange(addresses.filter((_, i) => i !== index))
-                    }
+                    onClick={() => handleRemoveAddress(index)}
                     className={s_delete_button}
                     title='Remove address'
                   >
