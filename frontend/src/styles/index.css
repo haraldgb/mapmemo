@@ -1,4 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Outfit:wght@400;500;600&display=swap');
 @import 'tailwindcss';
+
+@theme {
+  --font-display: 'Syne', sans-serif;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility animate-marquee {
+  animation: marquee var(--marquee-duration, 20s) linear infinite;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 @keyframes shake {
   0%,
@@ -23,6 +52,10 @@
   animation: shake 0.4s ease-in-out;
 }
 
+@utility animate-slide-in {
+  animation: slideIn 0.22s ease-out;
+}
+
 @layer base {
   :root {
     color-scheme: light;
@@ -31,7 +64,7 @@
   body {
     @apply min-h-screen bg-slate-50 text-slate-900 antialiased;
     font-family:
-      'Inter',
+      'Outfit',
       'Segoe UI',
       system-ui,
       -apple-system,

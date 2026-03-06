@@ -80,9 +80,9 @@ export const INCORRECT_FLASH_STYLE: google.maps.Data.StyleOptions = {
 }
 
 export const MODE_OPTIONS = [
+  { label: 'Route', value: 'route' },
   { label: 'Click', value: 'click' },
   { label: 'Name', value: 'name' },
-  { label: 'Route', value: 'route' },
 ] as const
 
 export const MODE_DESCRIPTIONS: Record<string, string> = {
