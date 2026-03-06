@@ -1,9 +1,17 @@
 import { useMapsLibrary } from '@vis.gl/react-google-maps'
 import { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { DELBYDELER_GEOJSON_URL } from '../consts'
 import type { AreaSubMode } from '../settings/settingsTypes'
-import { getAreaId } from '../utils'
+import {
+  getAreaId,
+  buildAreaOptionsFromGeoJson,
+  buildAllSubAreaNames,
+  type OsloGeoJson,
+} from '../utils'
 import { fetchWithSessionRetry } from '../../api/utils'
+import { mapmemoActions } from '../../duck/reducer'
+import type { AppDispatch, RootState } from '../../store'
 
 type GeoJsonObject = {
   type: string
@@ -84,6 +92,10 @@ type Props = {
 export const useFeaturesInPlay = ({ gameState }: Props) => {
   const mapsLibrary = useMapsLibrary('maps')
   const [allFeatures, setAllFeatures] = useState<google.maps.Data.Feature[]>([])
+  const dispatch = useDispatch<AppDispatch>()
+  const areaOptionsLoaded = useSelector(
+    (state: RootState) => state.mapmemo.areaOptions.length > 0,
+  )
 
   useEffect(
     function loadOsloGeoJson() {
@@ -104,7 +116,22 @@ export const useFeaturesInPlay = ({ gameState }: Props) => {
         if (!response.ok) {
           throw new Error('Failed to load Oslo GeoJSON')
         }
-        let geojson = (await response.json()) as GeoJsonObject
+        // SAFETY: Oslo-specific cast until multi-city GeoJSON support is added.
+        const rawGeojson = (await response.json()) as OsloGeoJson &
+          GeoJsonObject
+        if (!isActive) {
+          return
+        }
+
+        if (!areaOptionsLoaded) {
+          // settings uses area options.
+          const areaOptions = buildAreaOptionsFromGeoJson(rawGeojson)
+          const allSubAreaNames = buildAllSubAreaNames(rawGeojson)
+          dispatch(mapmemoActions.setAreaOptions(areaOptions))
+          dispatch(mapmemoActions.setAllSubAreaNames(allSubAreaNames))
+        }
+
+        let geojson: GeoJsonObject = rawGeojson
         if (getGeoJsonType(geojson) === 'EPSG:3857') {
           geojson = convertGeoJsonToLatLng(geojson)
         }

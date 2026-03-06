@@ -70,6 +70,7 @@ export const GameSettings = ({
     ) {
       dispatch(mapmemoActions.loadAreaOptions())
     }
+    // Should only run on mount. Revisit when react compiler releases exhaustive-deps rule for use with compiler.
   }, [])
 
   const handleAddressError = (
