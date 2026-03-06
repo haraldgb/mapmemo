@@ -12,7 +12,7 @@ type Props = {
 }
 
 export const GameSettingsButton = ({ isGameActive, resetGameState }: Props) => {
-  const { isSettingsOpen, setIsSettingsOpen } = useSettingsOpen()
+  const { isSettingsOpen, setIsSettingsOpen, setIsInfoOpen } = useSettingsOpen()
   const gameSettings = useSelector(
     (state: RootState) => state.mapmemo.gameSettings,
   )
@@ -36,6 +36,7 @@ export const GameSettingsButton = ({ isGameActive, resetGameState }: Props) => {
   }
 
   const handleClick = () => {
+    setIsInfoOpen(false)
     setIsSettingsOpen(!isSettingsOpen)
   }
 
