@@ -60,7 +60,10 @@ export const GameInfoSection = ({
   useEffect(
     function scrollIntoViewOnOpen() {
       if (isOpen) {
-        contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        contentRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+        })
       }
     },
     [isOpen],
@@ -102,7 +105,7 @@ export const GameInfoList = ({ children }: ChildProps) => {
 }
 
 export const GameInfoListItem = ({ children }: ChildProps) => {
-  return <li>{children}</li>
+  return <li className={s_list_item}>{children}</li>
 }
 
 export const GameInfoDivider = () => {
@@ -134,7 +137,8 @@ const s_section_button =
 const sf_chevron = (isOpen: boolean) =>
   `h-3.5 w-3.5 text-slate-400 transition-transform duration-150${isOpen ? '' : ' -rotate-90'}`
 const s_paragraph = 'mt-2 text-sm leading-relaxed text-slate-600'
-const s_list = 'mt-2 space-y-1.5 text-sm leading-relaxed text-slate-600'
+const s_list = 'mt-2 space-y-2 text-sm leading-relaxed text-slate-600'
+const s_list_item = 'border-l-2 border-slate-200 pl-3 py-0.5'
 const s_divider = 'my-3 border-t border-slate-100'
 const s_footer_divider = 'mb-3 border-t border-slate-100'
 const s_link =
