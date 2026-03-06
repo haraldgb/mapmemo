@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import type { AppDispatch, RootState } from '../../store'
 import { mapmemoActions } from '../../duck/reducer'
@@ -47,6 +47,9 @@ export const GameSettings = ({
   const areaOptions = useSelector(
     (state: RootState) => state.mapmemo.areaOptions,
   )
+  const isAreaOptionsLoading = useSelector(
+    (state: RootState) => state.mapmemo.isAreaOptionsLoading,
+  )
   const reduxCityInfo = useSelector(
     (state: RootState) => state.mapmemo.cityInfo,
   )
@@ -58,6 +61,17 @@ export const GameSettings = ({
   const [addressErrorLevel, setAddressErrorLevel] = useState<
     'warning' | 'error'
   >('warning')
+
+  useEffect(function loadAreaOptionsOnMount() {
+    if (
+      draftSettings.mode !== 'route' &&
+      areaOptions.length === 0 &&
+      !isAreaOptionsLoading
+    ) {
+      dispatch(mapmemoActions.loadAreaOptions())
+    }
+    // Should only run on mount. Revisit when react compiler releases exhaustive-deps rule for use with compiler.
+  }, [])
 
   const handleAddressError = (
     error: string | null,
@@ -88,6 +102,13 @@ export const GameSettings = ({
           lng: a.lng,
         }))
       : []
+
+  const handleModeChange = (mode: GameSettingsModel['mode']) => {
+    setDraftSettings((prev) => ({ ...prev, mode }))
+    if (mode !== 'route' && areaOptions.length === 0 && !isAreaOptionsLoading) {
+      dispatch(mapmemoActions.loadAreaOptions())
+    }
+  }
 
   const handleSeedChange = (value: string) => {
     const filtered = value.replace(/[^a-z0-9]/gi, '').toLowerCase()
@@ -195,12 +216,7 @@ export const GameSettings = ({
                 key={option.value}
                 type='button'
                 title={MODE_DESCRIPTIONS[option.value]}
-                onClick={() =>
-                  setDraftSettings((prev) => ({
-                    ...prev,
-                    mode: option.value,
-                  }))
-                }
+                onClick={() => handleModeChange(option.value)}
                 className={sf_option_button(isSelected, false)}
               >
                 {option.label}
@@ -342,6 +358,7 @@ export const GameSettings = ({
           <AreaDropdown
             label={areaButtonLabel}
             options={areaOptions}
+            isLoading={isAreaOptionsLoading}
             selectedIds={draftSettings.selectedAreas}
             onToggleSelection={toggleAreaSelection}
             outsideClickRef={containerRef}

@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import type { RefObject } from 'react'
 import type { AreaOption } from './settingsTypes'
 
-type IProps = {
+type Props = {
   label: string
   options: AreaOption[]
+  isLoading: boolean
   selectedIds: string[]
   onToggleSelection: (areaId: string) => void
   outsideClickRef: RefObject<HTMLDivElement | null>
@@ -13,10 +14,11 @@ type IProps = {
 export const AreaDropdown = ({
   label,
   options,
+  isLoading,
   selectedIds,
   onToggleSelection,
   outsideClickRef,
-}: IProps) => {
+}: Props) => {
   const dropdownRoot = useRef<HTMLDivElement | null>(null)
   const [isOpen, setIsOpen] = useState(false)
 
@@ -60,28 +62,33 @@ export const AreaDropdown = ({
       </button>
       {isOpen && (
         <div className={s_dropdown_menu}>
-          {options.length === 0 && (
+          {isLoading ? (
             <div className={s_dropdown_empty}>Loading areas...</div>
+          ) : options.length === 0 ? (
+            <div className={s_dropdown_empty}>
+              Failed to load areas. Try again later.
+            </div>
+          ) : (
+            options.map((option) => {
+              const isChecked = selectedIds.includes(option.id)
+              return (
+                <label
+                  key={option.id}
+                  className={s_checkbox_option}
+                >
+                  <input
+                    type='checkbox'
+                    checked={isChecked}
+                    onChange={() => onToggleSelection(option.id)}
+                    className={s_checkbox}
+                  />
+                  <span>
+                    {option.name} ({option.count})
+                  </span>
+                </label>
+              )
+            })
           )}
-          {options.map((option) => {
-            const isChecked = selectedIds.includes(option.id)
-            return (
-              <label
-                key={option.id}
-                className={s_checkbox_option}
-              >
-                <input
-                  type='checkbox'
-                  checked={isChecked}
-                  onChange={() => onToggleSelection(option.id)}
-                  className={s_checkbox}
-                />
-                <span>
-                  {option.name} ({option.count})
-                </span>
-              </label>
-            )
-          })}
         </div>
       )}
     </div>

@@ -18,6 +18,7 @@ export interface MapmemoState {
   gameSettings: GameSettings
   areaOptions: AreaOption[]
   allSubAreaNames: string[]
+  isAreaOptionsLoading: boolean
   isAppInitialized: boolean
   cityInfo: CityInfo | null
 }
@@ -26,6 +27,7 @@ export const initialMapmemoState: MapmemoState = {
   gameSettings: DEFAULT_GAME_SETTINGS,
   areaOptions: [],
   allSubAreaNames: [],
+  isAreaOptionsLoading: false,
   isAppInitialized: false,
   cityInfo: null,
 }
@@ -36,6 +38,10 @@ const mapmemoSlice = createSlice({
   reducers: {
     setGameSettings(state, action: PayloadAction<GameSettings>) {
       state.gameSettings = action.payload
+    },
+    loadAreaOptions() {},
+    setAreaOptionsLoading(state, action: PayloadAction<boolean>) {
+      state.isAreaOptionsLoading = action.payload
     },
     setAreaOptions(state, action: PayloadAction<AreaOption[]>) {
       state.areaOptions = action.payload

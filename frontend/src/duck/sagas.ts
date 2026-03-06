@@ -4,6 +4,12 @@ import type { GameSettings } from '../game/settings/settingsTypes'
 import type { CityInfo } from '../api/cityApi'
 import { fetchCityInfo } from '../api/cityApi'
 import { loadGameSettings, saveGameSettings } from './sagaUtils'
+import { DELBYDELER_GEOJSON_URL } from '../game/consts'
+import {
+  buildAllSubAreaNames,
+  buildAreaOptionsFromGeoJson,
+  type OsloGeoJson,
+} from '../game/utils'
 
 function* handleInitializeApp() {
   try {
@@ -26,6 +32,27 @@ function* handleInitializeApp() {
   }
 }
 
+function* handleLoadAreaOptions() {
+  try {
+    yield put(mapmemoActions.setAreaOptionsLoading(true))
+    const response: Response = yield call(fetch, DELBYDELER_GEOJSON_URL)
+    if (!response.ok) {
+      const text: string = yield call([response, response.text])
+      throw new Error('Failed to load Oslo GeoJSON, response: ' + text)
+    }
+    // SAFETY: Oslo-specific cast until multi-city GeoJSON support is added.
+    const geojson = (yield call([response, response.json])) as OsloGeoJson
+    const areaOptions = buildAreaOptionsFromGeoJson(geojson)
+    const allSubAreaNames = buildAllSubAreaNames(geojson)
+    yield put(mapmemoActions.setAreaOptions(areaOptions))
+    yield put(mapmemoActions.setAllSubAreaNames(allSubAreaNames))
+  } catch {
+    // TODO: add silent error logging to sentry/similar
+  } finally {
+    yield put(mapmemoActions.setAreaOptionsLoading(false))
+  }
+}
+
 function* handleGameSettingsChange(
   action: ReturnType<typeof mapmemoActions.setGameSettings>,
 ) {
@@ -40,5 +67,6 @@ export function* mapmemoSaga() {
   yield all([
     takeLatest(mapmemoActions.initializeApp.type, handleInitializeApp),
     takeLatest(mapmemoActions.setGameSettings.type, handleGameSettingsChange),
+    takeLatest(mapmemoActions.loadAreaOptions.type, handleLoadAreaOptions),
   ])
 }
