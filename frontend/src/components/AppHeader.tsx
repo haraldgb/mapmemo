@@ -14,7 +14,7 @@ export const AppHeader = ({ isGameRoute }: AppHeaderProps) => {
       <div className={s_header_inner}>
         <Link
           to='/'
-          className={sf_home_link(isGameRoute)}
+          className={s_home_link}
         >
           <img
             src='/mapmemo-logo.svg'
@@ -41,7 +41,5 @@ const sf_header = (isGameRoute: boolean, isVisible: boolean) => {
   return `${gameBase} ${gamePosition} ${visibility}`
 }
 const s_header_inner = 'flex w-full items-center justify-between'
-const sf_home_link = (isGameRoute: boolean) =>
-  isGameRoute
-    ? 'inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-900 transition hover:bg-slate-100'
-    : 'inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-900 transition hover:bg-slate-100'
+const s_home_link =
+  'inline-flex items-center gap-2 px-3 py-1.5 text-xs font-semibold text-slate-900 transition hover:bg-slate-100'
