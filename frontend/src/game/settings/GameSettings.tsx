@@ -238,7 +238,7 @@ export const GameSettings = ({
               type='text'
               disabled
               value='Oslo, Norway'
-              title={`In ${draftSettings.mode} mode, city selection is currently only available for Oslo, Norway`}
+              title={`In ${draftSettings.mode} mode, only Oslo, Norway is available`}
               className={s_city_disabled_input}
             />
           </div>
