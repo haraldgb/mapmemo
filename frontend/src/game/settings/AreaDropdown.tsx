@@ -66,7 +66,9 @@ export const AreaDropdown = ({
             <div className={s_dropdown_empty}>Loading areas...</div>
           )}
           {!isLoading && options.length === 0 && (
-            <div className={s_dropdown_empty}>No areas available</div>
+            <div className={s_dropdown_empty}>
+              Failed to load areas. Try again later.
+            </div>
           )}
           {options.map((option) => {
             const isChecked = selectedIds.includes(option.id)

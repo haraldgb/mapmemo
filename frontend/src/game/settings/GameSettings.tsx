@@ -50,9 +50,6 @@ export const GameSettings = ({
   const isAreaOptionsLoading = useSelector(
     (state: RootState) => state.mapmemo.isAreaOptionsLoading,
   )
-  const isAreaOptionsLoadFailed = useSelector(
-    (state: RootState) => state.mapmemo.isAreaOptionsLoadFailed,
-  )
   const reduxCityInfo = useSelector(
     (state: RootState) => state.mapmemo.cityInfo,
   )
@@ -65,26 +62,15 @@ export const GameSettings = ({
     'warning' | 'error'
   >('warning')
 
-  useEffect(
-    function loadAreaOptionsWhenNeeded() {
-      const showAreaSettings = draftSettings.mode !== 'route'
-      if (
-        showAreaSettings &&
-        areaOptions.length === 0 &&
-        !isAreaOptionsLoading &&
-        !isAreaOptionsLoadFailed
-      ) {
-        dispatch(mapmemoActions.loadAreaOptions())
-      }
-    },
-    [
-      draftSettings.mode,
-      areaOptions.length,
-      isAreaOptionsLoading,
-      isAreaOptionsLoadFailed,
-      dispatch,
-    ],
-  )
+  useEffect(function loadAreaOptionsOnMount() {
+    if (
+      draftSettings.mode !== 'route' &&
+      areaOptions.length === 0 &&
+      !isAreaOptionsLoading
+    ) {
+      dispatch(mapmemoActions.loadAreaOptions())
+    }
+  }, [])
 
   const handleAddressError = (
     error: string | null,
@@ -115,6 +101,13 @@ export const GameSettings = ({
           lng: a.lng,
         }))
       : []
+
+  const handleModeChange = (mode: GameSettingsModel['mode']) => {
+    setDraftSettings((prev) => ({ ...prev, mode }))
+    if (mode !== 'route' && areaOptions.length === 0 && !isAreaOptionsLoading) {
+      dispatch(mapmemoActions.loadAreaOptions())
+    }
+  }
 
   const handleSeedChange = (value: string) => {
     const filtered = value.replace(/[^a-z0-9]/gi, '').toLowerCase()
@@ -222,12 +215,7 @@ export const GameSettings = ({
                 key={option.value}
                 type='button'
                 title={MODE_DESCRIPTIONS[option.value]}
-                onClick={() =>
-                  setDraftSettings((prev) => ({
-                    ...prev,
-                    mode: option.value,
-                  }))
-                }
+                onClick={() => handleModeChange(option.value)}
                 className={sf_option_button(isSelected, false)}
               >
                 {option.label}

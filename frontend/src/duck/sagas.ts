@@ -48,7 +48,6 @@ function* handleLoadAreaOptions() {
     yield put(mapmemoActions.setAllSubAreaNames(allSubAreaNames))
   } catch {
     // TODO: add silent error logging to sentry/similar
-    yield put(mapmemoActions.setAreaOptionsLoadFailed(true))
   } finally {
     yield put(mapmemoActions.setAreaOptionsLoading(false))
   }
