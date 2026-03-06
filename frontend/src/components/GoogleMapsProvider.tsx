@@ -39,7 +39,6 @@ export const GoogleMapsProvider = ({ children }: GoogleMapsProviderProps) => {
     return (
       <div className={s_loading}>
         <Spinner />
-        Loading map...
       </div>
     )
   }
@@ -55,5 +54,4 @@ export const GoogleMapsProvider = ({ children }: GoogleMapsProviderProps) => {
   )
 }
 
-const s_loading =
-  'flex min-h-screen flex-col items-center justify-center gap-3 text-sm font-medium text-slate-600'
+const s_loading = 'flex flex-1 items-center justify-center'
