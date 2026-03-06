@@ -4,6 +4,7 @@ import { s_overlayGUI_item } from './OverlayGuiStyles'
 import { useInputSuggestions } from './hooks/useInputSuggestions'
 import type { AutoCompleteInputHandle } from '../components/AutoCompleteInput'
 import { AutoCompleteInput } from '../components/AutoCompleteInput'
+import { useSettingsOpen } from './settings/SettingsOpenContext'
 
 type NameModeInputProps = {
   areaGameState: AreaGameState
@@ -12,6 +13,7 @@ type NameModeInputProps = {
 export const NameModeInput = ({ areaGameState }: NameModeInputProps) => {
   const { difficulty, registerNameGuess, prevGuess, currentEntry } =
     areaGameState
+  const { isSettingsOpen, isInfoOpen } = useSettingsOpen()
   const [typedValue, setTypedValue] = useState('')
 
   // useRef: imperative handle for captureKeysToFocusInput effect and post-selection focus/select.
@@ -45,27 +47,35 @@ export const NameModeInput = ({ areaGameState }: NameModeInputProps) => {
     handleSelect(typedValue)
   }
 
-  // Captures keypresses anywhere on the page and redirects to this input.
-  useEffect(function captureKeysToFocusInput() {
-    const handleDocumentKeyDown = (e: KeyboardEvent) => {
-      if (document.activeElement === inputRef.current) {
-        return
+  // Captures keypresses anywhere on the page and redirects to this input,
+  // unless settings or info panel is open.
+  useEffect(
+    function captureKeysToFocusInput() {
+      const handleDocumentKeyDown = (e: KeyboardEvent) => {
+        if (isSettingsOpen || isInfoOpen) {
+          return
+        }
+        if (document.activeElement === inputRef.current) {
+          return
+        }
+        if (e.key === 'Tab') {
+          e.preventDefault()
+          inputRef.current?.focus()
+          return
+        }
+        if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+          e.preventDefault()
+          inputRef.current?.focus()
+          inputRef.current?.open()
+          setTypedValue((prev) => prev + e.key)
+        }
       }
-      if (e.key === 'Tab') {
-        e.preventDefault()
-        inputRef.current?.focus()
-        return
-      }
-      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        e.preventDefault()
-        inputRef.current?.focus()
-        inputRef.current?.open()
-        setTypedValue((prev) => prev + e.key)
-      }
-    }
-    document.addEventListener('keydown', handleDocumentKeyDown)
-    return () => document.removeEventListener('keydown', handleDocumentKeyDown)
-  }, [])
+      document.addEventListener('keydown', handleDocumentKeyDown)
+      return () =>
+        document.removeEventListener('keydown', handleDocumentKeyDown)
+    },
+    [isSettingsOpen, isInfoOpen],
+  )
 
   return (
     <form
