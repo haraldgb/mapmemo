@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useState, useEffect, useRef, type ReactNode } from 'react'
 import { ChevronIcon } from './icons/ChevronIcon'
 
 type Props = {
@@ -55,6 +55,16 @@ export const GameInfoSection = ({
   defaultOpen,
 }: SectionProps) => {
   const [isOpen, setIsOpen] = useState(defaultOpen)
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  useEffect(
+    function scrollIntoViewOnOpen() {
+      if (isOpen) {
+        contentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      }
+    },
+    [isOpen],
+  )
 
   const handleToggle = () => {
     setIsOpen(!isOpen)
@@ -70,7 +80,7 @@ export const GameInfoSection = ({
         <span className={s_subtitle}>{title}</span>
         <ChevronIcon className={sf_chevron(isOpen)} />
       </button>
-      {isOpen && <div>{children}</div>}
+      {isOpen && <div ref={contentRef}>{children}</div>}
     </div>
   )
 }
@@ -112,7 +122,7 @@ export const Underline = ({ children }: ChildProps) => {
 }
 
 const s_panel =
-  'flex h-[635px] max-h-[calc(100dvh-6rem)] w-[343px] flex-col rounded-xl border border-slate-200 bg-white text-left shadow-lg'
+  'flex h-[635px] max-h-[calc(100dvh-6rem)] w-[343px] sm:w-[514px] md:w-[686px] flex-col rounded-xl border border-slate-200 bg-white text-left shadow-lg'
 const s_header = 'shrink-0 border-b border-slate-200 px-4 py-3 shadow-sm'
 const s_content = 'flex-1 overflow-auto px-4 pt-2'
 const s_footer = 'shrink-0 px-4 pb-4'

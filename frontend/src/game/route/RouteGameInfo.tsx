@@ -28,7 +28,7 @@ export const RouteGameInfo = ({ onClose }: Props) => {
         <GameInfoList>
           <GameInfoListItem>
             Your goal is to find the quickest route possible between two
-            addresses. Click an available junction(purple dot) to select it.
+            addresses. Click a available junction(purple dot) to select it.
           </GameInfoListItem>
           <GameInfoListItem>
             That junction connects you to new road(s). A new set of junctions
@@ -73,7 +73,13 @@ export const RouteGameInfo = ({ onClose }: Props) => {
       >
         <GameInfoList>
           <GameInfoListItem>
-            Selectable junctions are only partly decided by traffic rules. This
+            Did your driving instructor ever tell you that no instruction means
+            continue forward? Here, this is the case for continuing along the
+            same road. Only junctions reachable through the included roads of
+            your current junction are available.
+          </GameInfoListItem>
+          <GameInfoListItem>
+            Available junctions are only partly decided by traffic rules. This
             might lead you to pick an "illegal" junction, which Google Maps'
             route calculation still has to pass through, taking a detour. As
             long as you know your way around, this shouldn't be a problem! ;-)
@@ -91,6 +97,11 @@ export const RouteGameInfo = ({ onClose }: Props) => {
             bound. These are not calculated correctly for all cities. This
             causes some addresses to not be searchable. TBD.
           </GameInfoListItem>
+          <GameInfoListItem>
+            Some roads in the same city share name. All these roads' junctions
+            are available if your current junction's address share their road
+            name. TBD.
+          </GameInfoListItem>
         </GameInfoList>
       </GameInfoSection>
       <GameInfoSection
@@ -99,13 +110,13 @@ export const RouteGameInfo = ({ onClose }: Props) => {
       >
         <GameInfoList>
           <GameInfoListItem>Versus mode</GameInfoListItem>
+          <GameInfoListItem>
+            Play multiple routes in a row, accumulate score / route diff
+          </GameInfoListItem>
+          <GameInfoListItem>Traffic settings</GameInfoListItem>
+          <GameInfoListItem>Pedestrian routes</GameInfoListItem>
+          <GameInfoListItem>Public transport routes</GameInfoListItem>
         </GameInfoList>
-        <GameInfoListItem>
-          Play multiple routes in a row, accumulate score / route diff
-        </GameInfoListItem>
-        <GameInfoListItem>Traffic settings</GameInfoListItem>
-        <GameInfoListItem>Pedestrian routes</GameInfoListItem>
-        <GameInfoListItem>Public transport routes</GameInfoListItem>
       </GameInfoSection>
     </GameInfo>
   )
