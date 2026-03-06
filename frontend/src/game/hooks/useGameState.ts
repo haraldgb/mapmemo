@@ -42,7 +42,7 @@ export const useGameState = ({ features, isMapReady }: Props): GameState => {
   const routeState = useRouteGameState()
 
   const isTimerRunning = routeState
-    ? routeState.isReady && !routeState.isComplete
+    ? routeState.isReady && isMapReady && !routeState.isComplete
     : !!areaState && features.length > 0 && isMapReady && !areaState.isComplete
 
   const { formattedTime, resetTimer } = useGameTimer({
