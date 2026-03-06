@@ -25,7 +25,7 @@ import type { CityInfo } from '../../api/cityApi'
 import { fetchCityInfo } from '../../api/cityApi'
 import type { RouteAddress } from '../route/types'
 
-const PRESET_SEEDS = ['dickbutt', 'kumquats', 'oslobest'] as const
+const PRESET_SEEDS = ['dickbutt', '42080085', 'memonoob'] as const
 
 type Props = {
   isGameActive: boolean
