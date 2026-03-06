@@ -85,6 +85,7 @@ export const useRouteMapRendering = ({
         },
         content: startElement,
         title: startAddress.label,
+        zIndex: 3,
       })
       startMarkerRef.current = startMarker
 
@@ -100,6 +101,7 @@ export const useRouteMapRendering = ({
         position: { lat: endAddress.lat, lng: endAddress.lng },
         content: endElement,
         title: endAddress.label,
+        zIndex: 3,
       })
       endMarkerRef.current = endMarker
 
@@ -213,6 +215,7 @@ export const useRouteMapRendering = ({
           content: element,
           title: junction.connectedRoadNames.join(', '),
           gmpClickable: true,
+          zIndex: 2,
         })
         marker.addEventListener('gmp-click', () => {
           onJunctionClickRef.current(junction)
@@ -324,6 +327,7 @@ export const useRouteMapRendering = ({
             content: element,
             title: junction.connectedRoadNames.join(', '),
             gmpClickable: isClickable,
+            zIndex: 1,
           })
 
           let removeClickListener: (() => void) | null = null
