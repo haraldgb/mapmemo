@@ -57,6 +57,7 @@ export const RouteGame = () => {
             <GameUI gameState={gameState} />
             {routeGameState.isComplete &&
               routeGameState.startAddress &&
+              finalTime !== '' &&
               routeGameState.endAddress && (
                 <RouteResults
                   startAddress={routeGameState.startAddress}

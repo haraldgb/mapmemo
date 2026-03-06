@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { ScoreBar } from './ScoreBar'
-import type { GameState } from './hooks/useGameState'
 import { useGameTimer } from './hooks/useGameTimer'
+import type { GameState } from './hooks/useGameState'
 import {
   s_overlayGUI_left,
   s_overlayGUI_item,
@@ -27,9 +27,13 @@ export const GameHUD = ({ gameState, onComplete }: Props) => {
   // Sync ref after every render so captureCompletionTime always reads the
   // latest formattedTime. Declared first so it runs before captureCompletionTime
   // when both fire in the same commit.
-  useEffect(function syncFormattedTimeRef() {
-    formattedTimeRef.current = formattedTime
-  })
+  useEffect(
+    function syncFormattedTimeRef() {
+      formattedTimeRef.current = formattedTime
+    },
+    [formattedTime],
+  )
+
   useEffect(
     function captureCompletionTime() {
       if (wasRunningRef.current && !gameState.isTimerRunning) {
