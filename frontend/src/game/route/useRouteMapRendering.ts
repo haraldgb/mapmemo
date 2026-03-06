@@ -170,7 +170,6 @@ export const useRouteMapRendering = ({
       if (!map) {
         return
       }
-
       const nextIds = new Set(availableJunctions.map((i) => i.id))
       const prevIds = new Set(dotMarkersMapRef.current.keys())
 
@@ -236,7 +235,6 @@ export const useRouteMapRendering = ({
       if (!map) {
         return
       }
-
       const availableIds = new Set(availableJunctions.map((j) => j.id))
 
       // Group 1-based visit indices by junction ID

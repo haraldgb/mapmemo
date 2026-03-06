@@ -1,9 +1,9 @@
+import { useState } from 'react'
 import { useAreaGameState, type AreaGameState } from './useAreaGameState'
 import {
   useRouteGameState,
   type RouteGameState,
 } from '../route/useRouteGameState'
-import { useGameTimer } from './useGameTimer'
 
 export type { AreaGameState } from './useAreaGameState'
 export type { RouteGameState } from '../route/useRouteGameState'
@@ -12,7 +12,8 @@ type AreaActive = {
   mode: 'click' | 'name'
   areaGameState: AreaGameState
   routeGameState: null
-  formattedTime: string
+  isTimerRunning: boolean
+  timerResetKey: number
   resetGame: () => void
 }
 
@@ -20,7 +21,8 @@ type RouteActive = {
   mode: 'route'
   areaGameState: null
   routeGameState: RouteGameState
-  formattedTime: string
+  isTimerRunning: boolean
+  timerResetKey: number
   resetGame: () => void
 }
 
@@ -34,32 +36,30 @@ type Props = {
 /**
  * Orchestrates area and route game state behind a discriminated union on `mode`.
  * Checking `mode` exposes the corresponding `areaGameState` or `routeGameState`.
- * Composes the mode-specific hook with `useGameTimer` and provides a unified
- * `resetGame` that resets both state and timer.
+ * Provides `isTimerRunning` and `timerResetKey` for the timer owned by GameHUD,
+ * and a unified `resetGame` that resets both game state and the timer.
  */
 export const useGameState = ({ features, isMapReady }: Props): GameState => {
   const areaState = useAreaGameState({ features })
   const routeState = useRouteGameState()
+  const [timerResetKey, setTimerResetKey] = useState(0)
 
   const isTimerRunning = routeState
     ? routeState.isReady && isMapReady && !routeState.isComplete
     : !!areaState && features.length > 0 && isMapReady && !areaState.isComplete
 
-  const { formattedTime, resetTimer } = useGameTimer({
-    isRunning: isTimerRunning,
-  })
-
   if (routeState) {
     const routeReset = routeState.reset
     const resetGame = () => {
       routeReset()
-      resetTimer()
+      setTimerResetKey((k) => k + 1)
     }
     return {
       mode: 'route',
       areaGameState: null,
       routeGameState: routeState,
-      formattedTime,
+      isTimerRunning,
+      timerResetKey,
       resetGame,
     }
   }
@@ -69,13 +69,14 @@ export const useGameState = ({ features, isMapReady }: Props): GameState => {
   const areaReset = area.resetGameState
   const resetGame = () => {
     areaReset()
-    resetTimer()
+    setTimerResetKey((k) => k + 1)
   }
   return {
     mode: area.mode,
     areaGameState: area,
     routeGameState: null,
-    formattedTime,
+    isTimerRunning,
+    timerResetKey,
     resetGame,
   }
 }
