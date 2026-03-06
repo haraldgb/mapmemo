@@ -34,18 +34,16 @@ export const AreaGameInfo = ({ onClose }: Props) => {
           <GameInfoListItem>
             {mode === 'click'
               ? 'Click somewhere on the map to guess where the prompted area is.'
-              : "Write the name of the blinking area. Use the input's auto-complete function to help you(auto-complete not available for harder difficulties)."}
+              : "Write the name of the blinking area. Use the input's auto-complete function to help you."}
           </GameInfoListItem>
           <GameInfoListItem>
-            {mode === 'click'
-              ? 'Correct guesses will paint the area green and take you to the next area'
-              : 'Correct guesses will paint the area green and take you to the next area'}
-            Correct guesses light up the area in green.
+            Correct guesses will paint the area green and take you to the next
+            area
           </GameInfoListItem>
           {mode === 'click' ? (
             <GameInfoListItem>
               Incorrect guesses will tell you the area you actually guessed, and
-              blink the correct one in red'
+              blink the correct one in red
             </GameInfoListItem>
           ) : null}
         </GameInfoList>
@@ -84,6 +82,34 @@ export const AreaGameInfo = ({ onClose }: Props) => {
           {mode === 'name' ? (
             <GameInfoListItem>
               Name mode is quite janky to play on a mobile device. TBD.
+            </GameInfoListItem>
+          ) : null}
+        </GameInfoList>
+      </GameInfoSection>
+      <GameInfoSection
+        title='Features to come'
+        defaultOpen={false}
+      >
+        <GameInfoList>
+          <GameInfoListItem>
+            Versus mode - play realtime against other players
+          </GameInfoListItem>
+          <GameInfoListItem>
+            3 attempts that score differently. Correct answer revealed at 3rd
+            incorrect attempt
+          </GameInfoListItem>
+          {mode === 'click' ? (
+            <GameInfoListItem>Difficulty levels</GameInfoListItem>
+          ) : null}
+          {mode === 'name' ? (
+            <GameInfoListItem>
+              Name is revealed letter by letter with incorrect answers
+            </GameInfoListItem>
+          ) : null}
+          {mode === 'name' ? (
+            <GameInfoListItem>
+              Name match indicator for difficulty hard - suggests similar
+              spellings or confirms possible match.
             </GameInfoListItem>
           ) : null}
         </GameInfoList>

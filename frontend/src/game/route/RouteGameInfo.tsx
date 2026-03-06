@@ -18,8 +18,8 @@ export const RouteGameInfo = ({ onClose }: Props) => {
       onClose={onClose}
     >
       <GameInfoParagraph>
-        Navigate from <Bold>A to B</Bold> through the cities' junctions and
-        roads.
+        As a car, navigate from <Bold>A to B</Bold> through the city's junctions
+        and roads.
       </GameInfoParagraph>
       <GameInfoSection
         title='How to play'
@@ -84,9 +84,28 @@ export const RouteGameInfo = ({ onClose }: Props) => {
             correspond with the actual entrance/exit. This might make getting to
             the end point a bit awkward. As Google Maps has additional
             entrance/exit info this also makes the calculated routes a bit
-            different.
+            different. TBD.
+          </GameInfoListItem>
+          <GameInfoListItem>
+            The address auto-complete is set with a south-west and north-east
+            bound. These are not calculated correctly for all cities. This
+            causes some addresses to not be searchable. TBD.
           </GameInfoListItem>
         </GameInfoList>
+      </GameInfoSection>
+      <GameInfoSection
+        title='Features to come'
+        defaultOpen={false}
+      >
+        <GameInfoList>
+          <GameInfoListItem>Versus mode</GameInfoListItem>
+        </GameInfoList>
+        <GameInfoListItem>
+          Play multiple routes in a row, accumulate score / route diff
+        </GameInfoListItem>
+        <GameInfoListItem>Traffic settings</GameInfoListItem>
+        <GameInfoListItem>Pedestrian routes</GameInfoListItem>
+        <GameInfoListItem>Public transport routes</GameInfoListItem>
       </GameInfoSection>
     </GameInfo>
   )

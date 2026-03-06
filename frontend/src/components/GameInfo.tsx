@@ -100,21 +100,21 @@ export const GameInfoDivider = () => {
 }
 
 export const Bold = ({ children }: ChildProps) => {
-  return <span className='font-semibold text-slate-700'>{children}</span>
+  return <span className={s_bold}>{children}</span>
 }
 
 export const Italic = ({ children }: ChildProps) => {
-  return <span className='italic'>{children}</span>
+  return <span className={s_italic}>{children}</span>
 }
 
 export const Underline = ({ children }: ChildProps) => {
-  return <span className='underline underline-offset-2'>{children}</span>
+  return <span className={s_underline}>{children}</span>
 }
 
 const s_panel =
   'flex h-[635px] max-h-[calc(100dvh-6rem)] w-[343px] flex-col rounded-xl border border-slate-200 bg-white text-left shadow-lg'
 const s_header = 'shrink-0 border-b border-slate-200 px-4 py-3 shadow-sm'
-const s_content = 'flex-1 overflow-auto px-4'
+const s_content = 'flex-1 overflow-auto px-4 pt-2'
 const s_footer = 'shrink-0 px-4 pb-4'
 const s_title = 'text-base font-semibold text-slate-900'
 const s_subtitle =
@@ -132,3 +132,6 @@ const s_link =
 const s_actions = 'mt-4 flex justify-end'
 const s_close_button =
   'rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-slate-400 hover:bg-slate-50'
+const s_bold = 'font-semibold text-slate-700'
+const s_italic = 'italic'
+const s_underline = 'underline underline-offset-2'
