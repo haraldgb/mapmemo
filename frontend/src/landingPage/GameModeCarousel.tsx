@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import type { TouchEventHandler } from 'react'
+import type { TouchEventHandler, ReactElement } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 import type { RootState } from '../store'
@@ -60,7 +60,7 @@ const SLIDES: GameModeSlide[] = [
   },
 ]
 
-export const GameModeCarousel = () => {
+export const GameModeCarousel = (): ReactElement | null => {
   const [activeIndex, setActiveIndex] = useState(0)
   const [imgErrors, setImgErrors] = useState<
     Partial<Record<GameMode, boolean>>
@@ -77,6 +77,8 @@ export const GameModeCarousel = () => {
     return null
   }
 
+  const showPlaceholder = imgErrors[slide.mode] ?? false
+
   const handlePrev = () => {
     setActiveIndex((prev) => (prev === 0 ? SLIDES.length - 1 : prev - 1))
   }
@@ -85,7 +87,7 @@ export const GameModeCarousel = () => {
     setActiveIndex((prev) => (prev === SLIDES.length - 1 ? 0 : prev + 1))
   }
 
-  const handleImgError = () => {
+  const handleImgLoadFail = () => {
     setImgErrors((prev) => ({ ...prev, [slide.mode]: true }))
   }
 
@@ -94,8 +96,6 @@ export const GameModeCarousel = () => {
       mapmemoActions.setGameSettings({ ...gameSettings, mode: slide.mode }),
     )
   }
-
-  const showPlaceholder = imgErrors[slide.mode] ?? false
 
   const handleTouchStart: TouchEventHandler = (e) => {
     touchStartX.current = e.touches[0]?.clientX ?? 0
@@ -170,7 +170,7 @@ export const GameModeCarousel = () => {
                 src={slide.imageSrc}
                 alt={slide.imageAlt}
                 className={s_image}
-                onError={handleImgError}
+                onError={handleImgLoadFail}
               />
             </picture>
           )}

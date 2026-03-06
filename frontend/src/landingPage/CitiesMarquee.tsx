@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactElement } from 'react'
 import { fetchCities } from '../api/cityApi'
 
-export const CitiesMarquee = () => {
+export const CitiesMarquee = (): ReactElement | null => {
   const [cityNames, setCityNames] = useState<string[]>([])
 
   useEffect(function loadCities() {
@@ -13,14 +13,14 @@ export const CitiesMarquee = () => {
       })
   }, [])
 
-  if (cityNames.length === 0) {
-    return null
-  }
-
   // Duplicate list for seamless CSS loop (translateX(-50%) = one full pass)
   const items = [...cityNames, ...cityNames]
   // ~6s per city, min 14s so the scroll feels unhurried
   const duration = Math.max(14, cityNames.length * 6)
+
+  if (cityNames.length === 0) {
+    return null
+  }
 
   return (
     <div

@@ -1,7 +1,8 @@
+import type { ReactElement } from 'react'
 import { CitiesMarquee } from './CitiesMarquee'
 import { GameModeCarousel } from './GameModeCarousel'
 
-export const Landing = () => {
+export const Landing = (): ReactElement => {
   return (
     <section className={s_outer}>
       <div
