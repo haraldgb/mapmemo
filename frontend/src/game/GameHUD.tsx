@@ -1,5 +1,7 @@
+import { useEffect, useRef } from 'react'
 import { ScoreBar } from './ScoreBar'
 import type { GameState } from './hooks/useGameState'
+import { useGameTimer } from './hooks/useGameTimer'
 import {
   s_overlayGUI_left,
   s_overlayGUI_item,
@@ -9,10 +11,34 @@ import {
 
 type Props = {
   gameState: GameState
+  onComplete?: (formattedTime: string) => void
 }
 
-export const GameHUD = ({ gameState }: Props) => {
-  const { formattedTime } = gameState
+export const GameHUD = ({ gameState, onComplete }: Props) => {
+  const { formattedTime } = useGameTimer({
+    isRunning: gameState.isTimerRunning,
+    resetKey: gameState.timerResetKey,
+  })
+
+  // Fire onComplete with the frozen time when timer transitions true → false.
+  // formattedTimeRef keeps the latest value without making it an effect dep.
+  const formattedTimeRef = useRef(formattedTime)
+  const wasRunningRef = useRef(false)
+  // Sync ref after every render so captureCompletionTime always reads the
+  // latest formattedTime. Declared first so it runs before captureCompletionTime
+  // when both fire in the same commit.
+  useEffect(function syncFormattedTimeRef() {
+    formattedTimeRef.current = formattedTime
+  })
+  useEffect(
+    function captureCompletionTime() {
+      if (wasRunningRef.current && !gameState.isTimerRunning) {
+        onComplete?.(formattedTimeRef.current)
+      }
+      wasRunningRef.current = gameState.isTimerRunning
+    },
+    [gameState.isTimerRunning, onComplete],
+  )
 
   if (gameState.mode === 'route') {
     return (

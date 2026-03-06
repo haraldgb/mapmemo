@@ -83,7 +83,6 @@ export const useRouteGameState = (): RouteGameState | null => {
       if (mode !== 'route') {
         return
       }
-
       let isActive = true
 
       const init = async () => {

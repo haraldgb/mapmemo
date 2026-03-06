@@ -12,6 +12,7 @@ const EMPTY_FEATURES: google.maps.Data.Feature[] = []
 
 export const RouteGame = () => {
   const [isGMapReady, setIsGMapReady] = useState(false)
+  const [finalTime, setFinalTime] = useState('')
   const gameState = useGameState({
     features: EMPTY_FEATURES,
     isMapReady: isGMapReady,
@@ -49,7 +50,10 @@ export const RouteGame = () => {
       >
         {isGMapReady && (
           <>
-            <GameHUD gameState={gameState} />
+            <GameHUD
+              gameState={gameState}
+              onComplete={setFinalTime}
+            />
             <GameUI gameState={gameState} />
             {routeGameState.isComplete &&
               routeGameState.startAddress &&
@@ -58,7 +62,7 @@ export const RouteGame = () => {
                   startAddress={routeGameState.startAddress}
                   endAddress={routeGameState.endAddress}
                   path={routeGameState.path}
-                  formattedTime={gameState.formattedTime}
+                  formattedTime={finalTime}
                   onPlayAgain={gameState.resetGame}
                 />
               )}
