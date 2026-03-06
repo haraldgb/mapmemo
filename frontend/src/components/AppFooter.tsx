@@ -49,7 +49,7 @@ const sf_footer = (isGameRoute: boolean, isVisible: boolean) => {
   }
   const gameBase =
     'border-t border-slate-200 bg-white transition-all duration-300 ease-in-out'
-  const gamePosition = 'absolute inset-x-0 bottom-0 z-40'
+  const gamePosition = 'fixed inset-x-0 bottom-0 z-40'
   const visibility = isVisible
     ? '[clip-path:inset(0)] opacity-100'
     : '[clip-path:inset(100%_0_0_0)] opacity-0 pointer-events-none'
