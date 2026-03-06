@@ -57,9 +57,15 @@ export const GameInfoSection = ({
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const contentRef = useRef<HTMLDivElement>(null)
 
+  // escapes scrollIntoViewOnOpen for first render
+  const [prevIsOpen, setIsPrevOpen] = useState(isOpen)
+  if (prevIsOpen !== isOpen) {
+    setIsPrevOpen(isOpen)
+  }
+
   useEffect(
     function scrollIntoViewOnOpen() {
-      if (isOpen) {
+      if (isOpen && prevIsOpen !== isOpen) {
         contentRef.current?.scrollIntoView({
           behavior: 'smooth',
           block: 'nearest',
