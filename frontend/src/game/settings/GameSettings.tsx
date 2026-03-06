@@ -398,13 +398,13 @@ export const GameSettings = ({
           ))}
         </div>
       </div>
-      {isConfirming && (
-        <ConfirmResetPopup
-          onConfirm={handleConfirmReset}
-          resetObjectLabel='this game session'
-        />
-      )}
       <div className={s_actions}>
+        {isConfirming && (
+          <ConfirmResetPopup
+            onConfirm={handleConfirmReset}
+            resetObjectLabel='this game session'
+          />
+        )}
         <button
           type='button'
           onClick={handleCancel}
@@ -458,7 +458,7 @@ const sf_seed_input = (isValid: boolean) =>
       : 'border-amber-400 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500'
   }`
 const s_apply_hint = 'mt-2 text-center text-xs text-amber-600'
-const s_actions = 'mt-4 flex items-center justify-end gap-2'
+const s_actions = 'relative mt-4 flex items-center justify-end gap-2'
 const sf_primary_button = (isEnabled: boolean) =>
   `rounded-md px-3 py-1.5 text-sm font-semibold text-white ${
     isEnabled
