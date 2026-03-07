@@ -75,7 +75,7 @@ const AreaGameUI = ({
 }
 
 const s_settings =
-  'pointer-events-auto absolute right-4 bottom-4 flex flex-col items-center gap-4'
+  'pointer-events-auto absolute right-4 bottom-[max(1rem,env(safe-area-inset-bottom))] flex flex-col items-center gap-4'
 const s_overlay =
   'pointer-events-auto absolute inset-0 z-20 flex items-center justify-center'
 const s_play_again =

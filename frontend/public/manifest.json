@@ -1,0 +1,49 @@
+{
+  "name": "MapMemo",
+  "short_name": "MapMemo",
+  "description": "Test your knowledge of a city's layout",
+  "display": "standalone",
+  "start_url": "/",
+  "theme_color": "#f8fafc",
+  "background_color": "#f8fafc",
+  "icons": [
+    {
+      "src": "/mapmemo-logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/click-mode-portrait.png",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/name-mode-portrait.png",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/route-mode-portrait.png",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/click-mode.png",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshots/name-mode.png",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshots/route-mode.png",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}
