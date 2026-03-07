@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
  * the layout viewport stays stable and only `visualViewport.height` shrinks.
  * Returns 0 when the keyboard is closed or the API is unavailable.
  */
-export function useKeyboardHeight(): number {
+export const useKeyboardHeight = (): number => {
   const [keyboardHeight, setKeyboardHeight] = useState(0)
 
   useEffect(function trackKeyboardHeight() {

@@ -107,7 +107,6 @@ switch (status) {
 
 - All hooks at the top of the component, before any logic or conditionals. The exception is conditional error throwing.
 - Custom hooks must start with `use` and live in their own file.
-- Dependency arrays must be complete — always include all dependencies.
 - `useCallback` / `useMemo` are rarely needed with React Compiler - it handles memoization automatically. Use them only when you need to stabilize a reference to intentionally exclude it from another hook's dependency array (e.g., to prevent an effect from re-firing).
 - **`useEffect` callbacks must be named functions**, not anonymous arrow functions. This improves stack traces and readability:
 

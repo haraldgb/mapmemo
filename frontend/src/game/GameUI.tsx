@@ -31,6 +31,7 @@ export const GameUI = ({ gameState }: Props) => {
     keyboardHeight > 0 && !isSettingsOpen && !isInfoOpen
 
   const handleKeyboardDismiss = () => {
+    // SAFETY: activeElement is always HTMLElement (and they are the only ones to have .blur())
     ;(document.activeElement as HTMLElement)?.blur()
   }
 

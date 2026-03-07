@@ -9,10 +9,10 @@ import { useEffect, useRef } from 'react'
  * @param getInput - Returns the input element to keep focused. Called lazily.
  * @param enabled  - When false, blur events are not intercepted.
  */
-export function useKeepKeyboardOnMapTouch(
+export const useKeepKeyboardOnMapTouch = (
   getInput: () => HTMLInputElement | null,
   enabled: boolean,
-): void {
+): void => {
   const enabledRef = useRef(enabled)
   useEffect(
     function syncEnabledRef() {
