@@ -17,9 +17,8 @@ export const Landing = (): ReactElement => {
           <span className={s_headline_accent}>Traverse it quickly.</span>
         </h1>
         <p className={s_subheading}>
-          Train your mental map through three game modes — pinpoint
-          neighborhoods, name what's highlighted, or navigate between road
-          junctions.
+          Train your mental map of a city through three game modes — pinpoint
+          neighborhoods, name the neighborhood, or navigate through it.
         </p>
       </div>
       <div className={s_carousel_wrapper}>
