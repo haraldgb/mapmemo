@@ -1,6 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Outfit:wght@400;500;600&display=swap');
 @import 'tailwindcss';
 
+@custom-variant standalone {
+  @media (display-mode: standalone) {
+    @slot;
+  }
+}
+
 @theme {
   --font-display: 'Syne', sans-serif;
 }
@@ -62,7 +68,7 @@
   }
 
   body {
-    @apply min-h-screen bg-slate-50 text-slate-900 antialiased;
+    @apply min-h-dvh bg-slate-50 text-slate-900 antialiased;
     font-family:
       'Outfit',
       'Segoe UI',
@@ -72,6 +78,6 @@
   }
 
   #root {
-    @apply min-h-screen;
+    @apply min-h-dvh;
   }
 }

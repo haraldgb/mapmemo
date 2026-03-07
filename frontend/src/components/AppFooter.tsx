@@ -51,12 +51,12 @@ const sf_footer = (isGameRoute: boolean, isVisible: boolean) => {
     'border-t border-slate-200 bg-white transition-all duration-300 ease-in-out'
   const gamePosition = 'fixed inset-x-0 bottom-0 z-40'
   const visibility = isVisible
-    ? '[clip-path:inset(0)] opacity-100'
-    : '[clip-path:inset(100%_0_0_0)] opacity-0 pointer-events-none'
+    ? 'translate-y-0 opacity-100'
+    : 'translate-y-full opacity-0 pointer-events-none'
   return `${gameBase} ${gamePosition} ${visibility}`
 }
 const s_footer_inner =
-  'flex flex-row w-full gap-1 px-4 py-1.5 text-xs text-slate-500 sm:items-center justify-between'
+  'flex flex-row w-full gap-1 px-4 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] text-xs text-slate-500 sm:items-center justify-between'
 const s_version = 'text-slate-500 cursor-default'
 const s_footer_links = 'flex items-center gap-4'
 const s_repo_link =

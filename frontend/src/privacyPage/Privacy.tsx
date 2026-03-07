@@ -14,8 +14,10 @@ export const Privacy = () => {
         <ul className={s_list}>
           <li>
             <strong>Game settings</strong> (localStorage key{' '}
-            <code className={s_code}>mapmemo.gameSettings</code>) — your chosen
-            game mode, difficulty, and selected areas. No personal information.
+            <code className={s_code}>mapmemo.gameSettings</code>) — settings and
+            other configurations/data that make revisiting the game easier are
+            stored locally on your device. This includes game mode, difficulty,
+            selected city, etc.
           </li>
           <li>
             <strong>Session cookie</strong> (

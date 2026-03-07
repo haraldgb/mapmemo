@@ -7,7 +7,7 @@
     "dev": "vite",
     "dev:browser": "vite --open",
     "build": "tsc -b && vite build",
-    "build:vercel": "git fetch --tags --depth=1 && pnpm build",
+    "build:vercel": "git remote add origin https://github.com/$VERCEL_GIT_REPO_OWNER/$VERCEL_GIT_REPO_SLUG.git || true && git fetch --tags --depth=1 && pnpm build",
     "lint": "eslint . --max-warnings 0",
     "lint-fix": "eslint . --fix",
     "format": "prettier . --write",

@@ -57,6 +57,7 @@ export const AreaGame = () => {
         onFeatureHover={gameStyling.registerFeatureHover}
         onMapReady={handleMapReady}
         mapId={AREA_MODE_MAP_ID}
+        attribution='oslo'
       >
         {isGMapReady && (
           <>
