@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useKeepKeyboardOnMapTouch } from './hooks/useKeepKeyboardOnMapTouch'
 import type { AreaGameState } from './hooks/useAreaGameState'
 import { s_overlayGUI_item } from './OverlayGuiStyles'
 import { useInputSuggestions } from './hooks/useInputSuggestions'
@@ -16,8 +17,12 @@ export const NameModeInput = ({ areaGameState }: NameModeInputProps) => {
   const { isSettingsOpen, isInfoOpen } = useSettingsOpen()
   const [typedValue, setTypedValue] = useState('')
 
-  // useRef: imperative handle for captureKeysToFocusInput effect and post-selection focus/select.
   const inputRef = useRef<AutoCompleteInputHandle>(null)
+  useKeepKeyboardOnMapTouch(
+    () => inputRef.current?.getInputElement() ?? null,
+    // If no overlay open, stop the keyboard from closing when dragging map
+    !isSettingsOpen && !isInfoOpen,
+  )
 
   const filteredSuggestions = useInputSuggestions({
     areaGameState,
@@ -67,7 +72,7 @@ export const NameModeInput = ({ areaGameState }: NameModeInputProps) => {
           e.preventDefault()
           inputRef.current?.focus()
           inputRef.current?.open()
-          setTypedValue((prev) => prev + e.key)
+          setTypedValue((prev: string) => prev + e.key)
         }
       }
       document.addEventListener('keydown', handleDocumentKeyDown)
