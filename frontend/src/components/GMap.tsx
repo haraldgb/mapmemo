@@ -16,6 +16,7 @@ type GMapProps = {
   }) => void
   children?: ReactNode
   mapId: string
+  attribution: 'osm' | 'oslo'
 }
 
 export const GMap = ({
@@ -26,6 +27,7 @@ export const GMap = ({
   onMapReady,
   children,
   mapId,
+  attribution,
 }: GMapProps) => {
   const map = useMap()
   const markerLibrary = useMapsLibrary('marker')
@@ -179,26 +181,25 @@ export const GMap = ({
         </div>
       )}
       <div className={s_attribution}>
-        <a
-          href='https://www.openstreetmap.org/copyright'
-          target='_blank'
-          rel='noreferrer'
-          className={s_attribution_link}
-        >
-          © OpenStreetMap contributors
-        </a>
-        <span className={s_attribution_separator_desktop_only}>
-          {/* \u00A0·\u00A0 */}
-          {'\u00A0·\u00A0'}
-        </span>
-        <a
-          href='https://www.oslo.kommune.no/statistikk-og-data/apne-data/'
-          target='_blank'
-          rel='noreferrer'
-          className={s_attribution_link}
-        >
-          © Oslo kommune
-        </a>
+        {attribution === 'osm' ? (
+          <a
+            href='https://www.openstreetmap.org/copyright'
+            target='_blank'
+            rel='noreferrer'
+            className={s_attribution_link}
+          >
+            © OpenStreetMap contributors
+          </a>
+        ) : (
+          <a
+            href='https://www.oslo.kommune.no/statistikk-og-data/apne-data/'
+            target='_blank'
+            rel='noreferrer'
+            className={s_attribution_link}
+          >
+            © Oslo kommune
+          </a>
+        )}
       </div>
     </div>
   )
@@ -213,4 +214,3 @@ const s_loading_overlay =
 const s_attribution =
   'pointer-events-auto absolute flex flex-col-reverse sm:flex-row bottom-0 left-0 z-10 rounded bg-white/80 px-1.5 py-0.5 text-[10px] text-slate-600 backdrop-blur-sm'
 const s_attribution_link = 'hover:text-slate-900 hover:underline'
-const s_attribution_separator_desktop_only = 'hidden sm:inline'

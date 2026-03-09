@@ -73,10 +73,11 @@ export const RouteGameInfo = ({ onClose }: Props) => {
       >
         <GameInfoList>
           <GameInfoListItem>
-            Did your driving instructor ever tell you that no instruction means
-            continue forward? Here, this is the case for continuing along the
-            same road. Only junctions reachable through the included roads of
-            your current junction are available.
+            You would expect all the junctions of a straight road to be
+            available. However, the game counts only junctions reachable through
+            the included roads of your current junction available. This means
+            that if a named road takes a turn at a junction, junctions down that
+            turn are available, not ones going straight from the junction.
           </GameInfoListItem>
           <GameInfoListItem>
             Available junctions are only partly decided by traffic rules. This

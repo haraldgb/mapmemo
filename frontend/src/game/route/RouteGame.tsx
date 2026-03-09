@@ -47,6 +47,7 @@ export const RouteGame = () => {
         features={EMPTY_FEATURES}
         onMapReady={handleMapReady}
         mapId={ROUTE_MODE_MAP_ID}
+        attribution='osm'
       >
         {isGMapReady && (
           <>
