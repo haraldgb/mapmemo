@@ -27,6 +27,7 @@ export const useKeepKeyboardOnMapTouch = (
   useEffect(function trackMapGesture() {
     // seems quite excessive, but handles both 1- and >=2-finger touches.
     const handleTouchStart = (e: TouchEvent) => {
+      // SAFETY: safe for the handlers it's used on.
       const target = e.target as Element
       if (target.closest('input, button, select, textarea')) {
         return
@@ -35,12 +36,16 @@ export const useKeepKeyboardOnMapTouch = (
         e.touches.length === 1 &&
         document.activeElement?.tagName !== 'INPUT'
       ) {
+        // single-finger tap outside an input with no input focused — nothing to keep open
         return
       }
       activeTouchCountRef.current = e.touches.length
       mapTouchActiveRef.current = true
     }
     const handleTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) {
+        mapTouchActiveRef.current = false
+      }
       activeTouchCountRef.current = e.touches.length
     }
     window.addEventListener('touchstart', handleTouchStart, {

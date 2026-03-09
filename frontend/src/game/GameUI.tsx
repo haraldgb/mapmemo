@@ -17,6 +17,9 @@ type Props = {
 }
 
 export const GameUI = ({ gameState }: Props) => {
+  const { isSettingsOpen, isInfoOpen } = useSettingsOpen()
+  const keyboardHeight = useKeyboardHeight()
+
   const isGameActive =
     gameState.mode === 'route'
       ? gameState.routeGameState.isGameActive
@@ -25,8 +28,6 @@ export const GameUI = ({ gameState }: Props) => {
   const isAreaComplete =
     gameState.mode !== 'route' && gameState.areaGameState.isComplete
 
-  const { isSettingsOpen, isInfoOpen } = useSettingsOpen()
-  const keyboardHeight = useKeyboardHeight()
   const showKeyboardDismiss =
     keyboardHeight > 0 && !isSettingsOpen && !isInfoOpen
 
@@ -45,7 +46,7 @@ export const GameUI = ({ gameState }: Props) => {
             onClick={handleKeyboardDismiss}
             aria-label='Close keyboard'
           >
-            <ChevronIcon className='h-5 w-5' />
+            <ChevronIcon className={s_keyboard_chevron} />
           </button>
         </div>
       )}
@@ -103,6 +104,7 @@ const s_keyboard_dismiss_wrapper =
   'pointer-events-auto absolute left-4 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+var(--keyboard-height,0px))] flex flex-col items-center'
 const s_keyboard_dismiss_button =
   'z-10 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-black shadow-sm transition hover:border-slate-300 hover:bg-slate-50'
+const s_keyboard_chevron = 'h-5 w-5'
 const s_settings =
   'pointer-events-auto absolute right-4 bottom-[calc(max(1rem,env(safe-area-inset-bottom))+var(--keyboard-height,0px))] flex flex-col items-center gap-4'
 const s_overlay =
