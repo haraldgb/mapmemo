@@ -101,6 +101,7 @@ export const RouteAddressInput = ({
             containerClassName={sf_autocomplete_container(shake)}
             inputClassName={s_autocomplete_input}
             disabled={isValidatingRoadName}
+            openOnFocus
           />
         </div>
       )}

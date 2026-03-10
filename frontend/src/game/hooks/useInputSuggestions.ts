@@ -5,6 +5,8 @@ import type { AreaGameState } from './useAreaGameState'
 type UseInputSuggestionsProps = {
   areaGameState: AreaGameState
   inputValue: string
+  /**Default is includes */
+  useStartsWith?: boolean
 }
 
 /**
@@ -13,6 +15,7 @@ type UseInputSuggestionsProps = {
 export const useInputSuggestions = ({
   areaGameState,
   inputValue,
+  useStartsWith = false,
 }: UseInputSuggestionsProps) => {
   const { difficulty, areaLabels, completedAreaLabels } = areaGameState
   const allSubAreaNames = useSelector(
@@ -37,7 +40,9 @@ export const useInputSuggestions = ({
       ? suggestionPool
       : inputValue.length > 0
         ? suggestionPool.filter((label) =>
-            label.toLowerCase().includes(inputValue.toLowerCase()),
+            useStartsWith
+              ? label.toLowerCase().startsWith(inputValue.toLowerCase())
+              : label.toLowerCase().includes(inputValue.toLowerCase()),
           )
         : []
 
