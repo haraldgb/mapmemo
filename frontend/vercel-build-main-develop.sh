@@ -1,3 +1,4 @@
+exit 1;
 if [[ "$VERCEL_GIT_COMMIT_REF" == "main" || "$VERCEL_GIT_COMMIT_REF" == "develop" ]] ; then
   # Proceed with the build
   exit 1;
