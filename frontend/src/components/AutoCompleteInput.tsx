@@ -33,6 +33,7 @@ type Props = {
   disabled?: boolean
   autoFocus?: boolean
   openOnFocus?: boolean
+  legalValueHints?: { legal: string; illegal: string }
 }
 
 export const AutoCompleteInput = ({
@@ -51,6 +52,7 @@ export const AutoCompleteInput = ({
   disabled,
   autoFocus,
   openOnFocus = false,
+  legalValueHints,
 }: Props) => {
   const [isOpen, setIsOpen] = useState(false)
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
@@ -209,6 +211,25 @@ export const AutoCompleteInput = ({
         <div className={inputWrapperClassName}>
           {prefix && <span className={s_revealed_prefix}>{prefix}</span>}
           {inputEl}
+          {noSuggestions && legalValueHints ? (
+            suggestions
+              .map((suggestion) => suggestion.toLowerCase())
+              .includes((prefix + value).toLowerCase()) ? (
+              <span
+                className={s_legal_value_hint}
+                title={legalValueHints.legal}
+              >
+                &#x2714;
+              </span>
+            ) : (
+              <span
+                className={s_illegal_value_hint}
+                title={legalValueHints.illegal}
+              >
+                &#x274C;
+              </span>
+            )
+          ) : null}
         </div>
       ) : (
         inputEl
@@ -240,7 +261,7 @@ export const AutoCompleteInput = ({
               <span>{label}</span>
               {((index === 0 && highlightedIndex === -1) ||
                 index === highlightedIndex) && (
-                <span className={s_tab_hint}>&#x21B5;</span>
+                <span className={s_submit_hint}>&#x21B5;</span>
               )}
             </li>
           ))}
@@ -258,5 +279,7 @@ const sf_dropdown_item = (isHighlighted: boolean) =>
       ? 'bg-blue-50 text-blue-700'
       : 'text-slate-700 hover:bg-slate-50'
   }`
-const s_tab_hint = 'text-base text-slate-400'
+const s_submit_hint = 'text-base text-slate-400'
+const s_legal_value_hint = 'text-base text-slate-400 cursor-default'
+const s_illegal_value_hint = 'text-base text-slate-400 cursor-default'
 const s_revealed_prefix = 'select-none font-bold text-slate-700 shrink-0'

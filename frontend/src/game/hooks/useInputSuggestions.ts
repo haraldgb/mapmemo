@@ -22,8 +22,6 @@ export const useInputSuggestions = ({
     (state: RootState) => state.mapmemo.allSubAreaNames,
   )
 
-  const hasAutocomplete = difficulty !== 'hard'
-
   const sorted = [...areaLabels].sort((a, b) =>
     a.localeCompare(b, undefined, { sensitivity: 'base' }),
   )
@@ -34,9 +32,8 @@ export const useInputSuggestions = ({
         : sorted
       : allSubAreaNames
 
-  const filteredSuggestions = !hasAutocomplete
-    ? []
-    : difficulty === 'beginner' && inputValue.length === 0
+  const filteredSuggestions =
+    difficulty === 'beginner' && inputValue.length === 0
       ? suggestionPool
       : inputValue.length > 0
         ? suggestionPool.filter((label) =>

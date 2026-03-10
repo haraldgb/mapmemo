@@ -110,6 +110,10 @@ export const NameModeInput = ({ areaGameState }: NameModeInputProps) => {
         containerClassName={s_autocomplete_container}
         inputWrapperClassName={sf_name_pill(prevGuess.isCorrect)}
         inputClassName={sf_name_input(revealedPrefix.length > 0)}
+        legalValueHints={{
+          legal: 'Input matches an area',
+          illegal: 'Input does not match any areas',
+        }}
       />
     </form>
   )
