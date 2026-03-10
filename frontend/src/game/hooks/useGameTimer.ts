@@ -9,7 +9,7 @@ type Props = {
   resetKey?: number
 }
 
-const TICK_INTERVAL_MS = 100
+const TICK_INTERVAL_MS = 1000
 
 /** Tracks elapsed game time with 100ms tick resolution. Formatted as `m:ss.t`. */
 export const useGameTimer = ({ isRunning, resetKey = 0 }: Props): GameTimer => {
@@ -57,6 +57,5 @@ const formatTime = (totalMs: number): string => {
   const totalSeconds = Math.floor(totalMs / 1000)
   const mins = Math.floor(totalSeconds / 60)
   const secs = totalSeconds % 60
-  const tenths = Math.floor((totalMs % 1000) / 100)
-  return `${mins}:${secs.toString().padStart(2, '0')}.${tenths}`
+  return `${mins}:${secs.toString().padStart(2, '0')}`
 }
