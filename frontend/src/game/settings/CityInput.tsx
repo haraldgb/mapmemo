@@ -58,6 +58,7 @@ export const CityInput = ({ selectedCity, onSelect }: Props) => {
         placeholder='Search city...'
         containerClassName={sf_autocomplete_container(shake)}
         inputClassName={s_input}
+        openOnFocus
       />
     </div>
   )

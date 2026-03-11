@@ -15,7 +15,13 @@ export const NameModeInput = ({ areaGameState }: NameModeInputProps) => {
   const { difficulty, registerNameGuess, prevGuess, currentEntry } =
     areaGameState
   const { isSettingsOpen, isInfoOpen } = useSettingsOpen()
-  const [typedValue, setTypedValue] = useState('')
+  const [typedSuffix, setTypedSuffix] = useState('')
+  // Track which entry the suffix belongs to — reset when entry changes (avoids effect)
+  const [suffixEntryId, setSuffixEntryId] = useState(currentEntry?.id)
+  if (suffixEntryId !== currentEntry?.id) {
+    setSuffixEntryId(currentEntry?.id)
+    setTypedSuffix('')
+  }
 
   const inputRef = useRef<AutoCompleteInputHandle>(null)
   useKeepKeyboardOnMapTouch(
@@ -24,32 +30,36 @@ export const NameModeInput = ({ areaGameState }: NameModeInputProps) => {
     !isSettingsOpen && !isInfoOpen,
   )
 
+  // Number of revealed letters = consecutive incorrect guesses for this area
+  const revealedCount = prevGuess.isCorrect
+    ? 0
+    : prevGuess.consecutiveIncorrectGuesses
+  const revealedPrefix = currentEntry?.label.slice(0, revealedCount) ?? ''
+  const fullValue = revealedPrefix + typedSuffix
+
   const filteredSuggestions = useInputSuggestions({
     areaGameState,
-    inputValue: typedValue,
+    inputValue: fullValue,
+    useStartsWith: revealedCount > 0,
   })
 
   const handleSelect = (label: string) => {
     registerNameGuess(label)
-    const isCorrect =
-      label.trim().toLowerCase() === currentEntry?.label.trim().toLowerCase()
-    if (isCorrect) {
-      setTypedValue('')
-    } else {
-      setTypedValue(label)
-    }
+    setTypedSuffix('')
     inputRef.current?.focus()
-    if (!isCorrect) {
-      requestAnimationFrame(() => inputRef.current?.select())
-    }
   }
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!typedValue.trim()) {
-      return
+    if (difficulty === 'hard') {
+      handleSelect(fullValue)
     }
-    handleSelect(typedValue)
+    if (filteredSuggestions.length > 0) {
+      handleSelect(filteredSuggestions[0])
+    } else {
+      inputRef.current?.shake()
+      inputRef.current?.select()
+    }
   }
 
   // Captures keypresses anywhere on the page and redirects to this input,
@@ -72,7 +82,7 @@ export const NameModeInput = ({ areaGameState }: NameModeInputProps) => {
           e.preventDefault()
           inputRef.current?.focus()
           inputRef.current?.open()
-          setTypedValue((prev: string) => prev + e.key)
+          setTypedSuffix((prev: string) => prev + e.key)
         }
       }
       document.addEventListener('keydown', handleDocumentKeyDown)
@@ -90,14 +100,23 @@ export const NameModeInput = ({ areaGameState }: NameModeInputProps) => {
       <AutoCompleteInput
         focusHandleRef={inputRef}
         suggestions={filteredSuggestions}
-        value={typedValue}
-        onChange={setTypedValue}
+        noSuggestions={difficulty === 'hard'}
+        value={typedSuffix}
+        onChange={setTypedSuffix}
         onSelect={handleSelect}
-        placeholder='Type area name...'
+        prefix={revealedPrefix}
+        placeholder={
+          revealedPrefix.length > 0 ? undefined : 'Type area name...'
+        }
         autoFocus
-        openOnFocus={difficulty === 'beginner'}
+        openOnFocus={difficulty === 'beginner' || fullValue.length > 0}
         containerClassName={s_autocomplete_container}
-        inputClassName={sf_name_input(prevGuess.isCorrect)}
+        inputWrapperClassName={sf_name_pill(prevGuess.isCorrect)}
+        inputClassName={sf_name_input(revealedPrefix.length > 0)}
+        legalValueHints={{
+          legal: 'Input matches an area',
+          illegal: 'Input does not match any areas',
+        }}
       />
     </form>
   )
@@ -105,9 +124,11 @@ export const NameModeInput = ({ areaGameState }: NameModeInputProps) => {
 
 const s_name_form = 'pointer-events-auto'
 const s_autocomplete_container = `relative w-74 max-w-xs ${s_overlayGUI_item}`
-const sf_name_input = (isCorrectState: boolean) =>
-  `h-full w-full rounded-full border-2 bg-white px-4 text-left text-lg font-semibold shadow-md outline-none ${
-    isCorrectState
-      ? 'border-slate-300 focus:border-blue-500'
-      : 'border-red-400 focus:border-red-500'
+const sf_name_pill = (isCorrect: boolean) =>
+  `flex h-full items-center rounded-full border-2 bg-white px-4 shadow-md ${
+    isCorrect
+      ? 'border-slate-300 focus-within:border-blue-500'
+      : 'border-red-400 focus-within:border-red-500'
   }`
+const sf_name_input = (hasPrefix: boolean) =>
+  `min-w-0 flex-1 bg-transparent text-left text-lg font-semibold outline-none${hasPrefix ? ' lowercase' : ''}`

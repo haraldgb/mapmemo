@@ -7,6 +7,7 @@ import { useFeaturesInPlay } from './hooks/useFeaturesInPlay.ts'
 import { useGameState } from './hooks/useGameState.ts'
 import { useAreaGameStyling } from './hooks/useAreaGameStyling'
 import { useFeatureLabels } from './hooks/useFeatureLabels'
+import { useMapAutoCenter } from './hooks/useMapAutoCenter'
 import { GameUI } from './GameUI.tsx'
 import type { MapContext } from './types.ts'
 import { AREA_MODE_MAP_ID } from './consts.ts'
@@ -39,6 +40,13 @@ export const AreaGame = () => {
     areaGameState: areaGameState,
     mapContext,
     features: featuresInPlay,
+  })
+  useMapAutoCenter({
+    currentEntry: areaGameState.currentEntry,
+    prevGuess: areaGameState.prevGuess,
+    map: mapContext?.map ?? null,
+    features: featuresInPlay,
+    isEnabled: areaGameState.mode === 'name',
   })
 
   const handleMapReady = (payload: MapContext) => {

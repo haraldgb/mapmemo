@@ -43,10 +43,14 @@ export const useKeepKeyboardOnMapTouch = (
       mapTouchActiveRef.current = true
     }
     const handleTouchEnd = (e: TouchEvent) => {
-      if (e.touches.length === 0) {
-        mapTouchActiveRef.current = false
-      }
       activeTouchCountRef.current = e.touches.length
+      if (e.touches.length === 0) {
+        // On mobile, blur fires after touchend. Defer the reset so the blur
+        // handler can still see mapTouchActiveRef.current = true and refocus.
+        setTimeout(() => {
+          mapTouchActiveRef.current = false
+        }, 0)
+      }
     }
     window.addEventListener('touchstart', handleTouchStart, {
       capture: true,
