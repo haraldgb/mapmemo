@@ -5,7 +5,12 @@ import { resolveAddress } from '../../api/snapToRoads'
 import { getRoutePair } from './routeAddresses'
 import { useRoadGraph } from './useRoadGraph'
 import type { RouteAddress, SelectedJunction } from './types'
-import { computeAvailableJunctions, canJunctionReachRoad } from './routeUtils'
+import {
+  computeAvailableJunctions,
+  canJunctionReachRoad,
+  pickEntryJunction,
+  findExitJunction,
+} from './routeUtils'
 
 export type RouteGameState = {
   mode: 'route'
@@ -13,6 +18,8 @@ export type RouteGameState = {
   endAddress: RouteAddress | null
   path: SelectedJunction[]
   availableJunctions: SelectedJunction[]
+  selectableJunctions: SelectedJunction[]
+  availableRoundabouts: number[]
   currentRoadName: string | null
   isLoading: boolean
   isReady: boolean
@@ -22,8 +29,10 @@ export type RouteGameState = {
   error: string | null
   gameKey: number
   handleJunctionClick: (junction: SelectedJunction) => void
+  handleRoundaboutClick: (roundaboutId: number) => void
   handleDestinationClick: () => void
   canReachDestination: boolean
+  getJunctionsForRoundabout: (roundaboutId: number) => SelectedJunction[]
   reset: () => void
 }
 
@@ -76,6 +85,17 @@ export const useRouteGameState = (): RouteGameState | null => {
     lastJunction,
     endAddress?.roadName ?? null,
   )
+
+  const selectableJunctions = availableJunctions.filter(
+    (j) => j.roundaboutId === null,
+  )
+  const availableRoundabouts = [
+    ...new Set(
+      availableJunctions
+        .filter((j) => j.roundaboutId !== null)
+        .map((j) => j.roundaboutId!),
+    ),
+  ]
 
   // Init flow: resolve addresses, fetch starting road
   useEffect(
@@ -138,7 +158,40 @@ export const useRouteGameState = (): RouteGameState | null => {
     }
 
     const prevJunction = path.at(-1) ?? null
-    setPath((prev) => [...prev, currentJunction])
+    const isExitingRoundabout = prevJunction?.roundaboutId != null
+
+    let newPath: SelectedJunction[]
+    let effectivePrev: SelectedJunction | null = prevJunction
+
+    if (isExitingRoundabout) {
+      const roundaboutId = prevJunction!.roundaboutId!
+      const roundaboutJunctions =
+        roadGraph.getJunctionsForRoundabout(roundaboutId)
+      const entryInRing = roundaboutJunctions.find(
+        (j) => j.id === prevJunction!.id,
+      )
+      const entryRingIndex = entryInRing?.nodeIndex ?? 0
+      const rawExitJunction = findExitJunction(
+        roundaboutJunctions,
+        entryRingIndex,
+        currentJunction.roadName,
+      )
+      // Tag exit junction with the road we're exiting onto so direction logic works
+      const exitJunction = rawExitJunction
+        ? { ...rawExitJunction, roadName: currentJunction.roadName }
+        : null
+
+      if (exitJunction && exitJunction.id !== prevJunction!.id) {
+        newPath = [...path, exitJunction, currentJunction]
+        effectivePrev = exitJunction
+      } else {
+        newPath = [...path, currentJunction]
+      }
+    } else {
+      newPath = [...path, currentJunction]
+    }
+
+    setPath(newPath)
 
     const roadsAtJunction = [
       currentJunction.roadName,
@@ -182,8 +235,84 @@ export const useRouteGameState = (): RouteGameState | null => {
 
     // Immediate update with currently cached roads
     setAvailableJunctions(
-      computeAvailableJunctions(currentJunction, prevJunction, roadGraph),
+      computeAvailableJunctions(currentJunction, effectivePrev, roadGraph),
     )
+  }
+
+  const handleRoundaboutClick = (roundaboutId: number) => {
+    if (isComplete || isLoading) {
+      return
+    }
+
+    const roundabout = roadGraph.getRoundabout(roundaboutId)
+    if (!roundabout) {
+      return
+    }
+
+    // Find entry junction: available junctions belonging to this roundabout
+    const candidatesFromCurrentRoad = availableJunctions.filter(
+      (j) => j.roundaboutId === roundaboutId,
+    )
+    if (candidatesFromCurrentRoad.length === 0) {
+      return
+    }
+
+    const refLat = path.at(-1)?.lat ?? startAddress?.lat ?? 0
+    const refLng = path.at(-1)?.lng ?? startAddress?.lng ?? 0
+    const roundaboutJunctions =
+      roadGraph.getJunctionsForRoundabout(roundaboutId)
+
+    const entryJunction = pickEntryJunction(
+      candidatesFromCurrentRoad,
+      refLat,
+      refLng,
+      roundaboutJunctions,
+    )
+
+    setPath((prev) => [...prev, entryJunction])
+    setCurrentRoadName(entryJunction.roadName)
+
+    const computeExternalJunctions = (): SelectedJunction[] => {
+      const connectedRoads =
+        roadGraph.getRoundabout(roundaboutId)?.connectedRoadNames ?? []
+      return connectedRoads
+        .flatMap((roadName) => roadGraph.getJunctionsForRoad(roadName))
+        .filter((j) => j.roundaboutId !== roundaboutId)
+        .filter((j, i, arr) => arr.findIndex((x) => x.id === j.id) === i)
+    }
+
+    // Fetch all connected roads as primary roads
+    const toFetch = roundabout.connectedRoadNames.filter(
+      (r) => !roadGraph.isFetchedAsPrimary(r),
+    )
+    setCurrentJunctionHasMissingConnectedJunctions(
+      roundabout.connectedRoadNames.some((r) => !roadGraph.isInCache(r)),
+    )
+
+    if (toFetch.length > 0) {
+      void Promise.all(toFetch.map((road) => roadGraph.fetchRoad(road)))
+        .then(() => {
+          if (isCompleteRef.current) {
+            return
+          }
+          const lastJ = pathRef.current.at(-1)
+          // Guard: only update if we're still in this roundabout context
+          if (!lastJ || lastJ.roundaboutId !== roundaboutId) {
+            return
+          }
+          setAvailableJunctions(computeExternalJunctions())
+          if (
+            roundabout.connectedRoadNames.every((r) => roadGraph.isInCache(r))
+          ) {
+            setCurrentJunctionHasMissingConnectedJunctions(false)
+          }
+        })
+        .catch((err) => {
+          setError(err instanceof Error ? err.message : 'Failed to fetch road')
+        })
+    }
+
+    setAvailableJunctions(computeExternalJunctions())
   }
 
   const handleDestinationClick = () => {
@@ -218,6 +347,8 @@ export const useRouteGameState = (): RouteGameState | null => {
     endAddress,
     path,
     availableJunctions,
+    selectableJunctions,
+    availableRoundabouts,
     currentRoadName,
     isLoading,
     isReady,
@@ -227,8 +358,10 @@ export const useRouteGameState = (): RouteGameState | null => {
     error,
     gameKey,
     handleJunctionClick,
+    handleRoundaboutClick,
     handleDestinationClick,
     canReachDestination,
+    getJunctionsForRoundabout: roadGraph.getJunctionsForRoundabout,
     reset,
   }
 }

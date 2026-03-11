@@ -11,6 +11,7 @@ export type SelectedJunction = {
   lat: number
   lng: number
   nodeIndex: number
+  roundaboutId: number | null
   roadName: string
   connectedRoadNames: string[]
 }

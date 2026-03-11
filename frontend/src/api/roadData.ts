@@ -21,9 +21,16 @@ export type RoadInfo = {
   junctions: RoadJunctionRef[]
 }
 
+export type RoundaboutInfo = {
+  id: number
+  junctions: RoadJunctionRef[] // roadJunctionIndex = ring index (0-based position in ring)
+  connectedRoadNames: string[]
+}
+
 export type RoadsResponse = {
   roads: Record<string, RoadInfo>
   junctions: Record<string, Junction>
+  roundabouts: RoundaboutInfo[]
 }
 
 export type RoadSuggestion = {
