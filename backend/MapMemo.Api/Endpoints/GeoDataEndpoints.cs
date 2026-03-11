@@ -180,32 +180,40 @@ internal static class GeoDataEndpoints {
                     .GroupBy(rj => rj.RoadId)
                     .ToDictionary(g => g.Key, g => g.ToList());
 
-                Dictionary<string, RoadResponseDto> response = new();
+                // Group road_junctions by junction to build connected road names per junction
+                var roadJunctionsByJunction = allRoadJunctions
+                    .GroupBy(rj => rj.JunctionId)
+                    .ToDictionary(g => g.Key, g => g.ToList());
+
+                Dictionary<string, RoadDto> roads = new();
                 foreach ((var roadId, Road r) in roadsById) {
                     List<RoadJunction> roadJunctions = roadJunctionsByRoad.GetValueOrDefault(roadId) ?? [];
 
-                    var junctions = roadJunctions
+                    var junctionRefs = roadJunctions
                         .OrderBy(rj => rj.NodeIndex)
-                        .Select(rj => {
-                            var otherRoads = allRoadJunctions
-                                .Where(x => x.JunctionId == rj.JunctionId && x.RoadId != rj.RoadId)
-                                .Select(x => x.Road.Name)
-                                .ToList();
-                            return new JunctionDto(
-                                rj.JunctionId,
-                                (double)rj.Junction.Lat,
-                                (double)rj.Junction.Lng,
-                                rj.Junction.WayType,
-                                rj.NodeIndex,
-                                otherRoads,
-                                rj.Junction.RoundaboutId);
-                        })
+                        .Select(rj => new RoadJunctionDto(rj.JunctionId, rj.NodeIndex))
                         .ToList();
 
-                    response[r.Name] = new RoadResponseDto(r.Id, r.Name, r.CityId, junctions);
+                    roads[r.Name] = new RoadDto(r.Id, r.Name, r.CityId, junctionRefs);
                 }
 
-                return Results.Json(response);
+                Dictionary<string, JunctionDto> junctions = new();
+                foreach ((var junctionId, List<RoadJunction>? rjs) in roadJunctionsByJunction) {
+                    Junction junctionEntity = rjs[0].Junction;
+                    var connectedRoadNames = rjs
+                        .Select(rj => rj.Road.Name)
+                        .Distinct()
+                        .ToList();
+                    junctions[junctionId.ToString()] = new JunctionDto(
+                        junctionId,
+                        (double)junctionEntity.Lat,
+                        (double)junctionEntity.Lng,
+                        junctionEntity.WayType,
+                        connectedRoadNames,
+                        junctionEntity.RoundaboutId);
+                }
+
+                return Results.Json(new { roads, junctions });
             });
 
         app.MapGet("/api/roads/check", async (
