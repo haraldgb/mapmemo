@@ -61,9 +61,13 @@ public sealed class RoadsEndpointTests(IntegrationTestFactory factory) : Integra
 
         response.EnsureSuccessStatusCode();
         var content = await response.Content.ReadAsStringAsync();
+        Assert.Contains("\"roads\"", content);
+        Assert.Contains("\"junctions\"", content);
         Assert.Contains("Karl Johans gate", content);
         Assert.Contains("Akersgata", content);
         Assert.Contains("traffic_signals", content);
+        Assert.Contains("junctionId", content);
+        Assert.Contains("roadJunctionIndex", content);
     }
 
     [Fact]
