@@ -130,12 +130,13 @@ export const AutoCompleteInput = ({
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
+      // if special behaviour, also include this in handleFormSubmit if within a form.
       if (shouldShowDropdown) {
         e.preventDefault()
         confirmSelection(
           suggestions[highlightedIndex >= 0 ? highlightedIndex : 0],
         )
-      } else if (noSuggestions) {
+      } else if (noSuggestions && (prefix + value).trim().length > 0) {
         e.preventDefault()
         confirmSelection(prefix + value)
       } else {
@@ -211,7 +212,9 @@ export const AutoCompleteInput = ({
         <div className={inputWrapperClassName}>
           {prefix && <span className={s_revealed_prefix}>{prefix}</span>}
           {inputEl}
-          {noSuggestions && legalValueHints ? (
+          {noSuggestions &&
+          legalValueHints &&
+          (prefix + value).trim().length > 0 ? (
             suggestions
               .map((suggestion) => suggestion.toLowerCase())
               .includes((prefix + value).toLowerCase()) ? (
@@ -252,11 +255,7 @@ export const AutoCompleteInput = ({
                 setPreviewValue('')
               }}
               className={sf_dropdown_item(index === highlightedIndex)}
-              title={
-                index === 0
-                  ? 'Press Tab or Enter to submit first suggestion'
-                  : ''
-              }
+              title={index === 0 ? 'Press Enter to submit this suggestion' : ''}
             >
               <span>{label}</span>
               {((index === 0 && highlightedIndex === -1) ||
