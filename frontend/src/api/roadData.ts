@@ -1,11 +1,15 @@
 import { fetchWithSessionRetry } from './utils'
 
-export type RoadJunction = {
+export type RoadJunctionRef = {
+  junctionId: number
+  roadJunctionIndex: number
+}
+
+export type Junction = {
   id: number
   lat: number
   lng: number
   wayType: string | null
-  nodeIndex: number
   connectedRoadNames: string[]
   roundaboutId: number | null
 }
@@ -14,10 +18,13 @@ export type RoadInfo = {
   id: number
   name: string
   cityId: number
-  junctions: RoadJunction[]
+  junctions: RoadJunctionRef[]
 }
 
-export type RoadWithJunctionsResponse = Record<string, RoadInfo>
+export type RoadsResponse = {
+  roads: Record<string, RoadInfo>
+  junctions: Record<string, Junction>
+}
 
 export type RoadSuggestion = {
   name: string
@@ -35,7 +42,7 @@ const ROADS_URL = '/api/roads'
 export const fetchRoadWithJunctions = async (
   cityId: number,
   roadName: string,
-): Promise<RoadWithJunctionsResponse> => {
+): Promise<RoadsResponse> => {
   const url = `${ROADS_URL}?city_id=${cityId}&road_name=${encodeURIComponent(roadName)}`
   const response = await fetchWithSessionRetry(url, {
     credentials: 'include',
@@ -44,7 +51,7 @@ export const fetchRoadWithJunctions = async (
   if (!response.ok) {
     throw new Error('Failed to fetch road with junctions')
   }
-  return (await response.json()) as RoadWithJunctionsResponse
+  return (await response.json()) as RoadsResponse
 }
 
 export const checkRoad = async (
