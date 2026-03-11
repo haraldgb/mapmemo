@@ -3,12 +3,15 @@ import {
   fetchRoadWithJunctions,
   type Junction,
   type RoadInfo,
+  type RoundaboutInfo,
 } from '../../api/roadData'
 import type { SelectedJunction } from './types'
 
 export type RoadGraph = {
   fetchRoad: (roadName: string) => Promise<RoadInfo | null>
   getJunctionsForRoad: (roadName: string) => SelectedJunction[]
+  getJunctionsForRoundabout: (roundaboutId: number) => SelectedJunction[]
+  getRoundabout: (roundaboutId: number) => RoundaboutInfo | null
   isFetchedAsPrimary: (roadName: string) => boolean
   isInCache: (roadName: string) => boolean
   reset: () => void
@@ -20,12 +23,14 @@ const normalizeRoadName = (name: string) => name.toLowerCase()
 export const useRoadGraph = (cityId: number): RoadGraph => {
   const normalizedRoadCacheRef = useRef<Map<string, RoadInfo>>(new Map())
   const junctionCacheRef = useRef<Map<string, Junction>>(new Map())
+  const roundaboutCacheRef = useRef<Map<number, RoundaboutInfo>>(new Map())
   const normalizedFetchedAsPrimaryRef = useRef<Set<string>>(new Set())
 
   useEffect(
     function resetCacheOnCityChange() {
       normalizedRoadCacheRef.current = new Map()
       junctionCacheRef.current = new Map()
+      roundaboutCacheRef.current = new Map()
       normalizedFetchedAsPrimaryRef.current = new Set()
     },
     [cityId],
@@ -52,6 +57,11 @@ export const useRoadGraph = (cityId: number): RoadGraph => {
         junctionCacheRef.current.set(id, junction)
       }
     }
+    for (const roundabout of response.roundabouts) {
+      if (!roundaboutCacheRef.current.has(roundabout.id)) {
+        roundaboutCacheRef.current.set(roundabout.id, roundabout)
+      }
+    }
     normalizedFetchedAsPrimaryRef.current.add(key)
     return normalizedRoadCacheRef.current.get(key) ?? null
   }
@@ -73,12 +83,42 @@ export const useRoadGraph = (cityId: number): RoadGraph => {
           lat: junction.lat,
           lng: junction.lng,
           nodeIndex: ref.roadJunctionIndex,
+          roundaboutId: junction.roundaboutId,
           roadName: road.name,
           connectedRoadNames: junction.connectedRoadNames,
         } satisfies SelectedJunction,
       ]
     })
   }
+
+  const getJunctionsForRoundabout = (
+    roundaboutId: number,
+  ): SelectedJunction[] => {
+    const roundabout = roundaboutCacheRef.current.get(roundaboutId)
+    if (!roundabout) {
+      return []
+    }
+    return roundabout.junctions.flatMap((ref) => {
+      const junction = junctionCacheRef.current.get(ref.junctionId.toString())
+      if (!junction) {
+        return []
+      }
+      return [
+        {
+          id: junction.id,
+          lat: junction.lat,
+          lng: junction.lng,
+          nodeIndex: ref.roadJunctionIndex, // ring index
+          roundaboutId,
+          roadName: '',
+          connectedRoadNames: junction.connectedRoadNames,
+        } satisfies SelectedJunction,
+      ]
+    })
+  }
+
+  const getRoundabout = (roundaboutId: number): RoundaboutInfo | null =>
+    roundaboutCacheRef.current.get(roundaboutId) ?? null
 
   const isFetchedAsPrimary = (roadName: string): boolean =>
     normalizedFetchedAsPrimaryRef.current.has(normalizeRoadName(roadName))
@@ -89,12 +129,15 @@ export const useRoadGraph = (cityId: number): RoadGraph => {
   const reset = () => {
     normalizedRoadCacheRef.current = new Map()
     junctionCacheRef.current = new Map()
+    roundaboutCacheRef.current = new Map()
     normalizedFetchedAsPrimaryRef.current = new Set()
   }
 
   return {
     fetchRoad,
     getJunctionsForRoad,
+    getJunctionsForRoundabout,
+    getRoundabout,
     isFetchedAsPrimary,
     isInCache,
     reset,
