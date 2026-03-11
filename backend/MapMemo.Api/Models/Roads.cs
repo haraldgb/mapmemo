@@ -6,6 +6,8 @@ internal sealed record RoadDto(long Id, string Name, long CityId, List<RoadJunct
 
 internal sealed record JunctionDto(long Id, double Lat, double Lng, string? WayType, List<string> ConnectedRoadNames, long? RoundaboutId);
 
+internal sealed record RoundaboutDto(long Id, List<RoadJunctionDto> Junctions, List<string> ConnectedRoadNames);
+
 internal sealed record RoadSuggestionDto(string Name, double Score);
 
 internal sealed record CheckRoadResponseDto(bool Found, string? CanonicalName, List<RoadSuggestionDto> Suggestions);

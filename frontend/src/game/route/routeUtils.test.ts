@@ -12,6 +12,7 @@ const makeJunction = (
   lat: 59.9,
   lng: 10.7,
   nodeIndex,
+  roundaboutId: null,
   roadName,
   connectedRoadNames,
 })

@@ -1,27 +1,39 @@
 import { useEffect, useRef } from 'react'
 import { useMap } from '@vis.gl/react-google-maps'
 import type { RouteAddress, SelectedJunction } from './types'
+import { haversineDistanceMeters } from './routeUtils'
 
 type Props = {
   startAddress: RouteAddress | null
   endAddress: RouteAddress | null
   path: SelectedJunction[]
-  availableJunctions: SelectedJunction[]
+  selectableJunctions: SelectedJunction[]
+  availableRoundabouts: number[]
   isReady: boolean
   canReachDestination: boolean
+  getJunctionsForRoundabout: (roundaboutId: number) => SelectedJunction[]
   onJunctionClick: (junction: SelectedJunction) => void
+  onRoundaboutClick: (roundaboutId: number) => void
   onDestinationClick: () => void
   gameKey: number
+}
+
+type RoundaboutCircleEntry = {
+  mainCircle: google.maps.Circle
+  borderCircle: google.maps.Circle
 }
 
 export const useRouteMapRendering = ({
   startAddress,
   endAddress,
   path,
-  availableJunctions,
+  selectableJunctions,
+  availableRoundabouts,
   isReady,
   canReachDestination,
+  getJunctionsForRoundabout,
   onJunctionClick,
+  onRoundaboutClick,
   onDestinationClick,
   gameKey,
 }: Props): void => {
@@ -47,12 +59,23 @@ export const useRouteMapRendering = ({
       }
     >
   >(new Map())
+  const roundaboutCirclesRef = useRef<Map<number, RoundaboutCircleEntry>>(
+    new Map(),
+  )
   const hasFittedRef = useRef(false)
-  // useRef: keep latest callback without making it a dep of the diff effect,
-  // so onJunctionClick identity changes don't trigger full marker re-creation.
+  // useRef: keep latest callbacks without making them deps of the diff effects,
+  // so callback identity changes don't trigger full marker re-creation.
   const onJunctionClickRef = useRef(onJunctionClick)
   useEffect(function syncOnJunctionClickRef() {
     onJunctionClickRef.current = onJunctionClick
+  })
+  const onRoundaboutClickRef = useRef(onRoundaboutClick)
+  useEffect(function syncOnRoundaboutClickRef() {
+    onRoundaboutClickRef.current = onRoundaboutClick
+  })
+  const getJunctionsForRoundaboutRef = useRef(getJunctionsForRoundabout)
+  useEffect(function syncGetJunctionsForRoundaboutRef() {
+    getJunctionsForRoundaboutRef.current = getJunctionsForRoundabout
   })
 
   // Reset fit-bounds flag when game resets
@@ -132,17 +155,17 @@ export const useRouteMapRendering = ({
         lng: startAddress.lng,
       })
       bounds.extend({ lat: endAddress.lat, lng: endAddress.lng })
-      for (const junction of availableJunctions) {
+      for (const junction of selectableJunctions) {
         bounds.extend({ lat: junction.lat, lng: junction.lng })
       }
       map.fitBounds(bounds, { top: 80, right: 40, bottom: 40, left: 40 })
     },
-    [map, isReady, startAddress, endAddress, availableJunctions],
+    [map, isReady, startAddress, endAddress, selectableJunctions],
   )
 
-  // Clean up all dot markers when map instance changes or unmounts
+  // Clean up all markers and circles when map instance changes or unmounts
   useEffect(
-    function cleanupDotMarkersOnMapChange() {
+    function cleanupMarkersOnMapChange() {
       if (!map) {
         return
       }
@@ -159,6 +182,14 @@ export const useRouteMapRendering = ({
           marker.map = null
         }
         pathDotMarkersMapRef.current.clear()
+        for (const {
+          mainCircle,
+          borderCircle,
+        } of roundaboutCirclesRef.current.values()) {
+          mainCircle.setMap(null)
+          borderCircle.setMap(null)
+        }
+        roundaboutCirclesRef.current.clear()
       }
     },
     [map],
@@ -170,7 +201,7 @@ export const useRouteMapRendering = ({
       if (!map) {
         return
       }
-      const nextIds = new Set(availableJunctions.map((i) => i.id))
+      const nextIds = new Set(selectableJunctions.map((i) => i.id))
       const prevIds = new Set(dotMarkersMapRef.current.keys())
 
       const pathIds = new Set(pathDotMarkersMapRef.current.keys())
@@ -187,7 +218,7 @@ export const useRouteMapRendering = ({
       }
 
       // Add markers that are new (skip junctions already shown as numbered path dots)
-      for (const junction of availableJunctions) {
+      for (const junction of selectableJunctions) {
         if (
           dotMarkersMapRef.current.has(junction.id) ||
           pathIds.has(junction.id)
@@ -222,20 +253,111 @@ export const useRouteMapRendering = ({
         dotMarkersMapRef.current.set(junction.id, marker)
       }
     },
-    [map, availableJunctions],
+    [map, selectableJunctions],
+  )
+
+  // Diff roundabout circles — add/remove as availableRoundabouts changes
+  useEffect(
+    function renderRoundaboutCircles() {
+      if (!map) {
+        return
+      }
+
+      const nextIds = new Set(availableRoundabouts)
+      const prevIds = new Set(roundaboutCirclesRef.current.keys())
+
+      // Remove circles no longer available
+      for (const id of prevIds) {
+        if (!nextIds.has(id)) {
+          const entry = roundaboutCirclesRef.current.get(id)!
+          entry.mainCircle.setMap(null)
+          entry.borderCircle.setMap(null)
+          roundaboutCirclesRef.current.delete(id)
+        }
+      }
+
+      // Add new circles
+      for (const roundaboutId of nextIds) {
+        if (roundaboutCirclesRef.current.has(roundaboutId)) {
+          continue
+        }
+
+        const junctions = getJunctionsForRoundaboutRef.current(roundaboutId)
+        if (junctions.length === 0) {
+          continue
+        }
+
+        // Center = average lat/lng of all roundabout junctions
+        const center = {
+          lat: junctions.reduce((sum, j) => sum + j.lat, 0) / junctions.length,
+          lng: junctions.reduce((sum, j) => sum + j.lng, 0) / junctions.length,
+        }
+
+        // Radius = average distance from center to each junction, minimum 1m
+        const radius = Math.max(
+          1,
+          junctions.reduce(
+            (sum, j) =>
+              sum +
+              haversineDistanceMeters(center.lat, center.lng, j.lat, j.lng),
+            0,
+          ) / junctions.length,
+        )
+
+        const borderCircle = new google.maps.Circle({
+          map,
+          center,
+          radius,
+          strokeColor: '#ffffff',
+          strokeWeight: 11,
+          fillOpacity: 0,
+          zIndex: 2,
+          clickable: false,
+        })
+
+        const mainCircle = new google.maps.Circle({
+          map,
+          center,
+          radius,
+          strokeColor: '#6f2dbd',
+          strokeWeight: 7,
+          fillOpacity: 0,
+          zIndex: 3,
+          clickable: true,
+        })
+
+        mainCircle.addListener('click', () => {
+          onRoundaboutClickRef.current(roundaboutId)
+        })
+        mainCircle.addListener('mouseover', () => {
+          mainCircle.setOptions({ strokeWeight: 10 })
+          borderCircle.setOptions({ strokeWeight: 15 })
+        })
+        mainCircle.addListener('mouseout', () => {
+          mainCircle.setOptions({ strokeWeight: 7 })
+          borderCircle.setOptions({ strokeWeight: 11 })
+        })
+
+        roundaboutCirclesRef.current.set(roundaboutId, {
+          mainCircle,
+          borderCircle,
+        })
+      }
+    },
+    [map, availableRoundabouts],
   )
 
   // Diff numbered path dots — update in-place when possible, only create/remove
   // what changed. Same junction can appear multiple times (revisit); indices grouped
   // and shown as "1·4" (two visits) or "..." (three or more).
-  // Path dots that are also in availableJunctions remain clickable; the unnumbered
+  // Path dots that are also in selectableJunctions remain clickable; the unnumbered
   // junction dot is suppressed for those junctions (see renderJunctionDots).
   useEffect(
     function renderPathDots() {
       if (!map) {
         return
       }
-      const availableIds = new Set(availableJunctions.map((j) => j.id))
+      const selectableIds = new Set(selectableJunctions.map((j) => j.id))
 
       // Group 1-based visit indices by junction ID
       const indicesByJunctionId = new Map<number, number[]>()
@@ -273,12 +395,12 @@ export const useRouteMapRendering = ({
               ? `${indices[0]}·${indices[1]}`
               : '...'
         const fontSize = indices.length === 2 ? '9px' : '11px'
-        const isClickable = availableIds.has(junction.id)
-        // Use the availableJunctions version — it has the correct roadName for
+        const isClickable = selectableIds.has(junction.id)
+        // Use the selectableJunctions version — it has the correct roadName for
         // the current traversal context, which handleJunctionClick needs for
         // direction logic. The path version has the roadName from the original visit.
-        const availableJunction = isClickable
-          ? availableJunctions.find((j) => j.id === junction.id)!
+        const selectableJunction = isClickable
+          ? selectableJunctions.find((j) => j.id === junction.id)!
           : null
 
         const existing = pathDotMarkersMapRef.current.get(junction.id)
@@ -294,9 +416,9 @@ export const useRouteMapRendering = ({
 
           existing.removeClickListener?.()
           existing.removeClickListener = null
-          if (isClickable && availableJunction) {
+          if (isClickable && selectableJunction) {
             const handleClick = () =>
-              onJunctionClickRef.current(availableJunction)
+              onJunctionClickRef.current(selectableJunction)
             existing.marker.addEventListener('gmp-click', handleClick)
             existing.removeClickListener = () =>
               existing.marker.removeEventListener('gmp-click', handleClick)
@@ -329,9 +451,9 @@ export const useRouteMapRendering = ({
           })
 
           let removeClickListener: (() => void) | null = null
-          if (isClickable && availableJunction) {
+          if (isClickable && selectableJunction) {
             const handleClick = () =>
-              onJunctionClickRef.current(availableJunction)
+              onJunctionClickRef.current(selectableJunction)
             marker.addEventListener('gmp-click', handleClick)
             removeClickListener = () =>
               marker.removeEventListener('gmp-click', handleClick)
@@ -345,7 +467,7 @@ export const useRouteMapRendering = ({
         }
       }
     },
-    [map, path, availableJunctions],
+    [map, path, selectableJunctions],
   )
 
   // Highlight B marker when destination is reachable, attach click handler

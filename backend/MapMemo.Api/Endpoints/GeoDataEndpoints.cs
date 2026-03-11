@@ -147,14 +147,141 @@ internal static class GeoDataEndpoints {
                     .Select(rj => rj.JunctionId)
                     .ToListAsync();
 
-                // Find all roads connected via those junctions
+                // === ROUNDABOUT HANDLING ===
+                // Find which of the primary road's junctions belong to a roundabout
+                List<Junction> roundaboutJunctionEntities = await db.Junctions
+                    .Where(j => junctionIds.Contains(j.Id) && j.RoundaboutId.HasValue)
+                    .ToListAsync();
+
+                var roundaboutJunctionIdSet = roundaboutJunctionEntities
+                    .Select(j => j.Id)
+                    .ToHashSet();
+
+                var touchedRoundaboutIds = roundaboutJunctionEntities
+                    .Select(j => j.RoundaboutId!.Value)
+                    .Distinct()
+                    .ToList();
+
+                var roundaboutDtos = new List<RoundaboutDto>();
+                var externalRoundaboutRoadIds = new HashSet<long>();
+                // Overrides for roundabout junctions: external-only connectedRoadNames
+                var roundaboutJunctionOverrides = new Dictionary<long, JunctionDto>();
+
+                if (touchedRoundaboutIds.Count > 0) {
+                    // Fetch ALL junctions of each touched roundabout (ring may contain more than
+                    // the primary road touches)
+                    List<Junction> allRoundaboutJunctionEntities = await db.Junctions
+                        .Where(j => j.RoundaboutId.HasValue && touchedRoundaboutIds.Contains(j.RoundaboutId.Value))
+                        .ToListAsync();
+
+                    var allRoundaboutJunctionIds = allRoundaboutJunctionEntities
+                        .Select(j => j.Id)
+                        .ToHashSet();
+
+                    // Find roads that touch any roundabout junction, then fetch ALL their
+                    // road_junctions — needed to correctly classify ring roads (all junctions
+                    // inside roundabout) vs external roads (at least one junction outside).
+                    var candidateRoadIds = await db.RoadJunctions
+                        .Where(rj => allRoundaboutJunctionIds.Contains(rj.JunctionId))
+                        .Select(rj => rj.RoadId)
+                        .Distinct()
+                        .ToListAsync();
+
+                    List<RoadJunction> candidateRoadJunctions = await db.RoadJunctions
+                        .Include(rj => rj.Road)
+                        .Where(rj => candidateRoadIds.Contains(rj.RoadId))
+                        .ToListAsync();
+
+                    var candidateByRoad = candidateRoadJunctions
+                        .GroupBy(rj => rj.RoadId)
+                        .ToDictionary(g => g.Key, g => g.ToList());
+
+                    foreach (var roundaboutId in touchedRoundaboutIds) {
+                        var thisRoundaboutJunctionIds = allRoundaboutJunctionEntities
+                            .Where(j => j.RoundaboutId == roundaboutId)
+                            .Select(j => j.Id)
+                            .ToHashSet();
+
+                        // Ring roads: ALL their junctions are inside this roundabout
+                        var ringRoadIds = candidateByRoad
+                            .Where(kvp => kvp.Value.All(rj => thisRoundaboutJunctionIds.Contains(rj.JunctionId)))
+                            .Select(kvp => kvp.Key)
+                            .ToHashSet();
+
+                        // External roads: at least one junction outside roundabout
+                        var externalIds = candidateByRoad
+                            .Where(kvp => !ringRoadIds.Contains(kvp.Key))
+                            .Select(kvp => kvp.Key);
+                        externalRoundaboutRoadIds.UnionWith(externalIds);
+
+                        // Order roundabout junctions by ring index via segment chaining
+                        var ringSegments = candidateByRoad
+                            .Where(kvp => ringRoadIds.Contains(kvp.Key))
+                            .Select(kvp => kvp.Value
+                                .OrderBy(rj => rj.NodeIndex)
+                                .Select(rj => rj.JunctionId)
+                                .ToList())
+                            .ToList();
+
+                        var orderedJunctionIds = ChainRoundaboutSegments(ringSegments);
+
+                        // Append any roundabout junctions not captured by ring segment chaining
+                        var chainedSet = orderedJunctionIds.ToHashSet();
+                        orderedJunctionIds.AddRange(
+                            thisRoundaboutJunctionIds.Where(id => !chainedSet.Contains(id)));
+
+                        // Build RoadJunctionDto refs: ring index = sequential position in ring
+                        var roundaboutJunctionRefs = orderedJunctionIds
+                            .Select((jId, ringIndex) => new RoadJunctionDto(jId, ringIndex))
+                            .ToList();
+
+                        // Build junction overrides with external-only road names
+                        var junctionById = allRoundaboutJunctionEntities
+                            .Where(j => j.RoundaboutId == roundaboutId)
+                            .ToDictionary(j => j.Id);
+
+                        foreach (var (jId, ringIndex) in orderedJunctionIds.Select((id, i) => (id, i))) {
+                            if (!junctionById.TryGetValue(jId, out var jEntity)) continue;
+                            var externalRoadNames = candidateRoadJunctions
+                                .Where(rj => rj.JunctionId == jId && !ringRoadIds.Contains(rj.RoadId))
+                                .Select(rj => rj.Road.Name)
+                                .Distinct()
+                                .ToList();
+                            roundaboutJunctionOverrides[jId] = new JunctionDto(
+                                jId,
+                                (double)jEntity.Lat,
+                                (double)jEntity.Lng,
+                                jEntity.WayType,
+                                externalRoadNames,
+                                roundaboutId);
+                        }
+
+                        // connectedRoadNames for the roundabout DTO = union across all junctions
+                        var allConnectedNames = roundaboutJunctionOverrides.Values
+                            .Where(j => j.RoundaboutId == roundaboutId)
+                            .SelectMany(j => j.ConnectedRoadNames)
+                            .Distinct()
+                            .ToList();
+
+                        roundaboutDtos.Add(new RoundaboutDto(roundaboutId, roundaboutJunctionRefs, allConnectedNames));
+                    }
+                }
+                // === END ROUNDABOUT HANDLING ===
+
+                // Find connected roads via NON-roundabout junctions only;
+                // roundabout-connected roads are handled above
+                var nonRoundaboutJunctionIds = junctionIds
+                    .Where(id => !roundaboutJunctionIdSet.Contains(id))
+                    .ToList();
+
                 HashSet<long> roadIds = [road.Id];
                 List<long> connectedIds = await db.RoadJunctions
-                    .Where(rj => junctionIds.Contains(rj.JunctionId) && rj.RoadId != road.Id)
+                    .Where(rj => nonRoundaboutJunctionIds.Contains(rj.JunctionId) && rj.RoadId != road.Id)
                     .Select(rj => rj.RoadId)
                     .Distinct()
                     .ToListAsync();
                 roadIds.UnionWith(connectedIds);
+                roadIds.UnionWith(externalRoundaboutRoadIds);
 
                 // Get all junction IDs that any of our roads participate in
                 List<long> allJunctionIds = await db.RoadJunctions
@@ -213,7 +340,13 @@ internal static class GeoDataEndpoints {
                         junctionEntity.RoundaboutId);
                 }
 
-                return Results.Json(new { roads, junctions });
+                // Override roundabout junction entries with external-only road names,
+                // and add any ring-road-only junctions not already present
+                foreach ((var jId, JunctionDto jDto) in roundaboutJunctionOverrides) {
+                    junctions[jId.ToString()] = jDto;
+                }
+
+                return Results.Json(new { roads, junctions, roundabouts = roundaboutDtos });
             });
 
         app.MapGet("/api/roads/check", async (
@@ -258,6 +391,40 @@ internal static class GeoDataEndpoints {
 
                 return Results.Json(new CheckRoadResponseDto(false, null, suggestions));
             });
+    }
+
+    /// <summary>
+    /// Chains ring road segments into an ordered list of junction IDs representing the full
+    /// roundabout ring. Each segment is a list of junction IDs sorted by NodeIndex; adjacent
+    /// segments share a boundary junction (segment[i].Last() == segment[i+1].First()), forming
+    /// a cycle. Returns an empty list if no segments are provided.
+    /// </summary>
+    private static List<long> ChainRoundaboutSegments(List<List<long>> segments) {
+        if (segments.Count == 0) return [];
+
+        // Build lookup: first junction ID of a segment → that segment
+        var byStart = new Dictionary<long, List<long>>();
+        foreach (var seg in segments) {
+            byStart[seg.First()] = seg;
+        }
+
+        var result = new List<long>();
+        var startId = segments[0].First();
+        var current = segments[0];
+        // Track visited segment starts to detect cycles in malformed data
+        var visitedStarts = new HashSet<long> { startId };
+
+        // Add all but the last junction of each segment (the last equals the first of the next).
+        // Stop when we return to the start junction or encounter a gap/cycle (malformed data).
+        do {
+            if (current.Count <= 1) break; // single-element segment: can't chain further
+            result.AddRange(current.Take(current.Count - 1));
+            var nextId = current.Last();
+            if (nextId == startId || !byStart.TryGetValue(nextId, out current!)) break;
+            if (!visitedStarts.Add(nextId)) break; // cycle detected in non-standard ring data
+        } while (true);
+
+        return result;
     }
 
     /// <summary>
