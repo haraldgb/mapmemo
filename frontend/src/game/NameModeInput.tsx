@@ -51,6 +51,9 @@ export const NameModeInput = ({ areaGameState }: NameModeInputProps) => {
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    if (difficulty === 'hard') {
+      handleSelect(fullValue)
+    }
     if (filteredSuggestions.length > 0) {
       handleSelect(filteredSuggestions[0])
     } else {

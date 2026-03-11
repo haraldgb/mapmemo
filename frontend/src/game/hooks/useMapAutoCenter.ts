@@ -22,7 +22,7 @@ export const useMapAutoCenter = ({
   map,
   features,
   isEnabled,
-}: Props) => {
+}: Props): void => {
   const prevEntryIdRef = useRef<string | null>(null)
   const playAreaBoundsRef = useRef<google.maps.LatLngBounds | null>(null)
 
