@@ -1,14 +1,14 @@
-import type { SelectedJunction } from './types'
+import type { RoadJunction } from './types'
 import type { RoadGraph } from './useRoadGraph'
 
 /**
  * Returns junctions reachable from `currentJunction` for the next move.
  * Includes all junctions on intersecting roads, excluding `currentJunction` itself.
  * On the current road, once direction is established via `prevJunction`, only
- * junctions of the same road in that direction (by `nodeIndex`) are included.
+ * junctions of the same road in that direction (by `roadJunctionIndex`) are included.
  */
 export const canJunctionReachRoad = (
-  junction: SelectedJunction | null,
+  junction: RoadJunction | null,
   roadName: string | null,
 ): boolean => {
   if (junction === null || roadName === null) {
@@ -22,10 +22,10 @@ export const canJunctionReachRoad = (
 }
 
 export const computeAvailableJunctions = (
-  currentJunction: SelectedJunction,
-  prevJunction: SelectedJunction | null,
+  currentJunction: RoadJunction,
+  prevJunction: RoadJunction | null,
   roadGraph: RoadGraph,
-): SelectedJunction[] => {
+): RoadJunction[] => {
   const roadsAtJunction = [
     currentJunction.roadName,
     ...currentJunction.connectedRoadNames,
@@ -41,9 +41,9 @@ export const computeAvailableJunctions = (
   const isDirectionEstablished = previousOnCurrentRoad !== null
   const isGoingForward =
     isDirectionEstablished &&
-    currentJunction.nodeIndex > previousOnCurrentRoad!.nodeIndex
+    currentJunction.roadJunctionIndex > previousOnCurrentRoad!.roadJunctionIndex
 
-  const combined = new Map<number, SelectedJunction>()
+  const combined = new Map<number, RoadJunction>()
   for (const road of roadsAtJunction) {
     const isCurrentRoad = road === currentJunction.roadName
     for (const junction of roadGraph.getJunctionsForRoad(road)) {
@@ -51,12 +51,15 @@ export const computeAvailableJunctions = (
         continue
       }
       if (isCurrentRoad && isDirectionEstablished) {
-        if (isGoingForward && junction.nodeIndex <= currentJunction.nodeIndex) {
+        if (
+          isGoingForward &&
+          junction.roadJunctionIndex <= currentJunction.roadJunctionIndex
+        ) {
           continue
         }
         if (
           !isGoingForward &&
-          junction.nodeIndex >= currentJunction.nodeIndex
+          junction.roadJunctionIndex >= currentJunction.roadJunctionIndex
         ) {
           continue
         }
@@ -95,11 +98,11 @@ export const haversineDistanceMeters = (
  * // means highest index or 0 is our entrance.
  */
 export const pickEntryJunction = (
-  candidates: SelectedJunction[],
+  candidates: RoadJunction[],
   refLat: number,
   refLng: number,
-  roundaboutJunctions: SelectedJunction[],
-): SelectedJunction => {
+  roundaboutJunctions: RoadJunction[],
+): RoadJunction => {
   const PROXIMITY_THRESHOLD_METERS = 2 // hardcoded: junctions within this distance are treated as equidistant
 
   const withDist = candidates.map((j) => ({
@@ -118,10 +121,10 @@ export const pickEntryJunction = (
   }
 
   // Multiple within threshold: find their ring indices and apply tiebreak rules.
-  // Ring index comes from roundaboutJunctions (nodeIndex = ring index).
+  // Ring index comes from roundaboutJunctions (roadJunctionIndex = ring index).
   const withRingIndex = closeEnough.map((x) => {
     const inRing = roundaboutJunctions.find((rj) => rj.id === x.junction.id)
-    return { junction: x.junction, ringIndex: inRing?.nodeIndex ?? -1 }
+    return { junction: x.junction, ringIndex: inRing?.roadJunctionIndex ?? -1 }
   })
 
   const zeroIndex = withRingIndex.find((x) => x.ringIndex === 0)
@@ -140,10 +143,10 @@ export const pickEntryJunction = (
  * returns the one with the closest ring index in increasing order from entryRingIndex.
  */
 export const findExitJunction = (
-  roundaboutJunctions: SelectedJunction[],
+  roundaboutJunctions: RoadJunction[],
   entryRingIndex: number,
   targetRoadName: string,
-): SelectedJunction | null => {
+): RoadJunction | null => {
   const lower = targetRoadName.toLowerCase()
   const candidates = roundaboutJunctions.filter((j) =>
     j.connectedRoadNames.some((r) => r.toLowerCase() === lower),
@@ -157,8 +160,9 @@ export const findExitJunction = (
 
   const total = roundaboutJunctions.length
   return candidates.reduce((best, j) => {
-    const forwardDist = (j.nodeIndex - entryRingIndex + total) % total
-    const bestForwardDist = (best.nodeIndex - entryRingIndex + total) % total
+    const forwardDist = (j.roadJunctionIndex - entryRingIndex + total) % total
+    const bestForwardDist =
+      (best.roadJunctionIndex - entryRingIndex + total) % total
     return forwardDist < bestForwardDist ? j : best
   })
 }

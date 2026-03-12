@@ -4,7 +4,7 @@ import type { RootState } from '../../store'
 import { resolveAddress } from '../../api/snapToRoads'
 import { getRoutePair } from './routeAddresses'
 import { useRoadGraph } from './useRoadGraph'
-import type { RouteAddress, SelectedJunction } from './types'
+import type { RouteAddress, RoadJunction } from './types'
 import {
   computeAvailableJunctions,
   canJunctionReachRoad,
@@ -16,9 +16,9 @@ export type RouteGameState = {
   mode: 'route'
   startAddress: RouteAddress | null
   endAddress: RouteAddress | null
-  path: SelectedJunction[]
-  availableJunctions: SelectedJunction[]
-  selectableJunctions: SelectedJunction[]
+  path: RoadJunction[]
+  availableJunctions: RoadJunction[]
+  selectableJunctions: RoadJunction[]
   availableRoundabouts: number[]
   currentRoadName: string | null
   isLoading: boolean
@@ -28,11 +28,11 @@ export type RouteGameState = {
   currentJunctionHasMissingConnectedJunctions: boolean
   error: string | null
   gameKey: number
-  handleJunctionClick: (junction: SelectedJunction) => void
+  handleJunctionClick: (junction: RoadJunction) => void
   handleRoundaboutClick: (roundaboutId: number) => void
   handleDestinationClick: () => void
   canReachDestination: boolean
-  getJunctionsForRoundabout: (roundaboutId: number) => SelectedJunction[]
+  getJunctionsForRoundabout: (roundaboutId: number) => RoadJunction[]
   reset: () => void
 }
 
@@ -52,10 +52,10 @@ export const useRouteGameState = (): RouteGameState | null => {
 
   const [startAddress, setStartAddress] = useState<RouteAddress | null>(null)
   const [endAddress, setEndAddress] = useState<RouteAddress | null>(null)
-  const [path, setPath] = useState<SelectedJunction[]>([])
-  const [availableJunctions, setAvailableJunctions] = useState<
-    SelectedJunction[]
-  >([])
+  const [path, setPath] = useState<RoadJunction[]>([])
+  const [availableJunctions, setAvailableJunctions] = useState<RoadJunction[]>(
+    [],
+  )
   const [currentRoadName, setCurrentRoadName] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isComplete, setIsComplete] = useState(false)
@@ -67,7 +67,7 @@ export const useRouteGameState = (): RouteGameState | null => {
   const [gameKey, setGameKey] = useState(0)
 
   // useRef: read fresh state in async callbacks without stale closures
-  const pathRef = useRef<SelectedJunction[]>([])
+  const pathRef = useRef<RoadJunction[]>([])
   const isCompleteRef = useRef(false)
 
   // No deps: must run after every render so async callbacks always read
@@ -152,7 +152,7 @@ export const useRouteGameState = (): RouteGameState | null => {
     [seed, gameKey, mode, roadGraph, routeAddresses],
   )
 
-  const handleJunctionClick = (currentJunction: SelectedJunction) => {
+  const handleJunctionClick = (currentJunction: RoadJunction) => {
     if (isComplete || isLoading) {
       return
     }
@@ -160,8 +160,8 @@ export const useRouteGameState = (): RouteGameState | null => {
     const prevJunction = path.at(-1) ?? null
     const isExitingRoundabout = prevJunction?.roundaboutId != null
 
-    let newPath: SelectedJunction[]
-    let effectivePrev: SelectedJunction | null = prevJunction
+    let newPath: RoadJunction[]
+    let effectivePrev: RoadJunction | null = prevJunction
 
     if (isExitingRoundabout) {
       const roundaboutId = prevJunction!.roundaboutId!
@@ -170,7 +170,7 @@ export const useRouteGameState = (): RouteGameState | null => {
       const entryInRing = roundaboutJunctions.find(
         (j) => j.id === prevJunction!.id,
       )
-      const entryRingIndex = entryInRing?.nodeIndex ?? 0
+      const entryRingIndex = entryInRing?.roadJunctionIndex ?? 0
       const rawExitJunction = findExitJunction(
         roundaboutJunctions,
         entryRingIndex,
@@ -272,7 +272,7 @@ export const useRouteGameState = (): RouteGameState | null => {
     setPath((prev) => [...prev, entryJunction])
     setCurrentRoadName(entryJunction.roadName)
 
-    const computeExternalJunctions = (): SelectedJunction[] => {
+    const computeExternalJunctions = (): RoadJunction[] => {
       const connectedRoads =
         roadGraph.getRoundabout(roundaboutId)?.connectedRoadNames ?? []
       return connectedRoads

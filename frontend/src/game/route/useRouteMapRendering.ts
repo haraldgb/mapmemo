@@ -1,18 +1,18 @@
 import { useEffect, useRef } from 'react'
 import { useMap } from '@vis.gl/react-google-maps'
-import type { RouteAddress, SelectedJunction } from './types'
+import type { RouteAddress, RoadJunction } from './types'
 import { haversineDistanceMeters } from './routeUtils'
 
 type Props = {
   startAddress: RouteAddress | null
   endAddress: RouteAddress | null
-  path: SelectedJunction[]
-  selectableJunctions: SelectedJunction[]
+  path: RoadJunction[]
+  selectableJunctions: RoadJunction[]
   availableRoundabouts: number[]
   isReady: boolean
   canReachDestination: boolean
-  getJunctionsForRoundabout: (roundaboutId: number) => SelectedJunction[]
-  onJunctionClick: (junction: SelectedJunction) => void
+  getJunctionsForRoundabout: (roundaboutId: number) => RoadJunction[]
+  onJunctionClick: (junction: RoadJunction) => void
   onRoundaboutClick: (roundaboutId: number) => void
   onDestinationClick: () => void
   gameKey: number

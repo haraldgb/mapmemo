@@ -6,14 +6,16 @@ export type RouteAddress = {
   lng: number
 }
 
-export type SelectedJunction = {
+/** Junction in relation to road or roundabout */
+export type RoadJunction = {
   id: number
   lat: number
   lng: number
-  nodeIndex: number
-  roundaboutId: number | null
-  roadName: string
+  wayType: string | null
   connectedRoadNames: string[]
+  roundaboutId: number | null
+  roadJunctionIndex: number
+  roadName: string
 }
 
 export type RouteResult = {

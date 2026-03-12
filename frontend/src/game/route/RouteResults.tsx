@@ -3,12 +3,12 @@ import { useMap } from '@vis.gl/react-google-maps'
 import { computeRouteResult } from '../../api/computeRoutes'
 import { decodePolyline } from '../../utils/decodePolyline'
 import { Spinner } from '../../components/Spinner'
-import type { RouteAddress, RouteResult, SelectedJunction } from './types'
+import type { RouteAddress, RouteResult, RoadJunction } from './types'
 
 type Props = {
   startAddress: RouteAddress
   endAddress: RouteAddress
-  path: SelectedJunction[]
+  path: RoadJunction[]
   formattedTime: string
   onPlayAgain: () => void
 }

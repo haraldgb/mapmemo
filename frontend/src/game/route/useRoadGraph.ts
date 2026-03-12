@@ -5,12 +5,12 @@ import {
   type RoadInfo,
   type RoundaboutInfo,
 } from '../../api/roadData'
-import type { SelectedJunction } from './types'
+import type { RoadJunction } from './types'
 
 export type RoadGraph = {
   fetchRoad: (roadName: string) => Promise<RoadInfo | null>
-  getJunctionsForRoad: (roadName: string) => SelectedJunction[]
-  getJunctionsForRoundabout: (roundaboutId: number) => SelectedJunction[]
+  getJunctionsForRoad: (roadName: string) => RoadJunction[]
+  getJunctionsForRoundabout: (roundaboutId: number) => RoadJunction[]
   getRoundabout: (roundaboutId: number) => RoundaboutInfo | null
   isFetchedAsPrimary: (roadName: string) => boolean
   isInCache: (roadName: string) => boolean
@@ -66,7 +66,7 @@ export const useRoadGraph = (cityId: number): RoadGraph => {
     return normalizedRoadCacheRef.current.get(key) ?? null
   }
 
-  const getJunctionsForRoad = (roadName: string): SelectedJunction[] => {
+  const getJunctionsForRoad = (roadName: string): RoadJunction[] => {
     const road = normalizedRoadCacheRef.current.get(normalizeRoadName(roadName))
     if (!road) {
       return []
@@ -82,18 +82,17 @@ export const useRoadGraph = (cityId: number): RoadGraph => {
           id: junction.id,
           lat: junction.lat,
           lng: junction.lng,
-          nodeIndex: ref.roadJunctionIndex,
+          roadJunctionIndex: ref.roadJunctionIndex,
+          wayType: junction.wayType,
           roundaboutId: junction.roundaboutId,
           roadName: road.name,
           connectedRoadNames: junction.connectedRoadNames,
-        } satisfies SelectedJunction,
+        } satisfies RoadJunction,
       ]
     })
   }
 
-  const getJunctionsForRoundabout = (
-    roundaboutId: number,
-  ): SelectedJunction[] => {
+  const getJunctionsForRoundabout = (roundaboutId: number): RoadJunction[] => {
     const roundabout = roundaboutCacheRef.current.get(roundaboutId)
     if (!roundabout) {
       return []
@@ -108,11 +107,12 @@ export const useRoadGraph = (cityId: number): RoadGraph => {
           id: junction.id,
           lat: junction.lat,
           lng: junction.lng,
-          nodeIndex: ref.roadJunctionIndex, // ring index
+          roadJunctionIndex: ref.roadJunctionIndex, // ring index
+          wayType: junction.wayType,
           roundaboutId,
           roadName: '',
           connectedRoadNames: junction.connectedRoadNames,
-        } satisfies SelectedJunction,
+        } satisfies RoadJunction,
       ]
     })
   }
