@@ -87,6 +87,71 @@ export const haversineDistanceMeters = (
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
+const getClosestJunctionCluster = (
+  candidates: RoadJunction[],
+  refLat: number,
+  refLng: number,
+  roundaboutJunctions: RoadJunction[],
+): RoadJunction[] => {
+  // be wary that different RoadJunction lists might not share POV.
+  //   They belong to different roads and thus have different roadJunctionIndexes,
+  //   even though the junction is the same
+  const roundAboutJunctionCandidates = roundaboutJunctions.filter((rj) =>
+    candidates.map((c) => c.id).includes(rj.id),
+  )
+  if (roundAboutJunctionCandidates.length === 0) {
+    return []
+  }
+
+  const candidateClusters: RoadJunction[][] = []
+  const sortedCandidates = roundAboutJunctionCandidates.sort(
+    (a, b) => a.roadJunctionIndex - b.roadJunctionIndex,
+  )
+
+  let current = [sortedCandidates[0]]
+
+  for (let i = 1; i < sortedCandidates.length; i++) {
+    if (
+      sortedCandidates[i].roadJunctionIndex -
+        sortedCandidates[i - 1].roadJunctionIndex ===
+      1
+    ) {
+      current.push(sortedCandidates[i])
+    } else {
+      candidateClusters.push(current)
+      current = [sortedCandidates[i]]
+    }
+  }
+  candidateClusters.push(current)
+
+  const first = candidateClusters[0]
+  const last = candidateClusters[candidateClusters.length - 1]
+  if (
+    candidateClusters.length > 1 &&
+    first[0].roadJunctionIndex === 0 &&
+    last[last.length - 1].roadJunctionIndex + 1 === roundaboutJunctions.length
+  ) {
+    candidateClusters.shift()
+    candidateClusters.push([...last, ...first])
+  }
+
+  const calculateAvgDistanceForCluster = (cluster: RoadJunction[]) =>
+    cluster
+      .map((junction) =>
+        haversineDistanceMeters(refLat, refLng, junction.lat, junction.lng),
+      )
+      .reduce((prev, distance) => prev + distance, 0)
+
+  return candidateClusters.reduce(
+    (prev, cluster) =>
+      calculateAvgDistanceForCluster(cluster) <=
+      calculateAvgDistanceForCluster(prev)
+        ? cluster
+        : prev,
+    candidateClusters[0],
+  )
+}
+
 /**
  * Picks the roundabout entrance junction from candidates (all have the same roundaboutId).
  * Reference point is the last path entry or start address position.
@@ -98,43 +163,22 @@ export const haversineDistanceMeters = (
  * // means highest index or 0 is our entrance.
  */
 export const pickEntryJunction = (
-  candidates: RoadJunction[],
+  availableJunctionsFromEntry: RoadJunction[],
   refLat: number,
   refLng: number,
   roundaboutJunctions: RoadJunction[],
 ): RoadJunction => {
-  const PROXIMITY_THRESHOLD_METERS = 2 // hardcoded: junctions within this distance are treated as equidistant
-
-  const withDist = candidates.map((j) => ({
-    junction: j,
-    dist: haversineDistanceMeters(refLat, refLng, j.lat, j.lng),
-  }))
-  withDist.sort((a, b) => a.dist - b.dist)
-
-  const minDist = withDist[0].dist
-  const closeEnough = withDist.filter(
-    (x) => x.dist - minDist <= PROXIMITY_THRESHOLD_METERS,
+  const closestCluster = getClosestJunctionCluster(
+    availableJunctionsFromEntry,
+    refLat,
+    refLng,
+    roundaboutJunctions,
   )
 
-  if (closeEnough.length === 1) {
-    return closeEnough[0].junction
-  }
-
-  // Multiple within threshold: find their ring indices and apply tiebreak rules.
-  // Ring index comes from roundaboutJunctions (roadJunctionIndex = ring index).
-  const withRingIndex = closeEnough.map((x) => {
-    const inRing = roundaboutJunctions.find((rj) => rj.id === x.junction.id)
-    return { junction: x.junction, ringIndex: inRing?.roadJunctionIndex ?? -1 }
-  })
-
-  const zeroIndex = withRingIndex.find((x) => x.ringIndex === 0)
-  if (zeroIndex) {
-    return zeroIndex.junction
-  }
-
-  return withRingIndex.reduce((best, x) =>
-    x.ringIndex > best.ringIndex ? x : best,
-  ).junction
+  // Returning last in cluster assumes that the cluster stops at the entrance - doesn't work for
+  // e.g. three-way roundabout:([road_name:entrance_number]) [Road A:0] - [Road A:1] - [Road B:2] - [Road A:0]
+  // WIP
+  return closestCluster[closestCluster.length - 1]
 }
 
 /**
@@ -143,26 +187,26 @@ export const pickEntryJunction = (
  * returns the one with the closest ring index in increasing order from entryRingIndex.
  */
 export const findExitJunction = (
+  availableJunctionsFromExit: RoadJunction[],
   roundaboutJunctions: RoadJunction[],
-  entryRingIndex: number,
-  targetRoadName: string,
+  refLat: number,
+  refLng: number,
 ): RoadJunction | null => {
-  const lower = targetRoadName.toLowerCase()
-  const candidates = roundaboutJunctions.filter((j) =>
-    j.connectedRoadNames.some((r) => r.toLowerCase() === lower),
-  )
-  if (candidates.length === 0) {
+  if (availableJunctionsFromExit.length === 0) {
     return null
   }
-  if (candidates.length === 1) {
-    return candidates[0]
+  if (availableJunctionsFromExit.length === 1) {
+    return availableJunctionsFromExit[0]
   }
 
-  const total = roundaboutJunctions.length
-  return candidates.reduce((best, j) => {
-    const forwardDist = (j.roadJunctionIndex - entryRingIndex + total) % total
-    const bestForwardDist =
-      (best.roadJunctionIndex - entryRingIndex + total) % total
-    return forwardDist < bestForwardDist ? j : best
-  })
+  const closestCluster = getClosestJunctionCluster(
+    availableJunctionsFromExit,
+    refLat,
+    refLng,
+    roundaboutJunctions,
+  )
+
+  // Returning first in cluster only works if there are two clusters for road
+  // on each opposite sides of roundabout. WIP
+  return closestCluster[0]
 }

@@ -167,14 +167,16 @@ export const useRouteGameState = (): RouteGameState | null => {
       const roundaboutId = prevJunction!.roundaboutId!
       const roundaboutJunctions =
         roadGraph.getJunctionsForRoundabout(roundaboutId)
-      const entryInRing = roundaboutJunctions.find(
-        (j) => j.id === prevJunction!.id,
-      )
-      const entryRingIndex = entryInRing?.roadJunctionIndex ?? 0
-      const rawExitJunction = findExitJunction(
-        roundaboutJunctions,
-        entryRingIndex,
+
+      const availableJunctionsFromExit = roadGraph.getJunctionsForRoad(
         currentJunction.roadName,
+      )
+
+      const rawExitJunction = findExitJunction(
+        availableJunctionsFromExit,
+        roundaboutJunctions,
+        currentJunction.lat,
+        currentJunction.lng,
       )
       // Tag exit junction with the road we're exiting onto so direction logic works
       const exitJunction = rawExitJunction
