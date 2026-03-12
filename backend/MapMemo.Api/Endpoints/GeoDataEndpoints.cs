@@ -181,7 +181,7 @@ internal static class GeoDataEndpoints {
                     // Find roads that touch any roundabout junction, then fetch ALL their
                     // road_junctions — needed to correctly classify ring roads (all junctions
                     // inside roundabout) vs external roads (at least one junction outside).
-                    var candidateRoadIds = await db.RoadJunctions
+                    List<long> candidateRoadIds = await db.RoadJunctions
                         .Where(rj => allRoundaboutJunctionIds.Contains(rj.JunctionId))
                         .Select(rj => rj.RoadId)
                         .Distinct()
@@ -209,7 +209,7 @@ internal static class GeoDataEndpoints {
                             .ToHashSet();
 
                         // External roads: at least one junction outside roundabout
-                        var externalIds = candidateByRoad
+                        IEnumerable<long> externalIds = candidateByRoad
                             .Where(kvp => !ringRoadIds.Contains(kvp.Key))
                             .Select(kvp => kvp.Key);
                         externalRoundaboutRoadIds.UnionWith(externalIds);
@@ -223,7 +223,7 @@ internal static class GeoDataEndpoints {
                                 .ToList())
                             .ToList();
 
-                        var orderedJunctionIds = ChainRoundaboutSegments(ringSegments);
+                        List<long> orderedJunctionIds = ChainRoundaboutSegments(ringSegments);
 
                         // Append any roundabout junctions not captured by ring segment chaining
                         var chainedSet = orderedJunctionIds.ToHashSet();
@@ -240,8 +240,8 @@ internal static class GeoDataEndpoints {
                             .Where(j => j.RoundaboutId == roundaboutId)
                             .ToDictionary(j => j.Id);
 
-                        foreach (var (jId, ringIndex) in orderedJunctionIds.Select((id, i) => (id, i))) {
-                            if (!junctionById.TryGetValue(jId, out var jEntity)) continue;
+                        foreach ((long jId, int ringIndex) in orderedJunctionIds.Select((id, i) => (id, i))) {
+                            if (!junctionById.TryGetValue(jId, out Junction? jEntity)) continue;
                             var externalRoadNames = candidateRoadJunctions
                                 .Where(rj => rj.JunctionId == jId && !ringRoadIds.Contains(rj.RoadId))
                                 .Select(rj => rj.Road.Name)
@@ -404,13 +404,13 @@ internal static class GeoDataEndpoints {
 
         // Build lookup: first junction ID of a segment → that segment
         var byStart = new Dictionary<long, List<long>>();
-        foreach (var seg in segments) {
+        foreach (List<long> seg in segments) {
             byStart[seg.First()] = seg;
         }
 
         var result = new List<long>();
         var startId = segments[0].First();
-        var current = segments[0];
+        List<long>? current = segments[0];
         // Track visited segment starts to detect cycles in malformed data
         var visitedStarts = new HashSet<long> { startId };
 
